@@ -13,6 +13,7 @@ import { WorldTradeCenter } from "@/components/world-trade-center"
 import { LevelUpNotification } from "@/components/level-up-notification"
 import { AchievementsPanel } from "@/components/achievements-panel"
 import { GameOverModal } from "@/components/game-over-modal"
+import { AISettings } from "@/components/ai-settings"
 import { useGameState } from "@/hooks/use-game-state"
 import type { Country, TradeOffer, GameAction } from "@/lib/types"
 
@@ -56,6 +57,7 @@ export default function GeopoliticsGame() {
   const [showTradeCenter, setShowTradeCenter] = useState(false)
   const [showEventHistory, setShowEventHistory] = useState(false)
   const [showAchievements, setShowAchievements] = useState(false)
+  const [showAISettings, setShowAISettings] = useState(false)
   const [recentAction, setRecentAction] = useState<GameAction | null>(null)
   const [showIntro, setShowIntro] = useState(true)
 
@@ -69,6 +71,7 @@ export default function GeopoliticsGame() {
     setShowTradeCenter(false)
     setShowEventHistory(false)
     setShowAchievements(false)
+    setShowAISettings(false)
     setRecentAction(null)
   }
 
@@ -107,6 +110,31 @@ export default function GeopoliticsGame() {
 
   const handleTradeExecuted = (trade: TradeOffer) => {
     executeTradeOffer(trade)
+  }
+
+  // Función para manejar acciones de IA
+  const handleAIAction = (action: any) => {
+    console.log('🤖 Acción de IA recibida:', action)
+    
+    // Convertir la acción de IA al formato esperado por executeAction
+    const gameAction: GameAction = {
+      id: `ai_action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      type: action.type,
+      targetCountry: action.target || 'Global',
+      cost: 0, // Las acciones de IA no tienen costo para el jugador
+      timestamp: action.timestamp || Date.now(),
+      sourceCountry: action.sourceCountry,
+      severity: action.severity || 5
+    }
+    
+    // Ejecutar la acción
+    executeAction(gameAction)
+    setRecentAction(gameAction)
+    
+    // Limpiar la acción después de un tiempo
+    setTimeout(() => {
+      setRecentAction(null)
+    }, 3000)
   }
 
   // Función para manejar acciones ejecutadas y activar animaciones
@@ -156,6 +184,7 @@ export default function GeopoliticsGame() {
             setAchievements(updated)
             setShowAchievements(true)
           }}
+          onShowAISettings={() => setShowAISettings(true)}
           playerLevel={playerLevel}
           gameProgression={gameProgression}
           unseenAchievementsCount={achievements.filter(a => a.unlocked && !a.seen).length}
@@ -240,6 +269,10 @@ export default function GeopoliticsGame() {
           countries={countries}
           onClose={() => setShowDiplomaticChat(false)}
           onDiplomaticChange={updateDiplomaticRelations}
+          gameEvents={gameEvents}
+          actionHistory={actionHistory}
+          onAIAction={handleAIAction}
+          onShowAISettings={() => setShowAISettings(true)}
         />
       )}
 
@@ -270,6 +303,11 @@ export default function GeopoliticsGame() {
         playerCountry={countries.find((c) => c.id === playerCountry)?.name || "Tu País"}
         onRestart={handleRestart}
       />
+
+      {/* Configuración de IA */}
+      {showAISettings && (
+        <AISettings onClose={() => setShowAISettings(false)} />
+      )}
     </div>
   )
 }

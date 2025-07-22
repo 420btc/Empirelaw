@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import type { Country, GameEvent, GameAction, GameStats, ActionHistory, TradeOffer } from "@/lib/types"
 import { initialCountries } from "@/lib/data/countries"
 import { generateRandomEvent, processAction, checkForCollapses, calculateChaosLevel, applyGDPGrowth, provideMutualAidToCriticalCountries, checkTerritorialRebellions, applyImperialMaintenanceCosts } from "@/lib/game-engine"
+import { aiProactiveActionsService } from "@/lib/ai-proactive-actions"
 import { ACHIEVEMENTS, checkAchievements, calculateXPGain, getPlayerLevel, type Achievement } from "@/lib/achievement-system"
 import type { GameProgression } from "@/lib/types"
 
@@ -218,7 +219,7 @@ export function useGameState() {
   }, [])
 
   // Función principal para generar eventos
-  const generateEvent = useCallback(() => {
+  const generateEvent = useCallback(async () => {
     // No generar eventos si están pausados
     if (isEventsPausedRef.current) {
       console.log("⏸️ Eventos pausados, saltando generación")
@@ -361,6 +362,48 @@ export function useGameState() {
     if (aiResult.aiEvents.length > 0) {
       aiResult.aiEvents.forEach((event: GameEvent) => addEventToQueue(event))
       setCountries(aiResult.updatedCountries)
+    }
+
+    // Ejecutar acciones proactivas de IA diplomática
+    try {
+      const proactiveResult = await aiProactiveActionsService.evaluateProactiveActions(
+        aiResult.updatedCountries.length > 0 ? aiResult.updatedCountries : (updatedCountries.length > 0 ? updatedCountries : countries),
+        playerCountry!,
+        gameEvents
+      )
+      
+      if (proactiveResult.events.length > 0) {
+        console.log(`🤖 ${proactiveResult.events.length} acciones proactivas de IA generadas`)
+        proactiveResult.events.forEach(event => addEventToQueue(event))
+        setCountries(proactiveResult.updatedCountries)
+        
+        // Agregar acciones al historial
+        proactiveResult.actions.forEach(action => {
+          const sourceCountry = countries.find(c => c.id === action.countryId)
+          const targetCountry = countries.find(c => c.id === action.action.targetCountry)
+          
+          const historyEntry: ActionHistory = {
+            id: `ai_proactive_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            type: action.action.type,
+            actionName: `🤖 ${action.action.type === 'military_action' ? 'Ataque Militar' : 
+                              action.action.type === 'economic_sanction' ? 'Sanción Económica' : 
+                              'Operación Encubierta'} (IA)`,
+            sourceCountry: action.countryId,
+            sourceCountryName: sourceCountry?.name || 'País IA',
+            targetCountry: action.action.targetCountry || 'unknown',
+            targetCountryName: targetCountry?.name || 'Objetivo',
+            cost: action.action.cost,
+            success: true,
+            timestamp: Date.now(),
+            result: `Acción proactiva de IA: ${action.reasoning}`,
+            severity: 6
+          }
+          
+          setActionHistory(prev => [...prev, historyEntry])
+        })
+      }
+    } catch (error) {
+      console.error('Error ejecutando acciones proactivas de IA:', error)
     }
 
     // Calcular nivel de caos actual
@@ -738,32 +781,77 @@ export function useGameState() {
               return c
             })
 
-            // Incluir aliados en la retaliación
+            // TODOS los aliados responden defensivamente
             const allies = updatedCountries.filter(c => 
               (attackedCountry.alliances || []).includes(c.id) && c.id !== attackedCountry.id
             )
 
             let allyEffects: string[] = []
             if (allies.length > 0) {
-              const randomAlly = allies[Math.floor(Math.random() * allies.length)]
-              const allyDamage = Math.floor(economicDamage * 0.3)
-              const allyStabilityDamage = Math.floor(stabilityDamage * 0.4)
-              
-              updatedCountries = updatedCountries.map(c => {
-                if (c.id === randomAlly.id) {
-                  return {
-                    ...c,
-                    economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp + allyDamage) },
-                    stability: Math.min(100, c.stability + 3),
+              // Cada aliado contribuye a la defensa
+              allies.forEach(ally => {
+                const allyContribution = Math.floor(economicDamage * 0.2) // Cada aliado contribuye 20%
+                const allyMilitarySupport = Math.floor(militaryDamage * 0.3)
+                
+                updatedCountries = updatedCountries.map(c => {
+                  if (c.id === ally.id) {
+                    // Los aliados también sufren costos por defender
+                    return {
+                      ...c,
+                      economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - Math.floor(allyContribution * 0.5)) },
+                      stability: Math.max(0, c.stability - 2),
+                      militaryStrength: Math.max(10, (c.militaryStrength || 50) - 3),
+                    }
                   }
-                }
-                return c
+                  return c
+                })
+                
+                // Aumentar el daño al jugador por cada aliado que responde
+                updatedCountries = updatedCountries.map(c => {
+                  if (c.id === playerCountry) {
+                    return {
+                      ...c,
+                      economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - allyContribution) },
+                      militaryStrength: Math.max(10, (c.militaryStrength || 50) - allyMilitarySupport),
+                    }
+                  }
+                  return c
+                })
+                
+                allyEffects.push(`🤝 ${ally.name} responde en defensa de su aliado`)
+                allyEffects.push(`💥 Daño adicional: $${allyContribution}B PIB, ${allyMilitarySupport} fuerza militar`)
               })
               
-              allyEffects = [
-                `${randomAlly.name} apoya la retaliación`,
-                `PIB de ${randomAlly.name} aumentado en $${allyDamage}B`,
-              ]
+              // Deteriorar relaciones diplomáticas con todos los aliados
+              allies.forEach(ally => {
+                updatedCountries = updatedCountries.map(c => {
+                  if (c.id === ally.id) {
+                    const currentRelation = c.diplomaticRelations?.[playerCountryData.name] || 0
+                    return {
+                      ...c,
+                      diplomaticRelations: {
+                        ...c.diplomaticRelations,
+                        [playerCountryData.name]: Math.max(-100, currentRelation - 25)
+                      }
+                    }
+                  }
+                  if (c.id === playerCountry) {
+                    const currentRelation = c.diplomaticRelations?.[ally.name] || 0
+                    return {
+                      ...c,
+                      diplomaticRelations: {
+                        ...c.diplomaticRelations,
+                        [ally.name]: Math.max(-100, currentRelation - 25)
+                      }
+                    }
+                  }
+                  return c
+                })
+              })
+              
+              if (allies.length > 1) {
+                allyEffects.push(`⚠️ Has provocado la ira de ${allies.length} países aliados`)
+              }
             }
 
             // Crear evento de retaliación

@@ -3498,7 +3498,73 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
 
       if (success) {
         const stabilityDamage = Math.min(35, Math.max(10, Math.floor(militaryRatio * 20)))
-        const sourceDamage = Math.min(15, Math.max(3, Math.floor(stabilityDamage * 0.4)))
+        let sourceDamage = Math.min(15, Math.max(3, Math.floor(stabilityDamage * 0.4)))
+
+        // RESPUESTA INMEDIATA DE ALIADOS
+        const allies = updated.filter(c => 
+          (target.alliances || []).includes(c.id) && c.id !== target.id && c.id !== source.id
+        )
+
+        let allyEffects: string[] = []
+        let totalAllyDamage = 0
+
+        if (allies.length > 0) {
+          allies.forEach(ally => {
+            const allyMilitaryStrength = ally.militaryStrength || 50
+            const allyContribution = Math.floor(stabilityDamage * 0.15) // 15% del daño original por aliado
+            const allyMilitaryDamage = Math.floor(allyMilitaryStrength * 0.1) // 10% de su fuerza militar
+            
+            totalAllyDamage += allyContribution
+            
+            // Los aliados también sufren costos por intervenir
+            updated = updated.map(c => {
+              if (c.id === ally.id) {
+                return {
+                  ...c,
+                  economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - Math.floor(scaledCost * 0.1)) },
+                  stability: Math.max(0, c.stability - 3),
+                  militaryStrength: Math.max(10, (c.militaryStrength || 50) - 2),
+                }
+              }
+              return c
+            })
+            
+            allyEffects.push(`🤝 ${ally.name} interviene en defensa de ${target.name}`)
+            allyEffects.push(`💥 Contraataque aliado: +${allyContribution}% daño adicional`)
+          })
+          
+          // Aumentar el daño al atacante por la respuesta de los aliados
+          sourceDamage += totalAllyDamage
+          
+          // Deteriorar relaciones diplomáticas con todos los aliados
+          allies.forEach(ally => {
+            updated = updated.map(c => {
+              if (c.id === ally.id) {
+                const currentRelation = c.diplomaticRelations?.[source.name] || 0
+                return {
+                  ...c,
+                  diplomaticRelations: {
+                    ...c.diplomaticRelations,
+                    [source.name]: Math.max(-100, currentRelation - 30)
+                  }
+                }
+              }
+              if (c.id === source.id) {
+                const currentRelation = c.diplomaticRelations?.[ally.name] || 0
+                return {
+                  ...c,
+                  diplomaticRelations: {
+                    ...c.diplomaticRelations,
+                    [ally.name]: Math.max(-100, currentRelation - 30)
+                  }
+                }
+              }
+              return c
+            })
+          })
+          
+          allyEffects.push(`⚠️ Has provocado la respuesta militar de ${allies.length} países aliados`)
+        }
 
         updated = updated.map((c) => {
           if (c.id === target.id) return applyStabilityChange(c, -stabilityDamage)
@@ -3513,7 +3579,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
             id: `war_${Date.now()}`,
             type: "warning",
             title: "⚔️ Operación Militar Exitosa",
-            description: `${source.name} ha ejecutado una operación militar contra ${target?.name}${karmaResistance > 0 ? ", que ofreció resistencia inesperada" : ""}`,
+            description: `${source.name} ha ejecutado una operación militar contra ${target?.name}${karmaResistance > 0 ? ", que ofreció resistencia inesperada" : ""}${allies.length > 0 ? ` - ${allies.length} aliados han respondido` : ""}`,
             effects: [
               `Estabilidad de ${target?.name} reducida en ${stabilityDamage}%`,
               `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
@@ -3521,6 +3587,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
               karmaResistance > 0
                 ? `Resistencia popular aumentada (+${karmaResistance.toFixed(1)}%)`
                 : "Resistencia mínima encontrada",
+              ...allyEffects,
             ],
             timestamp: Date.now(),
           },

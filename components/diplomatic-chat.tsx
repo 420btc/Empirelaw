@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import type { Country } from "@/lib/types"
-import { X, Send, MessageCircle, Crown, Flag } from "lucide-react"
+import type { Country, GameEvent, ActionHistory } from "@/lib/types"
+import { aiDiplomacyService } from "@/lib/ai-diplomacy"
+import { X, Send, MessageCircle, Crown, Flag, Bot, Settings } from "lucide-react"
 
 interface Message {
   id: string
@@ -23,13 +24,27 @@ interface DiplomaticChatProps {
   countries: Country[]
   onClose: () => void
   onDiplomaticChange: (country1: string, country2: string, change: number) => void
+  gameEvents: GameEvent[]
+  actionHistory: ActionHistory[]
+  onAIAction?: (action: any) => void
+  onShowAISettings?: () => void
 }
 
-export function DiplomaticChat({ playerCountry, countries, onClose, onDiplomaticChange }: DiplomaticChatProps) {
+export function DiplomaticChat({ 
+  playerCountry, 
+  countries, 
+  onClose, 
+  onDiplomaticChange, 
+  gameEvents, 
+  actionHistory, 
+  onAIAction,
+  onShowAISettings 
+}: DiplomaticChatProps) {
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputMessage, setInputMessage] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [isAIEnabled, setIsAIEnabled] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Obtener países vecinos y con relaciones diplomáticas
@@ -48,8 +63,69 @@ export function DiplomaticChat({ playerCountry, countries, onClose, onDiplomatic
     scrollToBottom()
   }, [messages])
 
+  // Verificar si la IA está habilitada
+  useEffect(() => {
+    const checkAIStatus = () => {
+      setIsAIEnabled(aiDiplomacyService.isAIEnabled())
+    }
+    
+    checkAIStatus()
+    
+    // Escuchar cambios en localStorage
+    const handleStorageChange = () => {
+      aiDiplomacyService.updateSettings()
+      checkAIStatus()
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
   const generateAIResponse = async (message: string, targetCountry: Country): Promise<string> => {
-    // Simular respuesta de IA basada en el contexto del juego
+    // Si la IA está habilitada, usar OpenAI
+    if (isAIEnabled) {
+      try {
+        const aiResponse = await aiDiplomacyService.generateAIResponse({
+          country: targetCountry,
+          playerCountry: playerCountry,
+          allCountries: countries,
+          recentEvents: gameEvents.slice(-10), // Últimos 10 eventos
+          actionHistory: actionHistory.slice(-5), // Últimas 5 acciones
+          currentMessage: message
+        })
+
+        // Si la IA sugiere una acción, ejecutarla
+        if (aiResponse.action && onAIAction) {
+          setTimeout(() => {
+            onAIAction({
+              ...aiResponse.action,
+              sourceCountry: targetCountry.id,
+              timestamp: Date.now()
+            })
+          }, 3000) // Ejecutar la acción 3 segundos después del mensaje
+        }
+
+        // Aplicar cambio de relación si existe
+        if (aiResponse.relationChange && aiResponse.relationChange !== 0) {
+          setTimeout(() => {
+            onDiplomaticChange(targetCountry.id, playerCountry.id, aiResponse.relationChange!)
+          }, 1000)
+        }
+
+        return aiResponse.message
+      } catch (error) {
+        console.error('Error con IA:', error)
+        // Fallback a respuesta simple si falla la IA
+        return generateSimpleResponse(message, targetCountry)
+      }
+    } else {
+      // Usar respuesta simple si la IA no está habilitada
+      return generateSimpleResponse(message, targetCountry)
+    }
+  }
+
+  const generateSimpleResponse = (message: string, targetCountry: Country): string => {
+    // Lógica de respuesta simple original (fallback)
     const relation = playerCountry.diplomaticRelations?.[targetCountry.id] || 0
     const playerStability = playerCountry.stability
     const targetStability = targetCountry.stability
@@ -132,6 +208,12 @@ export function DiplomaticChat({ playerCountry, countries, onClose, onDiplomatic
   const sendMessage = async () => {
     if (!inputMessage.trim() || !selectedCountry) return
 
+    console.log('💬 Enviando mensaje diplomático:', {
+      message: inputMessage,
+      to: selectedCountry.name,
+      isAIEnabled: isAIEnabled
+    })
+
     const newMessage: Message = {
       id: Date.now().toString(),
       from: playerCountry.id,
@@ -148,7 +230,9 @@ export function DiplomaticChat({ playerCountry, countries, onClose, onDiplomatic
     // Simular delay de respuesta
     setTimeout(
       async () => {
+        console.log('🔄 Generando respuesta de IA para:', selectedCountry.name)
         const aiResponse = await generateAIResponse(inputMessage, selectedCountry)
+        console.log('✅ Respuesta de IA recibida:', aiResponse.substring(0, 100) + '...')
 
         const responseMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -227,10 +311,23 @@ export function DiplomaticChat({ playerCountry, countries, onClose, onDiplomatic
             <CardTitle className="text-red-400 flex items-center gap-2">
               <MessageCircle className="w-6 h-6" />
               Centro Diplomático
+              {isAIEnabled && (
+                <Badge variant="outline" className="text-green-400 border-green-400 ml-2">
+                  <Bot className="w-3 h-3 mr-1" />
+                  IA Activa
+                </Badge>
+              )}
             </CardTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {onShowAISettings && (
+                <Button variant="ghost" size="sm" onClick={onShowAISettings}>
+                  <Settings className="w-4 h-4" />
+                </Button>
+              )}
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
 

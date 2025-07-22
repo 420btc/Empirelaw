@@ -22,6 +22,7 @@ import {
   MessageCircle,
   Star,
   Zap,
+  Settings,
 } from "lucide-react"
 
 interface GameHeaderProps {
@@ -34,6 +35,7 @@ interface GameHeaderProps {
   onShowDiplomacy?: () => void
   onShowTrade?: () => void
   onShowAchievements?: () => void
+  onShowAISettings?: () => void
   playerLevel?: {
     level: number
     xp: number
@@ -56,7 +58,7 @@ interface GameHeaderProps {
   }
 }
 
-export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade, onShowAchievements, playerLevel, gameProgression, unseenAchievementsCount = 0, eventStreak }: GameHeaderProps) {
+export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade, onShowAchievements, onShowAISettings, playerLevel, gameProgression, unseenAchievementsCount = 0, eventStreak }: GameHeaderProps) {
   const [showHistory, setShowHistory] = useState(false)
 
   const getActionIcon = (actionType: string) => {
@@ -269,6 +271,18 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
                   >
                     <TrendingUp className="w-3 h-3 mr-1" />
                     <span className="text-xs">Comercio</span>
+                  </Button>
+                )}
+
+                {onShowAISettings && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onShowAISettings}
+                    className="bg-blue-600 hover:bg-blue-700 border-blue-500 text-white font-semibold h-7 px-2 shadow-lg"
+                  >
+                    <Settings className="w-3 h-3 mr-1" />
+                    <span className="text-xs">IA Config</span>
                   </Button>
                 )}
 
