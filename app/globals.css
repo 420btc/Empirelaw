@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Estilos personalizados para scrollbar */
+@layer utilities {
+  /* Para navegadores WebKit (Chrome, Safari, etc.) */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #64748b;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
