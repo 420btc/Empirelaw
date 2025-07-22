@@ -42,6 +42,8 @@ export interface Country {
   // Nuevo: Sistema económico dinámico
   lastGDPGrowth?: number // Último crecimiento del PIB
   playerBonus?: number // Bonus que genera para el jugador (si es territorio conquistado)
+  // Nuevo: Sistema de cooldowns
+  lastDebtEmission?: number // Timestamp del último uso de emisión de deuda
 }
 
 export interface GameProgression {

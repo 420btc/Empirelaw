@@ -4,7 +4,7 @@ export const initialCountries: Country[] = [
   {
     id: "usa",
     name: "Estados Unidos",
-    president: "Alexandra Chen",
+    president: "Donald Trump", // Actualizado: Presidente real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 25000,
@@ -54,7 +54,7 @@ export const initialCountries: Country[] = [
   {
     id: "china",
     name: "China",
-    president: "Li Wei Ming",
+    president: "Xi Jinping", // Actualizado: Líder real 2025
     ideology: "Autoritarismo",
     economy: {
       gdp: 17000,
@@ -102,7 +102,7 @@ export const initialCountries: Country[] = [
   {
     id: "russia",
     name: "Rusia",
-    president: "Viktor Petrov",
+    president: "Vladimir Putin", // Actualizado: Presidente real 2025
     ideology: "Autoritarismo",
     economy: {
       gdp: 4000,
@@ -150,12 +150,22 @@ export const initialCountries: Country[] = [
   {
     id: "uk",
     name: "Reino Unido",
-    president: "Margaret Blackwood",
+    president: "Keir Starmer", // Actualizado: Primer Ministro real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 3500,
       debt: 100, // 100% del PIB
       resources: ["servicios financieros", "tecnología", "petróleo"],
+      resourceProduction: {
+        "servicios financieros": 200,
+        tecnología: 120,
+        petróleo: 80,
+      },
+      resourceReserves: {
+        "servicios financieros": 3000,
+        tecnología: 1800,
+        petróleo: 1200,
+      },
     },
     population: 67000000,
     stability: 78,
@@ -184,12 +194,22 @@ export const initialCountries: Country[] = [
   {
     id: "israel",
     name: "Israel",
-    president: "Benjamin Netanyahu",
+    president: "Benjamin Netanyahu", // Ya era correcto
     ideology: "Capitalismo",
     economy: {
       gdp: 500,
       debt: 75, // 75% del PIB
       resources: ["tecnología", "agricultura", "turismo"],
+      resourceProduction: {
+        tecnología: 100,
+        agricultura: 60,
+        turismo: 80,
+      },
+      resourceReserves: {
+        tecnología: 1200,
+        agricultura: 900,
+        turismo: 1000,
+      },
     },
     population: 9000000,
     stability: 75,
@@ -217,12 +237,22 @@ export const initialCountries: Country[] = [
   {
     id: "germany",
     name: "Alemania",
-    president: "Klaus Mueller",
+    president: "Friedrich Merz", // Actualizado: Canciller real 2025
     ideology: "Socialismo",
     economy: {
       gdp: 4500,
       debt: 70, // 70% del PIB
       resources: ["industria", "tecnología", "energía renovable"],
+      resourceProduction: {
+        industria: 53,
+        "tecnología": 129,
+        "energía renovable": 80,
+      },
+      resourceReserves: {
+        industria: 1007,
+        "tecnología": 2580,
+        "energía renovable": 1520,
+      },
     },
     population: 83000000,
     stability: 88,
@@ -251,12 +281,22 @@ export const initialCountries: Country[] = [
   {
     id: "france",
     name: "Francia",
-    president: "Marie Dubois",
+    president: "Emmanuel Macron", // Actualizado: Presidente real 2025
     ideology: "Socialismo",
     economy: {
       gdp: 3000,
       debt: 115, // 115% del PIB
       resources: ["agricultura", "turismo", "energía nuclear"],
+      resourceProduction: {
+        agricultura: 93,
+        turismo: 60,
+        "energía nuclear": 59,
+      },
+      resourceReserves: {
+        agricultura: 1767,
+        turismo: 1020,
+        "energía nuclear": 1180,
+      },
     },
     population: 68000000,
     stability: 82,
@@ -283,12 +323,22 @@ export const initialCountries: Country[] = [
   {
     id: "japan",
     name: "Japón",
-    president: "Hiroshi Tanaka",
+    president: "Shigeru Ishiba", // Actualizado: Primer Ministro real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 5000,
       debt: 260, // 260% del PIB - la más alta del mundo
       resources: ["tecnología", "manufactura", "pesca"],
+      resourceProduction: {
+        "tecnología": 125,
+        manufactura: 84,
+        pesca: 80,
+      },
+      resourceReserves: {
+        "tecnología": 2125,
+        manufactura: 1596,
+        pesca: 1520,
+      },
     },
     population: 125000000,
     stability: 92,
@@ -315,12 +365,22 @@ export const initialCountries: Country[] = [
   {
     id: "india",
     name: "India",
-    president: "Priya Sharma",
+    president: "Narendra Modi", // Actualizado: Primer Ministro real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 3800,
       debt: 90, // 90% del PIB
       resources: ["tecnología", "textiles", "especias"],
+      resourceProduction: {
+        "tecnología": 137,
+        textiles: 83,
+        especias: 64,
+      },
+      resourceReserves: {
+        "tecnología": 2192,
+        textiles: 1411,
+        especias: 1536,
+      },
     },
     population: 1380000000,
     stability: 65,
@@ -348,7 +408,7 @@ export const initialCountries: Country[] = [
   {
     id: "brazil",
     name: "Brasil",
-    president: "Carlos Silva",
+    president: "Luiz Inácio Lula da Silva", // Actualizado: Presidente real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 2500,
@@ -394,7 +454,7 @@ export const initialCountries: Country[] = [
   {
     id: "canada",
     name: "Canadá",
-    president: "Sarah Thompson",
+    president: "Mark Carney", // Actualizado: Primer Ministro real 2025
     ideology: "Socialismo",
     economy: {
       gdp: 2200,
@@ -439,12 +499,22 @@ export const initialCountries: Country[] = [
   {
     id: "mexico",
     name: "México",
-    president: "Ana García",
+    president: "Claudia Sheinbaum", // Actualizado: Presidenta real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 1700,
       debt: 55, // 55% del PIB
       resources: ["petróleo", "agricultura", "turismo"],
+      resourceProduction: {
+        "petróleo": 119,
+        agricultura: 68,
+        turismo: 78,
+      },
+      resourceReserves: {
+        "petróleo": 2380,
+        agricultura: 1496,
+        turismo: 1872,
+      },
     },
     population: 128000000,
     stability: 55,
@@ -471,12 +541,22 @@ export const initialCountries: Country[] = [
   {
     id: "south_korea",
     name: "Corea del Sur",
-    president: "Kim Min-jun",
+    president: "Lee Jae-myung", // Actualizado: Presidente real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 1800,
       debt: 45, // 45% del PIB
       resources: ["tecnología", "manufactura", "acero"],
+      resourceProduction: {
+        "tecnología": 100,
+        manufactura: 86,
+        acero: 72,
+      },
+      resourceReserves: {
+        "tecnología": 1500,
+        manufactura: 1376,
+        acero: 1224,
+      },
     },
     population: 52000000,
     stability: 85,
@@ -507,6 +587,16 @@ export const initialCountries: Country[] = [
       gdp: 40,
       debt: 5, // 5% del PIB - muy baja por aislamiento
       resources: ["carbón", "minerales", "agricultura"],
+      resourceProduction: {
+        "carbón": 86,
+        minerales: 62,
+        agricultura: 98,
+      },
+      resourceReserves: {
+        "carbón": 1462,
+        minerales: 992,
+        agricultura: 2058,
+      },
     },
     population: 26000000,
     stability: 60,
@@ -533,7 +623,7 @@ export const initialCountries: Country[] = [
   {
     id: "australia",
     name: "Australia",
-    president: "James Wilson",
+    president: "Anthony Albanese", // Actualizado: Primer Ministro real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 1800,
@@ -579,12 +669,22 @@ export const initialCountries: Country[] = [
   {
     id: "new_zealand",
     name: "Nueva Zelanda",
-    president: "Emma Clarke",
+    president: "Christopher Luxon", // Actualizado: Primer Ministro real 2025
     ideology: "Socialismo",
     economy: {
       gdp: 250,
       debt: 35, // 35% del PIB
       resources: ["agricultura", "turismo", "pesca"],
+      resourceProduction: {
+        agricultura: 99,
+        turismo: 85,
+        pesca: 56,
+      },
+      resourceReserves: {
+        agricultura: 1782,
+        turismo: 2040,
+        pesca: 952,
+      },
     },
     population: 5000000,
     stability: 95,
@@ -609,7 +709,7 @@ export const initialCountries: Country[] = [
   {
     id: "south_africa",
     name: "Sudáfrica",
-    president: "Nelson Mandela Jr.",
+    president: "Cyril Ramaphosa", // Actualizado: Presidente real 2025
     ideology: "Socialismo",
     economy: {
       gdp: 800,
@@ -646,6 +746,9 @@ export const initialCountries: Country[] = [
       brazil: 50,
       uk: 30,
       usa: 40,
+      kenya: 65,
+      morocco: 55,
+      ethiopia: 60,
     },
     conspiracyInfluence: {
       geoengineering: 5,
@@ -656,7 +759,7 @@ export const initialCountries: Country[] = [
   {
     id: "nigeria",
     name: "Nigeria",
-    president: "Amina Kano",
+    president: "Bola Tinubu", // Actualizado: Presidente real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 600,
@@ -690,6 +793,9 @@ export const initialCountries: Country[] = [
       usa: 50,
       uk: 45,
       china: 55,
+      kenya: 65,
+      morocco: 50,
+      ethiopia: 55,
     },
     conspiracyInfluence: {
       geoengineering: 3,
@@ -701,7 +807,7 @@ export const initialCountries: Country[] = [
   {
     id: "ghana",
     name: "Ghana",
-    president: "Kwame Asante",
+    president: "John Mahama", // Actualizado: Presidente real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 180,
@@ -747,12 +853,22 @@ export const initialCountries: Country[] = [
   {
     id: "egypt",
     name: "Egipto",
-    president: "Omar Hassan",
+    president: "Abdel Fattah el-Sisi", // Actualizado: Presidente real 2025
     ideology: "Autoritarismo",
     economy: {
       gdp: 500,
       debt: 95, // 95% del PIB
       resources: ["turismo", "petróleo", "agricultura"],
+      resourceProduction: {
+        turismo: 76,
+        "petróleo": 80,
+        agricultura: 71,
+      },
+      resourceReserves: {
+        turismo: 1292,
+        "petróleo": 1920,
+        agricultura: 1349,
+      },
     },
     population: 104000000,
     stability: 45,
@@ -777,12 +893,22 @@ export const initialCountries: Country[] = [
   {
     id: "argentina",
     name: "Argentina",
-    president: "Diego Fernández",
+    president: "Javier Milei", // Actualizado: Presidente real 2025
     ideology: "Socialismo",
     economy: {
       gdp: 900,
       debt: 105, // 105% del PIB - muy alta deuda
       resources: ["agricultura", "carne", "litio"],
+      resourceProduction: {
+        agricultura: 70,
+        carne: 64,
+        litio: 88,
+      },
+      resourceReserves: {
+        agricultura: 1330,
+        carne: 1472,
+        litio: 2112,
+      },
     },
     population: 45000000,
     stability: 58,
@@ -808,12 +934,22 @@ export const initialCountries: Country[] = [
   {
     id: "chile",
     name: "Chile",
-    president: "Isabella Rodriguez",
+    president: "Gabriel Boric", // Actualizado: Presidente real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 350,
       debt: 35, // 35% del PIB - baja deuda
       resources: ["cobre", "litio", "vino"],
+      resourceProduction: {
+        cobre: 60,
+        litio: 55,
+        vino: 56,
+      },
+      resourceReserves: {
+        cobre: 1260,
+        litio: 825,
+        vino: 896,
+      },
     },
     population: 19000000,
     stability: 78,
@@ -838,12 +974,22 @@ export const initialCountries: Country[] = [
   {
     id: "italy",
     name: "Italia",
-    president: "Giuseppe Romano",
+    president: "Giorgia Meloni", // Actualizado: Primera Ministra real 2025
     ideology: "Capitalismo",
     economy: {
       gdp: 2400,
       debt: 150, // 150% del PIB - muy alta deuda
       resources: ["turismo", "manufactura", "agricultura"],
+      resourceProduction: {
+        turismo: 72,
+        manufactura: 82,
+        agricultura: 79,
+      },
+      resourceReserves: {
+        turismo: 1224,
+        manufactura: 1476,
+        agricultura: 1422,
+      },
     },
     population: 59000000,
     stability: 72,
@@ -869,12 +1015,22 @@ export const initialCountries: Country[] = [
   {
     id: "spain",
     name: "España",
-    president: "Carmen López",
+    president: "Pedro Sánchez", // Actualizado: Primer Ministro real 2025
     ideology: "Socialismo",
     economy: {
       gdp: 1600,
       debt: 115, // 115% del PIB
       resources: ["turismo", "agricultura", "energía renovable"],
+      resourceProduction: {
+        turismo: 84,
+        agricultura: 64,
+        "energía renovable": 75,
+      },
+      resourceReserves: {
+        turismo: 1260,
+        agricultura: 1344,
+        "energía renovable": 1500,
+      },
     },
     population: 47000000,
     stability: 80,
@@ -901,12 +1057,22 @@ export const initialCountries: Country[] = [
   {
     id: "portugal",
     name: "Portugal",
-    president: "João Santos",
+    president: "Luís Montenegro", // Actualizado: Primer Ministro real 2025
     ideology: "Socialismo",
     economy: {
       gdp: 250,
       debt: 130, // 130% del PIB
       resources: ["turismo", "vino", "pesca"],
+      resourceProduction: {
+        turismo: 91,
+        vino: 58,
+        pesca: 79,
+      },
+      resourceReserves: {
+        turismo: 1365,
+        vino: 1392,
+        pesca: 1264,
+      },
     },
     population: 10000000,
     stability: 85,
@@ -931,12 +1097,22 @@ export const initialCountries: Country[] = [
   {
     id: "turkey",
     name: "Turquía",
-    president: "Mehmet Özkan",
+    president: "Recep Tayyip Erdoğan", // Actualizado: Presidente real 2025
     ideology: "Autoritarismo",
     economy: {
       gdp: 900,
       debt: 40, // 40% del PIB
       resources: ["turismo", "textiles", "agricultura"],
+      resourceProduction: {
+        turismo: 90,
+        textiles: 57,
+        agricultura: 93,
+      },
+      resourceReserves: {
+        turismo: 1440,
+        textiles: 1083,
+        agricultura: 1581,
+      },
     },
     population: 84000000,
     stability: 65,
@@ -962,12 +1138,22 @@ export const initialCountries: Country[] = [
   {
     id: "iran",
     name: "Irán",
-    president: "Hassan Rouhani",
+    president: "Masoud Pezeshkian", // Actualizado: Presidente real 2025
     ideology: "Autoritarismo",
     economy: {
       gdp: 650,
       debt: 25, // 25% del PIB - baja por sanciones
       resources: ["petróleo", "gas natural", "agricultura"],
+      resourceProduction: {
+        "petróleo": 80,
+        "gas natural": 118,
+        agricultura: 84,
+      },
+      resourceReserves: {
+        "petróleo": 1600,
+        "gas natural": 2124,
+        agricultura: 1344,
+      },
     },
     population: 84000000,
     stability: 55,
@@ -1038,12 +1224,22 @@ export const initialCountries: Country[] = [
   {
     id: "iceland",
     name: "Islandia",
-    president: "Anna Björnsdóttir",
+    president: "Kristrún Frostadóttir", // Actualizado: Primera Ministra real 2025
     ideology: "Neutralidad",
     economy: {
       gdp: 25,
       debt: 65, // 65% del PIB
       resources: ["pesca", "energía geotérmica", "turismo"],
+      resourceProduction: {
+        pesca: 89,
+        "energía geotérmica": 64,
+        turismo: 61,
+      },
+      resourceReserves: {
+        pesca: 2047,
+        "energía geotérmica": 1536,
+        turismo: 915,
+      },
     },
     population: 370000,
     stability: 98,
@@ -1068,12 +1264,22 @@ export const initialCountries: Country[] = [
   {
     id: "liechtenstein",
     name: "Liechtenstein",
-    president: "Hans Mueller",
+    president: "Brigitte Haas", // Actualizado: Primera Ministra real 2025
     ideology: "Neutralidad",
     economy: {
       gdp: 8,
       debt: 15, // 15% del PIB - muy baja
       resources: ["servicios financieros", "manufactura", "turismo"],
+      resourceProduction: {
+        "servicios financieros": 153,
+        manufactura: 77,
+        turismo: 63,
+      },
+      resourceReserves: {
+        "servicios financieros": 3519,
+        manufactura: 1309,
+        turismo: 1449,
+      },
     },
     population: 39000,
     stability: 95,
@@ -1098,12 +1304,22 @@ export const initialCountries: Country[] = [
   {
     id: "switzerland",
     name: "Suiza",
-    president: "Klaus Zimmermann",
+    president: "Karin Keller-Sutter", // Actualizado: Presidenta real 2025
     ideology: "Neutralidad",
     economy: {
       gdp: 900,
       debt: 45, // 45% del PIB
       resources: ["servicios financieros", "turismo", "manufactura"],
+      resourceProduction: {
+        "servicios financieros": 135,
+        turismo: 69,
+        manufactura: 83,
+      },
+      resourceReserves: {
+        "servicios financieros": 2835,
+        turismo: 1242,
+        manufactura: 1826,
+      },
     },
     population: 8700000,
     stability: 95,
@@ -1125,6 +1341,514 @@ export const initialCountries: Country[] = [
       legal: 0,
     },
   },
+  // NUEVOS PAÍSES AFRICANOS
+  {
+    id: "kenya",
+    name: "Kenia",
+    president: "William Ruto", // Actualizado: Presidente real 2025
+    ideology: "Capitalismo",
+    economy: {
+      gdp: 120,
+      debt: 70, // 70% del PIB
+      resources: ["café", "té", "turismo", "flores", "horticultura"],
+      resourceProduction: {
+        café: 60,
+        té: 80,
+        turismo: 40,
+        flores: 50,
+        horticultura: 45,
+      },
+      resourceReserves: {
+        café: 900,
+        té: 1200,
+        turismo: 600,
+        flores: 750,
+        horticultura: 680,
+      },
+    },
+    population: 54000000,
+    stability: 55,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 25,
+    powerLevel: "minor",
+    geopoliticalBlock: "africa",
+    alliances: ["south_africa", "ethiopia"],
+    neighbors: ["ethiopia", "somalia", "tanzania", "uganda"],
+    diplomaticRelations: {
+      south_africa: 65,
+      ethiopia: 70,
+      nigeria: 60,
+      uk: 60,
+      usa: 55,
+      china: 50,
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 4,
+      legal: 8,
+    },
+  },
+  {
+    id: "morocco",
+    name: "Marruecos",
+    president: "Aziz Akhannouch", // Actualizado: Primer Ministro real 2025 (Rey Mohammed VI)
+    ideology: "Autoritarismo",
+    economy: {
+      gdp: 140,
+      debt: 75, // 75% del PIB
+      resources: ["fosfatos", "turismo", "agricultura", "pesca", "textiles"],
+      resourceProduction: {
+        fosfatos: 120,
+        turismo: 60,
+        agricultura: 70,
+        pesca: 50,
+        textiles: 55,
+      },
+      resourceReserves: {
+        fosfatos: 2800, // Mayores reservas mundiales
+        turismo: 900,
+        agricultura: 1050,
+        pesca: 750,
+        textiles: 825,
+      },
+    },
+    population: 37000000,
+    stability: 60,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 35,
+    powerLevel: "regional",
+    geopoliticalBlock: "africa",
+    alliances: ["saudi_arabia", "egypt"],
+    neighbors: ["algeria", "spain"],
+    diplomaticRelations: {
+      saudi_arabia: 70,
+      egypt: 65,
+      spain: 75,
+      france: 70,
+      usa: 60,
+      algeria: -30, // Tensiones históricas
+    },
+    conspiracyInfluence: {
+      geoengineering: 5,
+      masonic: 8,
+      legal: 10,
+    },
+  },
+  {
+    id: "ethiopia",
+    name: "Etiopía",
+    president: "Abiy Ahmed", // Ya era correcto - Primer Ministro real 2025
+    ideology: "Socialismo",
+    economy: {
+      gdp: 110,
+      debt: 60, // 60% del PIB
+      resources: ["café", "agricultura", "ganadería", "oro", "textiles"],
+      resourceProduction: {
+        café: 100, // Origen del café
+        agricultura: 80,
+        ganadería: 90,
+        oro: 30,
+        textiles: 40,
+      },
+      resourceReserves: {
+        café: 1500, // Cuna del café
+        agricultura: 1200,
+        ganadería: 1350,
+        oro: 450,
+        textiles: 600,
+      },
+    },
+    population: 120000000,
+    stability: 45, // Inestabilidad política
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 30,
+    powerLevel: "regional",
+    geopoliticalBlock: "africa",
+    alliances: ["kenya", "south_africa"],
+    neighbors: ["kenya", "sudan", "somalia", "eritrea", "djibouti"],
+    diplomaticRelations: {
+      kenya: 70,
+      south_africa: 60,
+      china: 65, // Fuerte cooperación con China
+      usa: 40,
+      sudan: 30, // Tensiones por la presa
+      egypt: -20, // Conflicto por el Nilo
+    },
+    conspiracyInfluence: {
+      geoengineering: 1,
+      masonic: 2,
+      legal: 5,
+    },
+  },
+  // NUEVOS PAÍSES AÑADIDOS
+  // GROENLANDIA
+  {
+    id: "greenland",
+    name: "Groenlandia",
+    president: "Múte Bourup Egede", // Primer Ministro real 2025
+    ideology: "Neutralidad",
+    economy: {
+      gdp: 3,
+      debt: 20, // 20% del PIB - muy baja deuda
+      resources: ["pesca", "minerales", "turismo", "hielo", "energía renovable"],
+      resourceProduction: {
+        pesca: 80,
+        minerales: 40,
+        turismo: 25,
+        hielo: 100,
+        "energía renovable": 60,
+      },
+      resourceReserves: {
+        pesca: 1200,
+        minerales: 800,
+        turismo: 400,
+        hielo: 2000,
+        "energía renovable": 900,
+      },
+    },
+    population: 56000,
+    stability: 92,
+    legalSystem: "natural",
+    isSovereign: true,
+    militaryStrength: 5,
+    powerLevel: "minor",
+    geopoliticalBlock: "neutral",
+    alliances: [],
+    neighbors: ["canada", "iceland"],
+    diplomaticRelations: {
+      canada: 85,
+      iceland: 80,
+      denmark: 70, // Relación compleja por autonomía
+      usa: 60,
+    },
+    conspiracyInfluence: {
+      geoengineering: 0,
+      masonic: 0,
+      legal: 0,
+    },
+  },
+  // NUEVOS PAÍSES LATINOAMERICANOS
+  {
+    id: "colombia",
+    name: "Colombia",
+    president: "Gustavo Petro", // Presidente real 2025
+    ideology: "Socialismo",
+    economy: {
+      gdp: 350,
+      debt: 60, // 60% del PIB
+      resources: ["café", "petróleo", "carbón", "esmeraldas", "flores"],
+      resourceProduction: {
+        café: 120,
+        petróleo: 90,
+        carbón: 80,
+        esmeraldas: 60,
+        flores: 100,
+      },
+      resourceReserves: {
+        café: 1800,
+        petróleo: 1400,
+        carbón: 1200,
+        esmeraldas: 900,
+        flores: 1500,
+      },
+    },
+    population: 52000000,
+    stability: 50,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 35,
+    powerLevel: "regional",
+    geopoliticalBlock: "latin_america",
+    alliances: ["brazil", "mexico"],
+    neighbors: ["brazil", "venezuela", "ecuador", "peru", "panama"],
+    diplomaticRelations: {
+      brazil: 75,
+      mexico: 65,
+      usa: 55,
+      venezuela: -30, // Tensiones políticas
+      ecuador: 60,
+    },
+    conspiracyInfluence: {
+      geoengineering: 8,
+      masonic: 10,
+      legal: 12,
+    },
+  },
+  {
+    id: "peru",
+    name: "Perú",
+    president: "Dina Boluarte", // Presidenta real 2025
+    ideology: "Capitalismo",
+    economy: {
+      gdp: 240,
+      debt: 35, // 35% del PIB
+      resources: ["cobre", "oro", "plata", "zinc", "pesca"],
+      resourceProduction: {
+        cobre: 150,
+        oro: 120,
+        plata: 100,
+        zinc: 80,
+        pesca: 90,
+      },
+      resourceReserves: {
+        cobre: 2400,
+        oro: 1800,
+        plata: 1500,
+        zinc: 1200,
+        pesca: 1350,
+      },
+    },
+    population: 33000000,
+    stability: 45,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 30,
+    powerLevel: "regional",
+    geopoliticalBlock: "latin_america",
+    alliances: ["chile", "colombia"],
+    neighbors: ["colombia", "brazil", "bolivia", "chile", "ecuador"],
+    diplomaticRelations: {
+      chile: 65,
+      colombia: 60,
+      brazil: 55,
+      bolivia: 40, // Tensiones históricas
+      ecuador: 50,
+    },
+    conspiracyInfluence: {
+      geoengineering: 5,
+      masonic: 8,
+      legal: 15,
+    },
+  },
+  // NUEVOS PAÍSES EUROPEOS
+  {
+    id: "netherlands",
+    name: "Holanda",
+    president: "Dick Schoof", // Primer Ministro real 2025
+    ideology: "Socialismo",
+    economy: {
+      gdp: 1000,
+      debt: 55, // 55% del PIB
+      resources: ["agricultura", "gas natural", "tecnología", "servicios financieros"],
+      resourceProduction: {
+        agricultura: 110,
+        "gas natural": 70,
+        tecnología: 130,
+        "servicios financieros": 90,
+      },
+      resourceReserves: {
+        agricultura: 1650,
+        "gas natural": 1050,
+        tecnología: 1950,
+        "servicios financieros": 1350,
+      },
+    },
+    population: 17500000,
+    stability: 88,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 45,
+    powerLevel: "major",
+    geopoliticalBlock: "eu",
+    alliances: ["germany", "france", "uk"],
+    neighbors: ["germany", "belgium"],
+    diplomaticRelations: {
+      germany: 90,
+      france: 85,
+      uk: 75,
+      belgium: 95,
+      usa: 70,
+    },
+    conspiracyInfluence: {
+      geoengineering: 6,
+      masonic: 18,
+      legal: 22,
+    },
+  },
+  {
+    id: "sweden",
+    name: "Suecia",
+    president: "Ulf Kristersson", // Primer Ministro real 2025
+    ideology: "Socialismo",
+    economy: {
+      gdp: 550,
+      debt: 40, // 40% del PIB
+      resources: ["hierro", "madera", "tecnología", "energía renovable"],
+      resourceProduction: {
+        hierro: 90,
+        madera: 150,
+        tecnología: 110,
+        "energía renovable": 120,
+      },
+      resourceReserves: {
+        hierro: 1350,
+        madera: 2250,
+        tecnología: 1650,
+        "energía renovable": 1800,
+      },
+    },
+    population: 10500000,
+    stability: 92,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 40,
+    powerLevel: "regional",
+    geopoliticalBlock: "eu",
+    alliances: ["norway", "denmark", "germany"],
+    neighbors: ["norway", "finland"],
+    diplomaticRelations: {
+      norway: 95,
+      denmark: 90,
+      germany: 80,
+      finland: 85,
+      usa: 75,
+    },
+    conspiracyInfluence: {
+      geoengineering: 3,
+      masonic: 12,
+      legal: 25,
+    },
+  },
+  {
+    id: "norway",
+    name: "Noruega",
+    president: "Jonas Gahr Støre", // Primer Ministro real 2025
+    ideology: "Socialismo",
+    economy: {
+      gdp: 480,
+      debt: 35, // 35% del PIB - muy baja por petróleo
+      resources: ["petróleo", "gas natural", "pesca", "energía renovable"],
+      resourceProduction: {
+        petróleo: 200,
+        "gas natural": 180,
+        pesca: 100,
+        "energía renovable": 140,
+      },
+      resourceReserves: {
+        petróleo: 3000,
+        "gas natural": 2700,
+        pesca: 1500,
+        "energía renovable": 2100,
+      },
+    },
+    population: 5500000,
+    stability: 95,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 35,
+    powerLevel: "regional",
+    geopoliticalBlock: "eu",
+    alliances: ["sweden", "denmark", "uk"],
+    neighbors: ["sweden", "finland", "russia"],
+    diplomaticRelations: {
+      sweden: 95,
+      denmark: 90,
+      uk: 80,
+      finland: 85,
+      russia: -40, // Tensiones por fronteras árticas
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 8,
+      legal: 20,
+    },
+  },
+  // NUEVOS PAÍSES ASIA/OCEANÍA
+  {
+    id: "indonesia",
+    name: "Indonesia",
+    president: "Prabowo Subianto", // Presidente real 2025
+    ideology: "Capitalismo",
+    economy: {
+      gdp: 1400,
+      debt: 40, // 40% del PIB
+      resources: ["petróleo", "gas natural", "carbón", "palma", "especias"],
+      resourceProduction: {
+        petróleo: 110,
+        "gas natural": 100,
+        carbón: 140,
+        palma: 200,
+        especias: 80,
+      },
+      resourceReserves: {
+        petróleo: 1650,
+        "gas natural": 1500,
+        carbón: 2100,
+        palma: 3000,
+        especias: 1200,
+      },
+    },
+    population: 275000000,
+    stability: 60,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 50,
+    powerLevel: "regional",
+    geopoliticalBlock: "neutral",
+    alliances: ["australia"],
+    neighbors: ["australia", "malaysia", "singapore", "philippines"],
+    diplomaticRelations: {
+      australia: 70,
+      china: 60,
+      usa: 55,
+      singapore: 80,
+      malaysia: 75,
+    },
+    conspiracyInfluence: {
+      geoengineering: 8,
+      masonic: 6,
+      legal: 12,
+    },
+  },
+  {
+    id: "philippines",
+    name: "Filipinas",
+    president: "Ferdinand Marcos Jr.", // Presidente real 2025
+    ideology: "Capitalismo",
+    economy: {
+      gdp: 400,
+      debt: 65, // 65% del PIB
+      resources: ["níquel", "cobre", "oro", "agricultura", "pesca"],
+      resourceProduction: {
+        níquel: 80,
+        cobre: 70,
+        oro: 60,
+        agricultura: 90,
+        pesca: 85,
+      },
+      resourceReserves: {
+        níquel: 1200,
+        cobre: 1050,
+        oro: 900,
+        agricultura: 1350,
+        pesca: 1275,
+      },
+    },
+    population: 112000000,
+    stability: 55,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 35,
+    powerLevel: "regional",
+    geopoliticalBlock: "neutral",
+    alliances: ["usa"],
+    neighbors: ["china", "indonesia", "malaysia"],
+    diplomaticRelations: {
+      usa: 85,
+      china: -20, // Disputas en Mar de China Meridional
+      indonesia: 65,
+      malaysia: 60,
+      japan: 70,
+    },
+    conspiracyInfluence: {
+      geoengineering: 5,
+      masonic: 8,
+      legal: 10,
+    },
+  },
 ]
 
 // Definición de bloques geopolíticos
@@ -1141,7 +1865,7 @@ export const geopoliticalBlocks = {
   eu: {
     id: "eu",
     name: "Unión Europea",
-    members: ["germany", "france", "italy", "spain", "portugal"],
+    members: ["germany", "france", "italy", "spain", "portugal", "netherlands", "sweden", "norway"],
     leader: "germany",
     mutualDefense: true,
     economicCooperation: true,
@@ -1159,7 +1883,7 @@ export const geopoliticalBlocks = {
   africa: {
     id: "africa",
     name: "Unión Africana",
-    members: ["nigeria", "south_africa", "ghana"],
+    members: ["nigeria", "south_africa", "ghana", "kenya", "morocco", "ethiopia"],
     leader: "south_africa",
     mutualDefense: false,
     economicCooperation: true,
@@ -1168,7 +1892,7 @@ export const geopoliticalBlocks = {
   latin_america: {
     id: "latin_america",
     name: "América Latina",
-    members: ["mexico", "brazil", "argentina", "chile"],
+    members: ["mexico", "brazil", "argentina", "chile", "colombia", "peru"],
     leader: "brazil",
     mutualDefense: false,
     economicCooperation: true,
@@ -1186,7 +1910,7 @@ export const geopoliticalBlocks = {
   neutral: {
     id: "neutral",
     name: "Países Neutrales",
-    members: ["iceland", "liechtenstein", "switzerland"],
+    members: ["iceland", "liechtenstein", "switzerland", "greenland", "indonesia", "philippines"],
     leader: undefined,
     mutualDefense: false,
     economicCooperation: false,

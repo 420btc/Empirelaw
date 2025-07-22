@@ -32,6 +32,7 @@ interface GameHeaderProps {
   onShowEventHistory: () => void
   onShowDiplomacy?: () => void
   onShowTrade?: () => void
+  onShowAchievements?: () => void
   playerLevel?: {
     level: number
     xp: number
@@ -50,7 +51,7 @@ interface GameHeaderProps {
   }
 }
 
-export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade, playerLevel, gameProgression }: GameHeaderProps) {
+export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade, onShowAchievements, playerLevel, gameProgression }: GameHeaderProps) {
   const [showHistory, setShowHistory] = useState(false)
 
   const getActionIcon = (actionType: string) => {
@@ -99,7 +100,7 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
   const recentActions = actionHistory.slice(-15).reverse()
 
   // Calcular progreso hacia la dominación mundial
-  const totalCountries = 30
+  const totalCountries = 41
   const stableCountries = gameStats.countriesControlled
   const progressPercentage = Math.round((stableCountries / totalCountries) * 100)
 
@@ -275,6 +276,16 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
                   <History className="w-3 h-3 mr-1" />
                   <span className="text-xs">Historial</span>
                   {showHistory ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onShowAchievements}
+                  className="border-yellow-600 hover:border-yellow-500 h-7 px-2"
+                >
+                  <Star className="w-3 h-3 mr-1" />
+                  <span className="text-xs">Logros</span>
                 </Button>
               </div>
             </div>

@@ -500,22 +500,7 @@ export function useGameState() {
         return updatedCountries
       })
 
-      // Crear evento de notificación del crecimiento económico
-      const economicUpdateEvent: GameEvent = {
-        id: `economic_growth_${Date.now()}`,
-        type: "info",
-        title: "📈 Actualización Económica Global",
-        description: "El PIB mundial se ha actualizado basado en la estabilidad, recursos y relaciones diplomáticas",
-        effects: [
-          "PIB actualizado para todos los países",
-          "Crecimiento basado en estabilidad y recursos",
-          "Territorios conquistados generando ingresos",
-          "Relaciones diplomáticas afectando comercio"
-        ],
-        timestamp: Date.now(),
-      }
-
-      setGameEvents((prev) => [...prev, economicUpdateEvent])
+      // Nota: Eliminamos la notificación automática del PIB para reducir spam de eventos
     }, 30000) // Cada 30 segundos
 
     return () => {
@@ -668,10 +653,8 @@ export function useGameState() {
                 }
               })
               
-              // Auto-dismiss logros después de 8 segundos
-              setTimeout(() => {
-                setRecentAchievements(prev => prev.filter(a => !newUnlocks.includes(a)))
-              }, 8000)
+              // Nota: El auto-dismiss ahora se maneja en el componente AchievementNotifications
+              // con sistema de cascada personalizado
             }
           }
         }, 100)
@@ -784,6 +767,25 @@ export function useGameState() {
     console.log("🗑️ Descartando notificación:", eventId)
     setVisibleNotifications((prev) => prev.filter((event) => event.id !== eventId))
   }, [])
+
+  // Filtrar eventos de actualización económica automática de las notificaciones visibles y eventos
+  useEffect(() => {
+    const filterEconomicEvents = (events: GameEvent[]) => 
+      events.filter((event) => 
+        !event.title.includes("Actualización Económica Global") &&
+        !event.description.includes("PIB mundial se ha actualizado") &&
+        !event.description.includes("PIB actualizado para todos los países") &&
+        !event.effects?.some(effect => 
+          effect.includes("PIB actualizado para todos los países") ||
+          effect.includes("Crecimiento basado en estabilidad y recursos") ||
+          effect.includes("Territorios conquistados generando ingresos") ||
+          effect.includes("Relaciones diplomáticas afectando comercio")
+        )
+      )
+
+    setVisibleNotifications((prev) => filterEconomicEvents(prev))
+    setGameEvents((prev) => filterEconomicEvents(prev))
+  }, [visibleNotifications.length, gameEvents.length])
 
   const ownedTerritories = countries.filter((country) => country.ownedBy === playerCountry)
 

@@ -12,8 +12,9 @@ import { DiplomaticChat } from "@/components/diplomatic-chat"
 import { WorldTradeCenter } from "@/components/world-trade-center"
 import { AchievementNotifications } from "@/components/achievement-notifications"
 import { LevelUpNotification } from "@/components/level-up-notification"
+import { AchievementsPanel } from "@/components/achievements-panel"
 import { useGameState } from "@/hooks/use-game-state"
-import type { Country, TradeOffer } from "@/lib/types"
+import type { Country, TradeOffer, GameAction } from "@/lib/types"
 
 export default function GeopoliticsGame() {
   const {
@@ -44,10 +45,15 @@ export default function GeopoliticsGame() {
   const [showDiplomaticChat, setShowDiplomaticChat] = useState(false)
   const [showTradeCenter, setShowTradeCenter] = useState(false)
   const [showEventHistory, setShowEventHistory] = useState(false)
+  const [showAchievements, setShowAchievements] = useState(false)
+  const [recentAction, setRecentAction] = useState<GameAction | null>(null)
 
   const handleCountrySelection = (country: Country) => {
+    console.log("🏛️ handleCountrySelection llamado con:", country.name, country.id)
     setPlayerCountry(country.id)
+    console.log("✅ setPlayerCountry llamado con:", country.id)
     setShowCountrySelection(false)
+    console.log("✅ Modal cerrado")
   }
 
   const handleMapCountryClick = (countryId: string) => {
@@ -79,6 +85,17 @@ export default function GeopoliticsGame() {
     executeTradeOffer(trade)
   }
 
+  // Función para manejar acciones ejecutadas y activar animaciones
+  const handleActionExecuted = (action: GameAction) => {
+    executeAction(action)
+    setRecentAction(action)
+    
+    // Limpiar la acción después de un tiempo para permitir nuevas animaciones
+    setTimeout(() => {
+      setRecentAction(null)
+    }, 3000)
+  }
+
   // Helper para determinar si un país puede ser objetivo
   const getTargetCountry = (): Country | null => {
     if (!selectedCountry) return null
@@ -99,9 +116,10 @@ export default function GeopoliticsGame() {
           gameStats={gameStats}
           actionHistory={actionHistory}
           events={gameEvents} // Cronología completa para el badge
-          onShowEventHistory={() => setShowEventHistory(true)}
-          onShowDiplomacy={() => setShowDiplomaticChat(true)}
-          onShowTrade={() => setShowTradeCenter(true)}
+                      onShowEventHistory={() => setShowEventHistory(true)}
+            onShowDiplomacy={() => setShowDiplomaticChat(true)}
+            onShowTrade={() => setShowTradeCenter(true)}
+            onShowAchievements={() => setShowAchievements(true)}
           playerLevel={playerLevel}
           gameProgression={gameProgression}
         />
@@ -116,6 +134,7 @@ export default function GeopoliticsGame() {
               onCountryClick={handleMapCountryClick}
               onCountryHover={handleMapCountryHover}
               onMapClick={handleMapClick} // Nueva prop
+              recentAction={recentAction} // Nueva prop para animaciones
             />
 
             {hoveredCountry && (
@@ -155,7 +174,7 @@ export default function GeopoliticsGame() {
               <ActionMenu
                 playerCountry={countries.find((c) => c.id === playerCountry)!}
                 targetCountry={getTargetCountry()}
-                onExecuteAction={executeAction}
+                onExecuteAction={handleActionExecuted}
                 ownedTerritories={ownedTerritories} // Pasar territorios conquistados
               />
             )}
@@ -202,6 +221,14 @@ export default function GeopoliticsGame() {
 
       {/* Cronología completa - TODOS los eventos gameEvents */}
       {showEventHistory && <EventHistoryPanel events={gameEvents} onClose={() => setShowEventHistory(false)} />}
+
+      {/* Panel de Logros */}
+      {showAchievements && (
+        <AchievementsPanel
+          achievements={achievements}
+          onClose={() => setShowAchievements(false)}
+        />
+      )}
     </div>
   )
 }

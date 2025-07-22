@@ -4,9 +4,18 @@ import type React from "react"
 
 import { ComposableMap, Geographies, Geography } from "react-simple-maps"
 import { useEffect, useState } from "react"
-import type { Country } from "@/lib/types"
+import type { Country, GameAction } from "@/lib/types"
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"
+
+interface MissileAnimation {
+  id: string
+  sourceCountry: string
+  targetCountry: string
+  actionType: string
+  startTime: number
+  duration: number
+}
 
 interface WorldMapProps {
   countries: Country[]
@@ -16,6 +25,7 @@ interface WorldMapProps {
   onCountryClick: (countryId: string) => void
   onCountryHover: (countryId: string | null) => void
   onMapClick: () => void // Nueva prop para deseleccionar
+  recentAction?: GameAction | null // Nueva prop para activar animaciones
 }
 
 export function WorldMap({
@@ -26,8 +36,56 @@ export function WorldMap({
   onCountryClick,
   onCountryHover,
   onMapClick,
+  recentAction,
 }: WorldMapProps) {
   const [blinkState, setBlinkState] = useState(true)
+  const [activeAnimations, setActiveAnimations] = useState<MissileAnimation[]>([])
+
+  // Coordenadas aproximadas de los países (centros geográficos)
+  const countryCoordinates: Record<string, [number, number]> = {
+    usa: [-95, 37],
+    canada: [-106, 56],
+    mexico: [-102, 23],
+    brazil: [-55, -14],
+    argentina: [-64, -34],
+    chile: [-71, -35],
+    colombia: [-74, 4],
+    peru: [-76, -9],
+    uk: [-3, 55],
+    france: [2, 46],
+    germany: [10, 51],
+    italy: [12, 41],
+    spain: [-8, 40],
+    portugal: [-8, 39],
+    netherlands: [5, 52],
+    sweden: [18, 60],
+    norway: [10, 60],
+    russia: [105, 61],
+    china: [104, 35],
+    japan: [138, 36],
+    south_korea: [127, 37],
+    north_korea: [127, 40],
+    india: [78, 20],
+    australia: [133, -27],
+    new_zealand: [174, -40],
+    south_africa: [22, -30],
+    nigeria: [8, 9],
+    ghana: [-2, 7],
+    egypt: [30, 26],
+    kenya: [37, -0],
+    morocco: [-7, 31],
+    ethiopia: [40, 9],
+    iceland: [-19, 64],
+    liechtenstein: [9, 47],
+    switzerland: [8, 46],
+    greenland: [-42, 71],
+    turkey: [35, 39],
+    iran: [53, 32],
+    saudi_arabia: [45, 23],
+    israel: [34, 31],
+    indonesia: [113, -0],
+    philippines: [121, 13],
+  }
 
   // Efecto de parpadeo para el país seleccionado
   useEffect(() => {
@@ -39,6 +97,74 @@ export function WorldMap({
 
     return () => clearInterval(interval)
   }, [selectedCountry])
+
+  // Efecto para crear animaciones de misil cuando hay nuevas acciones
+  useEffect(() => {
+    if (!recentAction) return
+    
+    // Solo crear animaciones para acciones que involucran dos países diferentes
+    if (recentAction.sourceCountry === recentAction.targetCountry) return
+    if (!recentAction.targetCountry) return
+    
+    // Verificar que tenemos coordenadas para ambos países
+    const sourceCoords = countryCoordinates[recentAction.sourceCountry]
+    const targetCoords = countryCoordinates[recentAction.targetCountry]
+    
+    if (!sourceCoords || !targetCoords) {
+      console.log(`⚠️ No se encontraron coordenadas para ${recentAction.sourceCountry} o ${recentAction.targetCountry}`)
+      return
+    }
+
+    // Determinar duración basada en el tipo de acción
+    const getAnimationDuration = (actionType: string): number => {
+      switch (actionType) {
+        case "military_action":
+        case "naval_blockade":
+        case "cyber_attack":
+        case "biological_warfare":
+          return 2000 // 2 segundos para acciones militares
+        case "economic_sanction":
+        case "trade_embargo":
+          return 1500 // 1.5 segundos para acciones económicas
+        case "diplomatic_alliance":
+        case "diplomatic_message":
+          return 1000 // 1 segundo para diplomacia
+        default:
+          return 1800 // 1.8 segundos por defecto
+      }
+    }
+
+    const newAnimation: MissileAnimation = {
+      id: `missile_${Date.now()}`,
+      sourceCountry: recentAction.sourceCountry,
+      targetCountry: recentAction.targetCountry,
+      actionType: recentAction.type,
+      startTime: Date.now(),
+      duration: getAnimationDuration(recentAction.type)
+    }
+
+    console.log(`🚀 Creando animación de misil: ${recentAction.sourceCountry} → ${recentAction.targetCountry}`)
+    
+    setActiveAnimations(prev => [...prev, newAnimation])
+
+    // Remover la animación después de que termine
+    setTimeout(() => {
+      setActiveAnimations(prev => prev.filter(anim => anim.id !== newAnimation.id))
+    }, newAnimation.duration)
+
+  }, [recentAction])
+
+  // Limpiar animaciones expiradas
+  useEffect(() => {
+    const cleanup = setInterval(() => {
+      const now = Date.now()
+      setActiveAnimations(prev => 
+        prev.filter(anim => now - anim.startTime < anim.duration)
+      )
+    }, 100)
+
+    return () => clearInterval(cleanup)
+  }, [])
 
   const getCountryColor = (countryId: string) => {
     const country = countries.find((c) => c.id === countryId)
@@ -105,9 +231,70 @@ export function WorldMap({
       "364": "iran",
       "682": "saudi_arabia",
       "376": "israel",
+      "404": "kenya",
+      "504": "morocco",
+      "231": "ethiopia",
+      // NUEVOS PAÍSES AÑADIDOS
+      "304": "greenland", // Groenlandia
+      "170": "colombia", // Colombia
+      "604": "peru", // Perú
+      "528": "netherlands", // Holanda
+      "752": "sweden", // Suecia
+      "578": "norway", // Noruega
+      "360": "indonesia", // Indonesia
+      "608": "philippines", // Filipinas
     }
 
     return countryMapping[geoId] || null
+  }
+
+  // Función para generar path curvo entre dos puntos (efecto misil)
+  const generateMissilePath = (start: [number, number], end: [number, number], progress: number): string => {
+    const [x1, y1] = start
+    const [x2, y2] = end
+    
+    // Calcular punto medio elevado para crear la curva
+    const midX = (x1 + x2) / 2
+    const midY = (y1 + y2) / 2 - Math.abs(x2 - x1) * 0.3 // Elevar la curva
+    
+    // Calcular posición actual basada en el progreso (0-1)
+    const currentX = x1 + (x2 - x1) * progress
+    const currentY = y1 + (y2 - y1) * progress - Math.sin(progress * Math.PI) * Math.abs(x2 - x1) * 0.3
+    
+    // Crear path desde inicio hasta posición actual
+    if (progress < 0.5) {
+      // Primera mitad: desde inicio hasta punto medio
+      const t = progress * 2
+      const cx = x1 + (midX - x1) * t
+      const cy = y1 + (midY - y1) * t
+      return `M ${x1} ${y1} Q ${cx} ${cy} ${currentX} ${currentY}`
+    } else {
+      // Segunda mitad: desde punto medio hasta destino
+      const t = (progress - 0.5) * 2
+      const cx = midX + (x2 - midX) * t
+      const cy = midY + (y2 - midY) * t
+      return `M ${x1} ${y1} Q ${midX} ${midY} ${currentX} ${currentY}`
+    }
+  }
+
+  // Función para obtener color del misil basado en tipo de acción
+  const getMissileColor = (actionType: string): string => {
+    switch (actionType) {
+      case "military_action":
+      case "naval_blockade":
+        return "#ef4444" // Rojo para acciones militares
+      case "cyber_attack":
+      case "biological_warfare":
+        return "#8b5cf6" // Púrpura para acciones especiales
+      case "economic_sanction":
+      case "trade_embargo":
+        return "#f59e0b" // Ámbar para acciones económicas
+      case "diplomatic_alliance":
+      case "diplomatic_message":
+        return "#10b981" // Verde para diplomacia
+      default:
+        return "#06b6d4" // Cian por defecto
+    }
   }
 
   // Manejar clic en el mapa (para deseleccionar)
@@ -168,6 +355,84 @@ export function WorldMap({
               })
             }
           </Geographies>
+          
+          {/* Renderizar líneas animadas de misiles */}
+          {activeAnimations.map((animation) => {
+            const now = Date.now()
+            const elapsed = now - animation.startTime
+            const progress = Math.min(elapsed / animation.duration, 1)
+            
+            const sourceCoords = countryCoordinates[animation.sourceCountry]
+            const targetCoords = countryCoordinates[animation.targetCountry]
+            
+            if (!sourceCoords || !targetCoords) return null
+            
+            const missilePath = generateMissilePath(sourceCoords, targetCoords, progress)
+            const missileColor = getMissileColor(animation.actionType)
+            
+            return (
+              <g key={animation.id}>
+                {/* Línea de trayectoria (más tenue) */}
+                <path
+                  d={generateMissilePath(sourceCoords, targetCoords, 1)}
+                  fill="none"
+                  stroke={missileColor}
+                  strokeWidth="1"
+                  strokeOpacity="0.3"
+                  strokeDasharray="5,5"
+                />
+                
+                {/* Línea del misil (brillante) */}
+                <path
+                  d={missilePath}
+                  fill="none"
+                  stroke={missileColor}
+                  strokeWidth="3"
+                  strokeOpacity="0.9"
+                  filter="url(#glow)"
+                />
+                
+                {/* Punto del misil (cabeza) */}
+                {progress > 0 && (
+                  <circle
+                    cx={sourceCoords[0] + (targetCoords[0] - sourceCoords[0]) * progress}
+                    cy={sourceCoords[1] + (targetCoords[1] - sourceCoords[1]) * progress - Math.sin(progress * Math.PI) * Math.abs(targetCoords[0] - sourceCoords[0]) * 0.3}
+                    r="3"
+                    fill={missileColor}
+                    opacity="1"
+                    filter="url(#glow)"
+                  >
+                    <animate attributeName="r" values="2;4;2" dur="0.5s" repeatCount="indefinite" />
+                  </circle>
+                )}
+                
+                {/* Explosión al final */}
+                {progress >= 1 && (
+                  <circle
+                    cx={targetCoords[0]}
+                    cy={targetCoords[1]}
+                    r="0"
+                    fill={missileColor}
+                    opacity="0.8"
+                  >
+                    <animate attributeName="r" values="0;15;0" dur="0.6s" begin="0s" />
+                    <animate attributeName="opacity" values="0.8;0.3;0" dur="0.6s" begin="0s" />
+                  </circle>
+                )}
+              </g>
+            )
+          })}
+          
+          {/* Definir filtro de brillo */}
+          <defs>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge> 
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
         </ComposableMap>
       </div>
 

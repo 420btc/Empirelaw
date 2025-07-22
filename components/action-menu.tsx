@@ -107,7 +107,17 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
 
   const canEmitDebt = (): boolean => {
     // Solo Estados Unidos e Israel pueden emitir deuda internacional
-    return playerCountry.id === "usa" || playerCountry.id === "israel"
+    if (playerCountry.id !== "usa" && playerCountry.id !== "israel") {
+      return false
+    }
+
+    // Verificar cooldown de 3 horas
+    const cooldownTime = 3 * 60 * 60 * 1000 // 3 horas en milisegundos
+    const currentTime = Date.now()
+    const lastEmission = playerCountry.lastDebtEmission || 0
+    const timeRemaining = cooldownTime - (currentTime - lastEmission)
+
+    return timeRemaining <= 0
   }
 
   const getDebtEmissionAmount = (): number => {
@@ -118,6 +128,30 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
       return Math.round(playerCountry.economy.gdp * 0.2) // 20% del PIB
     }
     return 0
+  }
+
+  const getDebtEmissionCooldown = (): string => {
+    if (playerCountry.id !== "usa" && playerCountry.id !== "israel") {
+      return "No disponible"
+    }
+
+    const cooldownTime = 3 * 60 * 60 * 1000 // 3 horas en milisegundos
+    const currentTime = Date.now()
+    const lastEmission = playerCountry.lastDebtEmission || 0
+    const timeRemaining = cooldownTime - (currentTime - lastEmission)
+
+    if (timeRemaining <= 0) {
+      return "Disponible"
+    }
+
+    const hoursRemaining = Math.floor(timeRemaining / (60 * 60 * 1000))
+    const minutesRemaining = Math.floor((timeRemaining % (60 * 60 * 1000)) / (60 * 1000))
+    
+    if (hoursRemaining > 0) {
+      return `${hoursRemaining}h ${minutesRemaining}m`
+    } else {
+      return `${minutesRemaining}m`
+    }
   }
 
   const isNeighbor = (countryId: string): boolean => {
@@ -211,16 +245,19 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
   ]
 
   // Agregar emisión de deuda solo para países elegibles
-  const debtEmissionActions = canEmitDebt() ? [
+  const debtEmissionActions = (playerCountry.id === "usa" || playerCountry.id === "israel") ? [
     {
       id: "debt_emission",
-      name: "💰 Emisión de Deuda Internacional",
-      description: `Emitir deuda internacional para obtener +$${getDebtEmissionAmount()}B`,
+      name: "💰 Deuda Internacional",
+      description: canEmitDebt() 
+        ? `Emitir deuda para obtener +$${getDebtEmissionAmount()}B`
+        : `En cooldown: ${getDebtEmissionCooldown()}`,
       icon: DollarSign,
       cost: 0, // No cost, generates money
       risk: "Medio",
       isSpecial: true,
-      generates: getDebtEmissionAmount(),
+      generates: canEmitDebt() ? getDebtEmissionAmount() : 0,
+      disabled: !canEmitDebt(),
     }
   ] : []
 
@@ -464,7 +501,7 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
       const Icon = action.icon
       const canAfford = canAffordAction(action.id)
       const neighborRequired = action.requiresNeighbor && !isNeighbor(targetCountry?.id || "")
-      const isDisabled = !canAfford || neighborRequired
+      const isDisabled = !canAfford || neighborRequired || action.disabled
 
       // Debug logging
       if (action.id === "military_action") {
@@ -495,18 +532,24 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
               <Icon className={`w-5 h-5 mt-0.5 flex-shrink-0 ${action.isSpecial ? "text-yellow-400" : ""}`} />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <span className={`font-medium ${action.isSpecial ? "text-yellow-300" : ""}`}>{action.name}</span>
-                  <div className="flex items-center gap-2">
+                  <span className={`font-medium truncate ${action.isSpecial ? "text-yellow-300" : ""}`}>{action.name}</span>
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <Badge className={getRiskColor(action.risk)} variant="secondary">
                       {action.risk}
                     </Badge>
-                    <span className={`text-xs ${!canAfford ? "text-red-400 font-semibold" : "text-gray-400"}`}>
-                      ${action.cost}B
-                      {!canAfford && " ❌"}
-                    </span>
+                    {action.id === "debt_emission" ? (
+                      <span className={`text-xs ${action.disabled ? "text-orange-400" : "text-green-400"} font-semibold`}>
+                        {action.disabled ? "🕐" : `+$${action.generates}B`}
+                      </span>
+                    ) : (
+                      <span className={`text-xs ${!canAfford ? "text-red-400 font-semibold" : "text-gray-400"}`}>
+                        ${action.cost}B
+                        {!canAfford && " ❌"}
+                      </span>
+                    )}
                   </div>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">{action.description}</p>
+                <p className="text-xs text-gray-400 mt-1 break-words">{action.description}</p>
                 {neighborRequired && <p className="text-xs text-red-400 mt-1">⚠️ Requiere país vecino</p>}
                 {action.isSpecial && (
                   <p className="text-xs text-yellow-400 mt-1">
@@ -526,11 +569,14 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
                     <AlertTriangle className="w-3 h-3" />
                     <span className="font-semibold">Acción no disponible:</span>
                   </div>
-                  {!canAfford && (
+                  {!canAfford && !action.disabled && (
                     <p>• Fondos insuficientes (Necesitas: ${action.cost}B, Tienes: ${playerCountry.economy.gdp}B)</p>
                   )}
                   {neighborRequired && (
                     <p>• Requiere ser país vecino de {targetCountry?.name}</p>
+                  )}
+                  {action.disabled && action.id === "debt_emission" && (
+                    <p>• Tiempo restante: {getDebtEmissionCooldown()}</p>
                   )}
                 </div>
               )}
