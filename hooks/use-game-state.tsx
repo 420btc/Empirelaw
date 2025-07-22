@@ -85,8 +85,8 @@ export function useGameState() {
   const getEventInterval = useCallback(() => {
     // Para los primeros 20 eventos, usar intervalo más rápido para asegurar actividad inicial
     if (gameEvents.length < 20) {
-      console.log(`🚀 Fase inicial del juego (${gameEvents.length}/20 eventos): eventos cada 15s`)
-      return 15000 // 15 segundos para los primeros 20 eventos
+      console.log(`🚀 Fase inicial del juego (${gameEvents.length}/20 eventos): eventos cada 5s`)
+      return 5000 // 5 segundos para los primeros 20 eventos
     }
     
     // Verificar si hay zonas desestabilizadas (estabilidad < 30)
@@ -94,11 +94,11 @@ export function useGameState() {
     const hasDestabilizedZones = destabilizedCountries.length > 0
     
     if (hasDestabilizedZones) {
-      console.log(`🚨 Zonas desestabilizadas detectadas (${destabilizedCountries.length} países): eventos cada 25s`)
-      return 25000 // 25 segundos
+      console.log(`🚨 Zonas desestabilizadas detectadas (${destabilizedCountries.length} países): eventos cada 8s`)
+      return 8000 // 8 segundos
     } else {
-      console.log("✅ Situación estable: eventos cada 33s")
-      return 33000 // 33 segundos
+      console.log("✅ Situación estable: eventos cada 12s")
+      return 12000 // 12 segundos
     }
   }, [countries, gameEvents.length])
 
@@ -416,13 +416,13 @@ export function useGameState() {
       const newInterval = getEventInterval()
       
       // Determinar el intervalo actual basado en la lógica
-      let currentInterval = 33000 // default
+      let currentInterval = 12000 // default
       if (gameEvents.length < 20) {
-        currentInterval = 15000
+        currentInterval = 5000
       } else {
         const destabilizedCountries = countries.filter(country => country.stability < 30)
         if (destabilizedCountries.length > 0) {
-          currentInterval = 25000
+          currentInterval = 8000
         }
       }
 
@@ -612,7 +612,7 @@ export function useGameState() {
       }))
 
       // 🎊 SUBIDA DE NIVEL - Feedback emocionante
-      if (newLevel > oldLevel) {
+      if (newLevel > oldLevel && !showLevelUp) {
         console.log(`🎊 ¡SUBIDA DE NIVEL! ${oldLevel} → ${newLevel}`)
         setShowLevelUp(true)
         setTimeout(() => setShowLevelUp(false), 5000)
@@ -839,6 +839,10 @@ export function useGameState() {
     )
   }, [])
 
+  const dismissLevelUp = useCallback(() => {
+    setShowLevelUp(false)
+  }, [])
+
   return {
     countries,
     selectedCountry,
@@ -861,6 +865,7 @@ export function useGameState() {
     gameProgression,
     recentAchievements,
     showLevelUp,
+    dismissLevelUp,
     playerLevel: getPlayerLevel(gameProgression.totalXP),
     // Nueva función para notificar acción del jugador (reset inactividad IA)
     registerPlayerAction,

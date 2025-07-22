@@ -26,11 +26,11 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
       }
     })
 
-    // Auto-dismiss después de 15 segundos (aumentado para mejor lectura)
+    // Auto-dismiss después de 8 segundos (ajustado para mayor frecuencia de eventos)
     const timeouts = recentEvents.map((event) => {
       return setTimeout(() => {
         handleDismiss(event.id)
-      }, 15000)
+      }, 8000)
     })
 
     return () => {

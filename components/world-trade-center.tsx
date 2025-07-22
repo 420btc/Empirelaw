@@ -327,15 +327,15 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
             <TabsContent value="market" className="flex-1 overflow-hidden">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
                 {/* Precios de Recursos */}
-                <Card className="bg-slate-800/50">
-                  <CardHeader>
+                <Card className="bg-slate-800/50 flex flex-col">
+                  <CardHeader className="flex-shrink-0">
                     <CardTitle className="text-white flex items-center gap-2">
                       <DollarSign className="w-5 h-5" />
                       Precios Globales
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-64">
+                  <CardContent className="flex-1">
+                    <ScrollArea className="h-[calc(100vh-300px)]">
                       <div className="space-y-2">
                         {resourcePrices.map((price) => (
                           <div
@@ -362,15 +362,15 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
                 </Card>
 
                 {/* Recursos por País */}
-                <Card className="bg-slate-800/50">
-                  <CardHeader>
+                <Card className="bg-slate-800/50 flex flex-col">
+                  <CardHeader className="flex-shrink-0">
                     <CardTitle className="text-white flex items-center gap-2">
                       <Package className="w-5 h-5" />
                       Recursos por País
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <ScrollArea className="h-64">
+                  <CardContent className="flex-1">
+                    <ScrollArea className="h-[calc(100vh-300px)]">
                       <div className="space-y-3">
                         {countries
                           .filter((c) => !c.ownedBy)

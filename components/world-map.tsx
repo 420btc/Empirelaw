@@ -123,9 +123,9 @@ export function WorldMap({
       return
     }
 
-         // Duración simple y rápida para todas las acciones
+         // Duración muy rápida para línea simple
      const getAnimationDuration = (actionType: string): number => {
-       return 800 // 0.8 segundos para todas las acciones - más rápido y simple
+       return 500 // 0.5 segundos para línea simple y rápida
      }
 
     const newAnimation: MissileAnimation = {
@@ -264,26 +264,6 @@ export function WorldMap({
     return `M ${x1} ${y1} L ${currentX} ${currentY}`
   }
 
-  // Función para obtener color del misil basado en tipo de acción
-  const getMissileColor = (actionType: string): string => {
-    switch (actionType) {
-      case "military_action":
-      case "naval_blockade":
-        return "#ef4444" // Rojo para acciones militares
-      case "cyber_attack":
-      case "biological_warfare":
-        return "#8b5cf6" // Púrpura para acciones especiales
-      case "economic_sanction":
-      case "trade_embargo":
-        return "#f59e0b" // Ámbar para acciones económicas
-      case "diplomatic_alliance":
-      case "diplomatic_message":
-        return "#10b981" // Verde para diplomacia
-      default:
-        return "#06b6d4" // Cian por defecto
-    }
-  }
-
   // Manejar clic en el mapa (para deseleccionar)
   const handleMapClick = (event: React.MouseEvent<HTMLDivElement>) => {
     // Solo deseleccionar si el clic no fue en un país
@@ -343,7 +323,7 @@ export function WorldMap({
             }
           </Geographies>
           
-          {/* Renderizar líneas animadas de misiles */}
+          {/* Renderizar líneas simples blancas */}
           {activeAnimations.map((animation) => {
             const now = Date.now()
             const elapsed = now - animation.startTime
@@ -355,43 +335,17 @@ export function WorldMap({
             if (!sourceCoords || !targetCoords) return null
             
             const simplePath = generateSimplePath(sourceCoords, targetCoords, progress)
-            const lineColor = getMissileColor(animation.actionType)
             
             return (
               <g key={animation.id}>
-                {/* Línea simple y delgada */}
+                {/* Línea blanca simple y fina */}
                 <path
                   d={simplePath}
                   fill="none"
-                  stroke={lineColor}
-                  strokeWidth="2"
-                  strokeOpacity="0.8"
+                  stroke="white"
+                  strokeWidth="1"
+                  strokeOpacity="0.9"
                 />
-                
-                {/* Punto del proyectil (pequeño) */}
-                {progress > 0 && progress < 1 && (
-                  <circle
-                    cx={sourceCoords[0] + (targetCoords[0] - sourceCoords[0]) * progress}
-                    cy={sourceCoords[1] + (targetCoords[1] - sourceCoords[1]) * progress}
-                    r="2"
-                    fill={lineColor}
-                    opacity="1"
-                  />
-                )}
-                
-                {/* Flash al final (más simple) */}
-                {progress >= 1 && (
-                  <circle
-                    cx={targetCoords[0]}
-                    cy={targetCoords[1]}
-                    r="5"
-                    fill={lineColor}
-                    opacity="0.6"
-                  >
-                    <animate attributeName="r" values="5;10;0" dur="0.3s" begin="0s" />
-                    <animate attributeName="opacity" values="0.6;0.2;0" dur="0.3s" begin="0s" />
-                  </circle>
-                )}
               </g>
             )
           })}

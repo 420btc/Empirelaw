@@ -9,9 +9,10 @@ import { Crown, Users, DollarSign, Shield, Scale, Zap, TrendingDown, AlertTriang
 interface CountryPanelProps {
   country: Country | null
   isPlayerCountry: boolean
+  countries?: Country[]
 }
 
-export function CountryPanel({ country, isPlayerCountry }: CountryPanelProps) {
+export function CountryPanel({ country, isPlayerCountry, countries = [] }: CountryPanelProps) {
   if (!country) {
     return (
       <Card className="bg-slate-800/50 border-cyan-500/30">
@@ -226,11 +227,15 @@ export function CountryPanel({ country, isPlayerCountry }: CountryPanelProps) {
                 <span className="text-gray-300">Alianzas:</span>
               </div>
               <div className="flex flex-wrap gap-1">
-                {country.alliances.slice(0, 4).map((allyId, index) => (
-                  <Badge key={index} variant="outline" className="text-xs border-green-500 text-green-400">
-                    {allyId.toUpperCase()}
-                  </Badge>
-                ))}
+                {country.alliances.slice(0, 4).map((allyId, index) => {
+                  const allyCountry = countries.find(c => c.id === allyId)
+                  const allyName = allyCountry ? allyCountry.name : allyId.toUpperCase()
+                  return (
+                    <Badge key={index} variant="outline" className="text-xs border-green-500 text-green-400">
+                      {allyName}
+                    </Badge>
+                  )
+                })}
                 {country.alliances.length > 4 && (
                   <Badge variant="outline" className="text-xs text-gray-400">
                     +{country.alliances.length - 4} más

@@ -695,6 +695,40 @@ export function generateRandomEvent(
 
   let eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)]
   
+  // 🌍 RESTRICCIÓN AFRICANA: Limitar eventos científicos y tecnológicos para países africanos
+  const scientificEvents = [
+    "technological_breakthrough",
+    "scientific_breakthrough",
+    "genetic_breakthrough",
+    "quantum_computing",
+    "space_discovery",
+    "space_tourism_boom",
+    "digital_currency_adoption",
+    "medical_breakthrough",
+    "renewable_energy_revolution",
+    "AI_singularity",
+    "alien_technology_leak"
+  ]
+  
+  // Si el país afectado es africano y el evento es científico/tecnológico, cambiar por evento más básico
+  if (affectedCountry.geopoliticalBlock === "africa" && scientificEvents.includes(eventType)) {
+    const africanFriendlyEvents = [
+      "resource_discovery",
+      "african_mineral_boom",
+      "agricultural_innovation",
+      "infrastructure_modernization",
+      "cultural_renaissance",
+      "educational_reform_success",
+      "economic_boom"
+    ]
+    
+    // 80% de probabilidad de cambiar a evento más apropiado para África
+    if (Math.random() < 0.8) {
+      eventType = africanFriendlyEvents[Math.floor(Math.random() * africanFriendlyEvents.length)]
+      console.log(`🌍 Evento científico limitado para país africano ${affectedCountry.name}, cambiado a: ${eventType}`)
+    }
+  }
+  
   // 🧠 SISTEMA DE COHERENCIA: Evitar eventos contradictorios
   const recentCountryEvents = recentEvents
     .filter(event => event.targetedCountry === affectedCountry.id)
@@ -2093,10 +2127,48 @@ export function runAIActions(
         timestamp: now
       })
     }
-    // 6. Alianzas y traiciones (simplificado)
-    if (aiCountry.stability > 60 && Math.random() < 0.10) {
-      const ally = updatedCountries.filter(t => t.id !== aiCountry.id && !t.ownedBy && !t.isSovereign && t.powerLevel !== "minor")[0]
+    // 6. Alianzas y traiciones (simplificado) - Reducida frecuencia
+    if (aiCountry.stability > 70 && Math.random() < 0.03) {
+      let ally: Country | undefined
+      
+      // Restricción: países africanos solo pueden aliarse entre ellos
+      if (aiCountry.geopoliticalBlock === "africa") {
+        ally = updatedCountries.filter(t => 
+          t.id !== aiCountry.id && 
+          !t.ownedBy && 
+          !t.isSovereign && 
+          t.geopoliticalBlock === "africa" && 
+          t.powerLevel !== "minor"
+        )[0]
+      } else {
+        // Países no africanos pueden aliarse con cualquiera excepto países africanos
+        ally = updatedCountries.filter(t => 
+          t.id !== aiCountry.id && 
+          !t.ownedBy && 
+          !t.isSovereign && 
+          t.geopoliticalBlock !== "africa" && 
+          t.powerLevel !== "minor"
+        )[0]
+      }
+      
       if (ally) {
+        // Actualizar alianzas en el estado del juego
+        updatedCountries = updatedCountries.map(c => {
+          if (c.id === aiCountry.id) {
+            const currentAlliances = c.alliances || []
+            if (!currentAlliances.includes(ally.id)) {
+              return { ...c, alliances: [...currentAlliances, ally.id] }
+            }
+          }
+          if (c.id === ally.id) {
+            const currentAlliances = c.alliances || []
+            if (!currentAlliances.includes(aiCountry.id)) {
+              return { ...c, alliances: [...currentAlliances, aiCountry.id] }
+            }
+          }
+          return c
+        })
+        
         aiEvents.push({
           id: `ai_alliance_${now}_${aiCountry.id}_${ally.id}`,
           type: "info",
@@ -2107,7 +2179,6 @@ export function runAIActions(
           ],
           timestamp: now
         })
-        // (No muta el estado, solo evento)
       }
     }
   })
@@ -2639,6 +2710,233 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
             "Karma del territorio reiniciado",
             "Deuda del territorio aumentada por ocupación",
             "Ahora debes gestionar este territorio",
+          ],
+          timestamp: Date.now(),
+        },
+      }
+    }
+
+    case "technology_theft": {
+      if (!target || target.id === source.id) {
+        return {
+          success: false,
+          updatedCountries: countries,
+          event: {
+            id: `tech_theft_failed_${Date.now()}`,
+            type: "error",
+            title: "❌ Robo de Tecnología Imposible",
+            description: "No se puede robar tecnología sin un país objetivo válido",
+            effects: ["Selecciona un país válido para robar tecnología"],
+            timestamp: Date.now(),
+          },
+        }
+      }
+
+      // Restricción: países africanos no pueden realizar robos de tecnología
+      if (source.geopoliticalBlock === "africa") {
+        return {
+          success: false,
+          updatedCountries: countries,
+          event: {
+            id: `tech_theft_failed_${Date.now()}`,
+            type: "error",
+            title: "🌍 Capacidad Tecnológica Limitada",
+            description: `${source.name} no tiene la infraestructura tecnológica necesaria para realizar operaciones de espionaje tecnológico`,
+            effects: [
+              "Los países africanos se enfocan en desarrollo básico",
+              "Falta de capacidades de espionaje tecnológico avanzado",
+              "Considera inversiones en educación e infraestructura primero",
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+
+      deductCostFromSource(action.cost)
+
+      // Probabilidad de éxito basada en la diferencia tecnológica
+      const successChance = Math.max(0.3, Math.min(0.8, 1 - (target.economy.gdp - source.economy.gdp) / 5000))
+      const isSuccessful = Math.random() < successChance
+
+      if (isSuccessful) {
+        // Robo exitoso: mejorar tecnología del país fuente
+        const techBoost = Math.floor(target.economy.gdp * 0.1)
+        updated = updated.map((c) => {
+          if (c.id === source.id) {
+            return {
+              ...c,
+              economy: {
+                ...c.economy,
+                gdp: c.economy.gdp + techBoost,
+                resourceProduction: {
+                  ...c.economy.resourceProduction,
+                  tecnología: (c.economy.resourceProduction.tecnología || 0) + 20,
+                },
+              },
+            }
+          }
+          if (c.id === target.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - 5),
+              economy: {
+                ...c.economy,
+                resourceProduction: {
+                  ...c.economy.resourceProduction,
+                  tecnología: Math.max(0, (c.economy.resourceProduction.tecnología || 0) - 10),
+                },
+              },
+            }
+          }
+          return c
+        })
+
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `tech_theft_success_${Date.now()}`,
+            type: "success",
+            title: "🕵️ Robo de Tecnología Exitoso",
+            description: `${source.name} ha robado exitosamente secretos tecnológicos de ${target.name}`,
+            effects: [
+              `PIB de ${source.name} aumentado en $${techBoost}B`,
+              `Producción tecnológica de ${source.name} mejorada`,
+              `${target.name} sufre pérdidas tecnológicas y de estabilidad`,
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        // Robo fallido: consecuencias diplomáticas
+        updated = updated.map((c) => {
+          if (c.id === source.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - 10),
+            }
+          }
+          return c
+        })
+
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `tech_theft_failed_${Date.now()}`,
+            type: "error",
+            title: "🚨 Robo de Tecnología Descubierto",
+            description: `El intento de ${source.name} de robar tecnología de ${target.name} ha sido descubierto`,
+            effects: [
+              "Operación de espionaje expuesta",
+              `Estabilidad de ${source.name} reducida por escándalo`,
+              "Relaciones diplomáticas dañadas",
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+
+    case "diplomatic_alliance": {
+      if (!target || target.id === source.id) {
+        return {
+          success: false,
+          updatedCountries: countries,
+          event: {
+            id: `alliance_failed_${Date.now()}`,
+            type: "error",
+            title: "❌ Alianza Imposible",
+            description: "No se puede formar una alianza sin un país objetivo válido",
+            effects: ["Selecciona un país válido para formar una alianza"],
+            timestamp: Date.now(),
+          },
+        }
+      }
+
+      // Restricción: países africanos solo pueden aliarse entre ellos
+      if (source.geopoliticalBlock === "africa" && target.geopoliticalBlock !== "africa") {
+        return {
+          success: false,
+          updatedCountries: countries,
+          event: {
+            id: `alliance_failed_${Date.now()}`,
+            type: "error",
+            title: "🌍 Restricción de Alianza Africana",
+            description: `${source.name} intentó formar una alianza con ${target.name}, pero falló`,
+            effects: [
+              "Los países africanos están limitados a alianzas intra-africanas",
+              "Busca fortalecer la cooperación dentro del continente africano",
+              `Objetivo: ${target.name} (${target.geopoliticalBlock})`
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+
+      // Restricción: países no africanos no pueden aliarse con países africanos
+      if (source.geopoliticalBlock !== "africa" && target.geopoliticalBlock === "africa") {
+        return {
+          success: false,
+          updatedCountries: countries,
+          event: {
+            id: `alliance_failed_${Date.now()}`,
+            type: "error",
+            title: "🌍 Restricción de Alianza Africana",
+            description: `${source.name} intentó formar una alianza con ${target.name}, pero falló`,
+            effects: [
+              "Los países africanos mantienen alianzas exclusivamente entre ellos",
+              "Respeta la autonomía de la cooperación africana",
+              `Objetivo: ${target.name} (${target.geopoliticalBlock})`
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+
+      // Verificar si ya son aliados
+      if (source.alliances?.includes(target.id)) {
+        return {
+          success: false,
+          updatedCountries: countries,
+          event: {
+            id: `alliance_exists_${Date.now()}`,
+            type: "info",
+            title: "🤝 Alianza Ya Existente",
+            description: `${source.name} y ${target.name} ya son aliados`,
+            effects: ["La alianza ya está establecida"],
+            timestamp: Date.now(),
+          },
+        }
+      }
+
+      deductCostFromSource(action.cost)
+
+      // Formar la alianza
+      updated = updated.map((c) => {
+        if (c.id === source.id) {
+          const currentAlliances = c.alliances || []
+          return { ...c, alliances: [...currentAlliances, target.id] }
+        }
+        if (c.id === target.id) {
+          const currentAlliances = c.alliances || []
+          return { ...c, alliances: [...currentAlliances, source.id] }
+        }
+        return c
+      })
+
+      return {
+        success: true,
+        updatedCountries: updated,
+        event: {
+          id: `alliance_${Date.now()}`,
+          type: "success",
+          title: "🤝 Alianza Diplomática Formada",
+          description: `${source.name} y ${target.name} han formado una alianza estratégica`,
+          effects: [
+            `${source.name} y ${target.name} ahora son aliados`,
+            "Cooperación militar y económica establecida",
+            "Apoyo mutuo en crisis futuras",
           ],
           timestamp: Date.now(),
         },

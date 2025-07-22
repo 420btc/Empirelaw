@@ -40,6 +40,7 @@ export default function GeopoliticsGame() {
     gameProgression,
     recentAchievements,
     showLevelUp,
+    dismissLevelUp,
     playerLevel,
   } = useGameState()
 
@@ -185,6 +186,7 @@ export default function GeopoliticsGame() {
             <CountryPanel
               country={selectedCountry ? countries.find((c) => c.id === selectedCountry) || null : null}
               isPlayerCountry={selectedCountry === playerCountry}
+              countries={countries}
             />
 
             {playerCountry && (
@@ -205,7 +207,7 @@ export default function GeopoliticsGame() {
         <LevelUpNotification 
           show={showLevelUp} 
           playerLevel={playerLevel}
-          onDismiss={() => console.log('Level up dismissed')}
+          onDismiss={dismissLevelUp}
         />
       </div>
 
