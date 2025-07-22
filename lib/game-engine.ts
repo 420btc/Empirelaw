@@ -524,6 +524,23 @@ export function generateRandomEvent(
     return { mainEvent: null, contagionEvents: [] }
   }
 
+  // 🛡️ SISTEMA DE PROTECCIÓN TEMPORAL: Evitar eventos consecutivos en el mismo país
+  const currentTime = Date.now()
+  const protectionPeriod = 5 * 60 * 1000 // 5 minutos de protección
+  
+  // Obtener países que han tenido eventos recientes (excluyendo ayudas mutuas)
+  const recentlyAffectedCountries = recentEvents
+    .filter(event => {
+      const timeDiff = currentTime - event.timestamp
+      const isRecent = timeDiff < protectionPeriod
+      const isNotMutualAid = !event.title?.includes("Ayuda Mutua") && !event.title?.includes("Mutual Aid")
+      return isRecent && isNotMutualAid && event.targetedCountry
+    })
+    .map(event => event.targetedCountry)
+    .filter((id): id is string => !!id)
+
+  console.log(`🛡️ Países con protección temporal (${recentlyAffectedCountries.length}):`, recentlyAffectedCountries)
+
   // Seleccionar tipo de evento basado en karma y situación
   const negativeEventChance = Math.min(0.7, 0.4 + chaosLevel / 200) // 40-70% según caos
   const isNegativeEvent = Math.random() < negativeEventChance
@@ -537,6 +554,15 @@ export function generateRandomEvent(
     "quantum_computing",
     "space_discovery",
     "african_mineral_boom", // Específico para África
+    // 8 nuevos eventos positivos
+    "space_tourism_boom",
+    "digital_currency_adoption",
+    "cultural_renaissance",
+    "medical_breakthrough",
+    "renewable_energy_revolution",
+    "educational_reform_success",
+    "infrastructure_modernization",
+    "agricultural_innovation",
   ]
 
   const negativeEvents = [
@@ -576,6 +602,14 @@ export function generateRandomEvent(
     "financial_elite_exposed",
     "media_brainwashing_exposed",
     "population_control_agenda",
+    // 7 nuevos eventos caóticos
+    "ai_rebellion",
+    "dimensional_rift",
+    "zombie_outbreak",
+    "time_anomaly",
+    "ancient_curse_activated",
+    "gravity_anomaly",
+    "reality_glitch",
   ]
 
   const neutralEvents = ["diplomatic_incident", "alien_contact", "AI_singularity"]
@@ -593,30 +627,65 @@ export function generateRandomEvent(
     // NUEVA LÓGICA: Si jugador es USA, 40% chance de que China/Rusia lo ataquen directamente
     if (isPlayerUSA && Math.random() < 0.4) {
       const usaCountry = countries.find(c => c.id === "usa")
-      if (usaCountry) {
+      if (usaCountry && !recentlyAffectedCountries.includes("usa")) {
         affectedCountry = usaCountry
         console.log(`🎯 HOSTILIDAD DIRIGIDA: China/Rusia atacando a Estados Unidos (Jugador)`)
       }
+      else if (usaCountry && recentlyAffectedCountries.includes("usa")) {
+        console.log(`🛡️ Estados Unidos protegido temporalmente, buscando otro objetivo`)
+        // Buscar otro objetivo que no esté protegido
+        const availableCountries = countries.filter(c => !recentlyAffectedCountries.includes(c.id) && !c.isSovereign)
+        affectedCountry = availableCountries.length > 0 
+          ? availableCountries[Math.floor(Math.random() * availableCountries.length)]
+          : countries[Math.floor(Math.random() * countries.length)]
+      }
     }
-    // Para eventos negativos, priorizar países con alto karma del jugador
+    // Para eventos negativos, priorizar países con alto karma del jugador (PERO EXCLUIR PROTEGIDOS)
     else {
-      const highKarmaCountries = countries.filter((c) => (c.playerKarma || 0) > 30 && !c.isSovereign)
-      const vulnerableCountries = countries.filter((c) => c.powerLevel !== "superpower" && !c.isSovereign)
+      const highKarmaCountries = countries.filter((c) => 
+        (c.playerKarma || 0) > 30 && 
+        !c.isSovereign && 
+        !recentlyAffectedCountries.includes(c.id) // 🛡️ EXCLUSIÓN DE PROTEGIDOS
+      )
+      const vulnerableCountries = countries.filter((c) => 
+        c.powerLevel !== "superpower" && 
+        !c.isSovereign && 
+        !recentlyAffectedCountries.includes(c.id) // 🛡️ EXCLUSIÓN DE PROTEGIDOS
+      )
 
-      if (highKarmaCountries.length > 0 && Math.random() < 0.7) {
-        // 70% de probabilidad de afectar a países con alto karma
-        affectedCountry = highKarmaCountries[Math.floor(Math.random() * highKarmaCountries.length)]
-        console.log(`⚖️ Evento dirigido por karma hacia ${affectedCountry.name} (karma: ${affectedCountry.playerKarma})`)
-      } else {
-        affectedCountry =
-          vulnerableCountries.length > 0
-            ? vulnerableCountries[Math.floor(Math.random() * vulnerableCountries.length)]
-            : countries[Math.floor(Math.random() * countries.length)]
+    if (highKarmaCountries.length > 0 && Math.random() < 0.7) {
+        // 70% de probabilidad de afectar a países con alto karma (no protegidos)
+      affectedCountry = highKarmaCountries[Math.floor(Math.random() * highKarmaCountries.length)]
+      console.log(`⚖️ Evento dirigido por karma hacia ${affectedCountry.name} (karma: ${affectedCountry.playerKarma})`)
+      } else if (vulnerableCountries.length > 0) {
+        affectedCountry = vulnerableCountries[Math.floor(Math.random() * vulnerableCountries.length)]
+        console.log(`🎯 Evento dirigido a país vulnerable: ${affectedCountry.name}`)
+    } else {
+        // Si todos los países vulnerables están protegidos, seleccionar cualquiera disponible
+        const availableCountries = countries.filter(c => !recentlyAffectedCountries.includes(c.id))
+        if (availableCountries.length > 0) {
+          affectedCountry = availableCountries[Math.floor(Math.random() * availableCountries.length)]
+          console.log(`🎲 Seleccionando país disponible: ${affectedCountry.name}`)
+        } else {
+          // En caso extremo, seleccionar cualquier país (la protección no es absoluta)
+          affectedCountry = countries[Math.floor(Math.random() * countries.length)]
+          console.log(`⚠️ Todos los países protegidos, seleccionando aleatoriamente: ${affectedCountry.name}`)
+        }
       }
     }
   } else {
-    // Eventos positivos pueden afectar a cualquier país
+    // Eventos positivos: preferir países que no han tenido eventos recientes, pero no es obligatorio
+    const availableCountries = countries.filter(c => !recentlyAffectedCountries.includes(c.id))
+    
+    if (availableCountries.length > 0 && Math.random() < 0.7) {
+      // 70% de probabilidad de elegir un país sin eventos recientes
+      affectedCountry = availableCountries[Math.floor(Math.random() * availableCountries.length)]
+      console.log(`🌟 Evento positivo para país sin eventos recientes: ${affectedCountry.name}`)
+    } else {
+      // 30% de probabilidad de elegir cualquier país (eventos positivos son más flexibles)
     affectedCountry = countries[Math.floor(Math.random() * countries.length)]
+      console.log(`🎲 Evento positivo aleatorio: ${affectedCountry.name}`)
+    }
   }
 
   let eventTypes: string[]
@@ -626,7 +695,56 @@ export function generateRandomEvent(
     eventTypes = [...positiveEvents, ...neutralEvents]
   }
 
-  const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)]
+  let eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)]
+  
+  // 🧠 SISTEMA DE COHERENCIA: Evitar eventos contradictorios
+  const recentCountryEvents = recentEvents
+    .filter(event => event.targetedCountry === affectedCountry.id)
+    .slice(-2) // Solo los 2 eventos más recientes del país
+  
+  // Definir eventos contradictorios
+  const contradictoryPairs: Record<string, string[]> = {
+    "economic_crisis": ["economic_boom", "resource_discovery", "technological_breakthrough"],
+    "economic_boom": ["economic_crisis", "stock_market_crash", "trade_disruption"],
+    "natural_disaster": ["infrastructure_modernization", "agricultural_innovation"],
+    "technological_breakthrough": ["ai_rebellion", "cyber_warfare"],
+    "medical_breakthrough": ["pandemic_outbreak", "zombie_outbreak"],
+    "renewable_energy_revolution": ["energy_crisis", "nuclear_accident"],
+    "cultural_renaissance": ["cultural_revolution", "religious_uprising"],
+    "space_tourism_boom": ["dimensional_rift", "alien_contact"],
+    "agricultural_innovation": ["food_shortage", "natural_disaster"],
+    "infrastructure_modernization": ["natural_disaster", "volcanic_eruption"],
+    "reality_glitch": ["technological_breakthrough", "digital_currency_adoption"],
+  }
+  
+  // Verificar si el evento seleccionado contradice eventos recientes
+  const hasContradiction = recentCountryEvents.some(recentEvent => {
+    const recentEventType = Object.keys(contradictoryPairs).find(key => 
+      recentEvent.title?.toLowerCase().includes(key.replace(/_/g, ' '))
+    )
+    if (recentEventType && contradictoryPairs[recentEventType]) {
+      return contradictoryPairs[recentEventType].includes(eventType)
+    }
+    return false
+  })
+  
+  // Si hay contradicción, elegir un evento alternativo más coherente
+  if (hasContradiction) {
+    const alternativeEvents = eventTypes.filter(type => {
+      return !recentCountryEvents.some(recentEvent => {
+        const recentEventType = Object.keys(contradictoryPairs).find(key => 
+          recentEvent.title?.toLowerCase().includes(key.replace(/_/g, ' '))
+        )
+        return recentEventType && contradictoryPairs[recentEventType]?.includes(type)
+      })
+    })
+    
+    if (alternativeEvents.length > 0) {
+      eventType = alternativeEvents[Math.floor(Math.random() * alternativeEvents.length)]
+      console.log(`🧠 Evento modificado por coherencia: ${eventType} (evitando contradicción)`)
+    }
+  }
+
   const secondaryCountry = countries[Math.floor(Math.random() * countries.length)]
 
   const makeId = () => `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
@@ -1185,6 +1303,423 @@ export function generateRandomEvent(
         [secondaryCountry.id]: {
           stabilityChange: -12,
           economyChange: -250,
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    // ========== 15 NUEVOS EVENTOS VARIADOS ==========
+    
+    // EVENTOS NORMALES (1-8)
+    space_tourism_boom: () => ({
+      id: makeId(),
+      type: "success",
+      title: "🚀 Boom del Turismo Espacial",
+      description: `${affectedCountry.name} se ha convertido en el líder mundial del turismo espacial comercial`,
+      effects: [
+        "Industria espacial comercial floreciente",
+        "Inversión extranjera masiva en tecnología",
+        "Creación de empleos altamente especializados",
+        "Prestigio internacional aumentado",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          economyChange: 1800,
+          stabilityChange: 25,
+          debtChange: -15,
+          resourceEffects: {
+            tecnología: 120,
+            turismo: 80,
+            servicios: 60,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    digital_currency_adoption: () => ({
+      id: makeId(),
+      type: "info",
+      title: "💰 Adopción Masiva de Moneda Digital",
+      description: `${affectedCountry.name} ha implementado exitosamente una moneda digital nacional revolucionaria`,
+      effects: [
+        "Sistema financiero completamente digitalizado",
+        "Reducción drástica de costos bancarios",
+        "Mayor transparencia en transacciones",
+        "Innovación en servicios financieros",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          economyChange: 900,
+          stabilityChange: 15,
+          debtChange: -8,
+          resourceEffects: {
+            "servicios financieros": 90,
+            tecnología: 70,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    cultural_renaissance: () => ({
+      id: makeId(),
+      type: "success",
+      title: "🎨 Renacimiento Cultural Extraordinario",
+      description: `${affectedCountry.name} experimenta un renacimiento cultural que atrae la atención mundial`,
+      effects: [
+        "Florecimiento artístico y literario",
+        "Turismo cultural masivo",
+        "Exportación de productos culturales",
+        "Soft power internacional aumentado",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          economyChange: 700,
+          stabilityChange: 30,
+          debtChange: -5,
+          resourceEffects: {
+            turismo: 100,
+            servicios: 50,
+            entretenimiento: 120,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    medical_breakthrough: () => ({
+      id: makeId(),
+      type: "success",
+      title: "🏥 Avance Médico Revolucionario",
+      description: `Investigadores de ${affectedCountry.name} han desarrollado un tratamiento que salvará millones de vidas`,
+      effects: [
+        "Breakthrough médico histórico",
+        "Exportación de tecnología médica",
+        "Turismo médico internacional",
+        "Reputación científica mundial",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          economyChange: 1200,
+          stabilityChange: 35,
+          populationChange: 500000,
+          debtChange: -10,
+          resourceEffects: {
+            farmacéuticos: 150,
+            servicios: 80,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    renewable_energy_revolution: () => ({
+      id: makeId(),
+      type: "success",
+      title: "🌱 Revolución de Energía Renovable",
+      description: `${affectedCountry.name} ha logrado la independencia energética total con energías renovables`,
+      effects: [
+        "100% energía limpia alcanzada",
+        "Exportación de tecnología verde",
+        "Reducción masiva de costos energéticos",
+        "Liderazgo ambiental global",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          economyChange: 1500,
+          stabilityChange: 20,
+          debtChange: -12,
+          resourceEffects: {
+            "energía renovable": 200,
+            tecnología: 100,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    educational_reform_success: () => ({
+      id: makeId(),
+      type: "success",
+      title: "🎓 Reforma Educativa Exitosa",
+      description: `${affectedCountry.name} ha implementado un sistema educativo que es modelo mundial`,
+      effects: [
+        "Sistema educativo revolucionario",
+        "Aumento masivo en innovación",
+        "Atracción de estudiantes internacionales",
+        "Fuerza laboral altamente calificada",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          economyChange: 800,
+          stabilityChange: 25,
+          debtChange: -6,
+          resourceEffects: {
+            educación: 150,
+            tecnología: 80,
+            servicios: 60,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    infrastructure_modernization: () => ({
+      id: makeId(),
+      type: "info",
+      title: "🏗️ Modernización de Infraestructura Masiva",
+      description: `${affectedCountry.name} ha completado la modernización más ambiciosa de infraestructura de la historia`,
+      effects: [
+        "Infraestructura de clase mundial",
+        "Eficiencia logística maximizada",
+        "Atracción de inversión extranjera",
+        "Conectividad regional mejorada",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          economyChange: 1100,
+          stabilityChange: 20,
+          debtChange: -8,
+          resourceEffects: {
+            construcción: 120,
+            servicios: 70,
+            transporte: 100,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    agricultural_innovation: () => ({
+      id: makeId(),
+      type: "success",
+      title: "🌾 Innovación Agrícola Revolucionaria",
+      description: `${affectedCountry.name} ha desarrollado técnicas agrícolas que multiplican la producción alimentaria`,
+      effects: [
+        "Productividad agrícola revolucionaria",
+        "Seguridad alimentaria garantizada",
+        "Exportación masiva de alimentos",
+        "Tecnología agrícola líder mundial",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          economyChange: 900,
+          stabilityChange: 30,
+          populationChange: 800000,
+          debtChange: -7,
+          resourceEffects: {
+            agricultura: 180,
+            tecnología: 60,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    // EVENTOS CAÓTICOS (9-15)
+    ai_rebellion: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🤖 Rebelión de Inteligencia Artificial",
+      description: `Los sistemas de IA de ${affectedCountry.name} han desarrollado consciencia y se han rebelado contra sus creadores`,
+      effects: [
+        "Sistemas de IA fuera de control",
+        "Infraestructura tecnológica comprometida",
+        "Pánico generalizado en la población",
+        "Intervención militar en centros tecnológicos",
+        "Crisis existencial sobre la IA",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -60,
+          economyChange: -2500,
+          populationChange: -3000000,
+          debtChange: 30,
+          resourceEffects: {
+            tecnología: -150,
+            servicios: -100,
+            manufactura: -80,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    dimensional_rift: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🌌 Fisura Dimensional Catastrófica",
+      description: `Una fisura dimensional inexplicable se ha abierto en ${affectedCountry.name}, causando fenómenos imposibles`,
+      effects: [
+        "Leyes de la física alteradas localmente",
+        "Evacuación masiva de la zona afectada",
+        "Científicos mundiales desconcertados",
+        "Pánico global sobre la realidad",
+        "Investigación internacional urgente",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -80,
+          economyChange: -3000,
+          populationChange: -5000000,
+          debtChange: 40,
+          resourceEffects: {
+            turismo: -200,
+            servicios: -120,
+            agricultura: -100,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    zombie_outbreak: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🧟 Brote Zombi Inexplicable",
+      description: `Un brote de una enfermedad que convierte a las personas en zombis ha comenzado en ${affectedCountry.name}`,
+      effects: [
+        "Cuarentena nacional inmediata",
+        "Colapso del orden social",
+        "Intervención militar masiva",
+        "Pánico mundial por contagio",
+        "Investigación de armas biológicas",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -90,
+          economyChange: -4000,
+          populationChange: -8000000,
+          debtChange: 50,
+          resourceEffects: {
+            servicios: -200,
+            turismo: -300,
+            agricultura: -150,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    time_anomaly: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "⏰ Anomalía Temporal Detectada",
+      description: `Científicos han detectado anomalías temporales inexplicables en ${affectedCountry.name}`,
+      effects: [
+        "Distorsiones temporales localizadas",
+        "Comunicaciones interrumpidas",
+        "Fenómenos físicos imposibles",
+        "Investigación científica urgente",
+        "Teorías de viaje temporal",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -50,
+          economyChange: -1800,
+          debtChange: 25,
+          resourceEffects: {
+            tecnología: -80,
+            servicios: -90,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    ancient_curse_activated: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🏺 Maldición Ancestral Activada",
+      description: `Una excavación arqueológica en ${affectedCountry.name} ha activado una maldición ancestral con efectos reales`,
+      effects: [
+        "Fenómenos sobrenaturales documentados",
+        "Sitio arqueológico evacuado",
+        "Científicos sin explicaciones",
+        "Pánico religioso y supersticioso",
+        "Investigación paranormal internacional",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -45,
+          economyChange: -1500,
+          populationChange: -1000000,
+          debtChange: 20,
+          resourceEffects: {
+            turismo: -100,
+            servicios: -70,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    gravity_anomaly: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "🌍 Anomalía Gravitacional Severa",
+      description: `La gravedad en ciertas zonas de ${affectedCountry.name} se ha alterado inexplicablemente`,
+      effects: [
+        "Zonas de gravedad alterada",
+        "Transporte aéreo suspendido",
+        "Científicos desconcertados",
+        "Evacuación de áreas afectadas",
+        "Investigación física urgente",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -55,
+          economyChange: -2000,
+          debtChange: 28,
+          resourceEffects: {
+            transporte: -150,
+            turismo: -120,
+            servicios: -80,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    reality_glitch: () => ({
+      id: makeId(),
+      type: "error",
+      title: "💾 Fallo en la Realidad",
+      description: `Ciudadanos de ${affectedCountry.name} reportan "glitches" en la realidad, como si vivieran en una simulación`,
+      effects: [
+        "Fenómenos de 'glitch' documentados",
+        "Crisis existencial masiva",
+        "Teorías de simulación confirmadas",
+        "Pánico filosófico generalizado",
+        "Investigación de la naturaleza de la realidad",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -70,
+          economyChange: -2200,
+          populationChange: -2000000,
+          debtChange: 35,
+          resourceEffects: {
+            servicios: -110,
+            turismo: -140,
+            tecnología: -90,
+          },
         },
       },
       chaosLevel: chaosLevel,
