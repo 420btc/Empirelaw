@@ -179,13 +179,11 @@ export function provideMutualAidToCriticalCountries(countries: Country[], player
         timestamp: Date.now(),
       }
 
-      aidEvents.push(aidEvent)
-
       console.log(`🤝 Ayuda mutua: ${bestHelper.name} → ${criticalCountry.name} ($${aidAmount}B, +${stabilityBoost}% estabilidad)`)
     }
   })
 
-  return { updatedCountries, aidEvents }
+  return { updatedCountries, aidEvents };
 }
 
 export function calculateChaosLevel(countries: Country[], recentEvents: GameEvent[]): number {
@@ -1936,8 +1934,9 @@ export function selectAIOpponent(playerCountryId: string, countries: Country[]):
 export function runAIActions(
   countries: Country[],
   playerCountryId: string,
-  globalStability: number
-): { updatedCountries: Country[]; aiEvents: GameEvent[] } {
+  globalStability: number,
+  lastExpansionTimestamps: Record<string, number> = {}
+): { updatedCountries: Country[]; aiEvents: GameEvent[]; updatedExpansionTimestamps: Record<string, number> } {
   let updatedCountries = [...countries]
   let aiEvents: GameEvent[] = []
   const now = Date.now()
@@ -1947,7 +1946,19 @@ export function runAIActions(
     c.id !== playerCountryId && !c.ownedBy && !c.isSovereign && (c.powerLevel === "superpower" || c.powerLevel === "major")
   )
 
+  let updatedExpansionTimestamps = { ...lastExpansionTimestamps };
+
   aiCandidates.forEach(aiCountry => {
+    // --- Control de frecuencia de expansión ---
+    const now = Date.now();
+    if (
+      updatedExpansionTimestamps[aiCountry.id] &&
+      now - updatedExpansionTimestamps[aiCountry.id] < 60000
+    ) {
+      // Saltar expansión para este país en este ciclo
+      return;
+    }
+
     // Lógica de agresividad
     const aggressiveMode = globalStability < 25
     // Objetivos posibles: países vulnerables (no conquistados, baja estabilidad, no IA, no jugador)
@@ -1958,8 +1969,20 @@ export function runAIActions(
     const canAttackPlayer = aggressiveMode && countries.find(c => c.id === playerCountryId)?.stability! < 45
     // PIB mínimo para conquistar: 80% del objetivo
     let actionDone = false
+    // --- Coherencia: caos/inestabilidad regional o global ---
+    // Solo permitir expansión si hay caos global alto o vecinos inestables
+    const chaosLevel = typeof (globalThis as any).calculateChaosLevel === "function"
+      ? (globalThis as any).calculateChaosLevel(updatedCountries, [])
+      : 0;
+    const neighbors = aiCountry.neighbors || [];
+    const neighborInstability = neighbors
+      .map(nid => updatedCountries.find(c => c.id === nid))
+      .filter(Boolean)
+      .some(nc => nc!.stability < 40);
+    const allowExpansion = chaosLevel > 50 || neighborInstability;
+
     // 1. Conquista agresiva
-    if (aggressiveMode && vulnerableTargets.length > 0) {
+    if (aggressiveMode && vulnerableTargets.length > 0 && allowExpansion) {
       const target = vulnerableTargets.sort((a, b) => a.stability - b.stability)[0]
       const conquestCost = Math.max(target.economy.gdp * 0.8, 500)
       if (aiCountry.economy.gdp > conquestCost && aiCountry.stability > 45) {
@@ -1977,6 +2000,7 @@ export function runAIActions(
           ],
           timestamp: now
         })
+        updatedExpansionTimestamps[aiCountry.id] = now;
         actionDone = true
       }
     }
@@ -2007,7 +2031,7 @@ export function runAIActions(
       }
     }
     // 3. Expansión cauta (conquista si hay mucha estabilidad y PIB)
-    if (!actionDone && !aggressiveMode && aiCountry.stability > 70 && aiCountry.economy.gdp > 1200) {
+    if (!actionDone && !aggressiveMode && aiCountry.stability > 70 && aiCountry.economy.gdp > 1200 && allowExpansion) {
       const minorTargets = updatedCountries.filter(t => !t.ownedBy && t.id !== aiCountry.id && t.powerLevel === "minor" && t.stability < 50)
       if (minorTargets.length > 0) {
         const target = minorTargets[Math.floor(Math.random() * minorTargets.length)]
@@ -2024,9 +2048,11 @@ export function runAIActions(
           ],
           timestamp: now
         })
+        updatedExpansionTimestamps[aiCountry.id] = now;
         actionDone = true
       }
     }
+
     // 4. Ayuda a países en crisis (si hay caos pero la IA es estable)
     if (!actionDone && aiCountry.stability > 65 && aiCountry.economy.gdp > 900) {
       const crisisTargets = updatedCountries.filter(t => t.stability < 25 && !t.ownedBy && t.id !== aiCountry.id)
@@ -2085,7 +2111,7 @@ export function runAIActions(
       }
     }
   })
-  return { updatedCountries, aiEvents }
+  return { updatedCountries, aiEvents, updatedExpansionTimestamps };
 }
 
 // =====================
