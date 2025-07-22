@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import type { Country, GameEvent, GameAction, GameStats, ActionHistory, TradeOffer } from "@/lib/types"
 import { initialCountries } from "@/lib/data/countries"
-import { generateRandomEvent, processAction, checkForCollapses, calculateChaosLevel, applyGDPGrowth, provideMutualAidToCriticalCountries } from "@/lib/game-engine"
+import { generateRandomEvent, processAction, checkForCollapses, calculateChaosLevel, applyGDPGrowth, provideMutualAidToCriticalCountries, checkTerritorialRebellions, applyImperialMaintenanceCosts } from "@/lib/game-engine"
 import { ACHIEVEMENTS, checkAchievements, calculateXPGain, getPlayerLevel, type Achievement } from "@/lib/achievement-system"
 import type { GameProgression } from "@/lib/types"
 
@@ -255,7 +255,31 @@ export function useGameState() {
     }
 
     // Verificar colapsos y conquistas con países ya ayudados
-    const { updatedCountries, conquestEvents } = checkForCollapses(countriesAfterAid, playerCountry!)
+    const { updatedCountries: countriesAfterCollapses, conquestEvents } = checkForCollapses(countriesAfterAid, playerCountry!)
+    
+    // Verificar rebeliones en territorios conquistados
+    const { updatedCountries: countriesAfterRebellions, rebellionEvents } = checkTerritorialRebellions(countriesAfterCollapses, playerCountry!)
+    
+    // Aplicar costos de mantenimiento imperial
+    const { updatedCountries, maintenanceEvents } = applyImperialMaintenanceCosts(countriesAfterRebellions, playerCountry!)
+    
+    // Procesar eventos de rebeliones
+    if (rebellionEvents.length > 0) {
+      console.log(`🔥 ${rebellionEvents.length} eventos de rebelión generados`)
+      rebellionEvents.forEach(event => {
+        setGameEvents((prev) => [...prev, event])
+        setVisibleNotifications((prev) => [...prev.slice(-2), event])
+      })
+    }
+    
+    // Procesar eventos de mantenimiento
+    if (maintenanceEvents.length > 0) {
+      console.log(`💰 ${maintenanceEvents.length} eventos de mantenimiento generados`)
+      maintenanceEvents.forEach(event => {
+        setGameEvents((prev) => [...prev, event])
+        setVisibleNotifications((prev) => [...prev.slice(-2), event])
+      })
+    }
 
       if (conquestEvents.length > 0) {
         console.log("🏴 Conquistas automáticas detectadas:", conquestEvents.length)

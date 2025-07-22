@@ -58,7 +58,7 @@ export interface GameProgression {
 
 export interface GameEvent {
   id: string
-  type: "info" | "warning" | "error" | "success"
+  type: "info" | "warning" | "error" | "success" | "rebellion" | "economic"
   title: string
   description: string
   effects?: string[]

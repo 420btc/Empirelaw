@@ -72,14 +72,17 @@ export function calculateGDPGrowth(country: Country, countries: Country[], playe
 }
 
 export function applyGDPGrowth(countries: Country[], playerCountryId: string): Country[] {
-  return countries.map(country => {
+  let territorialContributions = 0
+  
+  // Primero calcular las contribuciones de territorios conquistados
+  const updatedCountries = countries.map(country => {
     const growthRate = calculateGDPGrowth(country, countries, playerCountryId)
     const gdpIncrease = Math.round(country.economy.gdp * growthRate)
     
-    // Aplicar ingresos de territorios conquistados al jugador
-    let playerBonus = 0
+    // Calcular contribución de territorios conquistados (15% del crecimiento)
     if (country.ownedBy === playerCountryId && country.id !== playerCountryId) {
-      playerBonus = gdpIncrease // El jugador recibe el 100% de lo que genera el territorio
+      const contribution = Math.round(gdpIncrease * 0.15) // 15% del crecimiento va al conquistador
+      territorialContributions += contribution
     }
 
     return {
@@ -88,11 +91,210 @@ export function applyGDPGrowth(countries: Country[], playerCountryId: string): C
         ...country.economy,
         gdp: Math.max(100, country.economy.gdp + gdpIncrease), // Mínimo 100B PIB
       },
-      // Metadata para tracking
       lastGDPGrowth: gdpIncrease,
-      playerBonus: playerBonus,
     }
   })
+  
+  // Aplicar las contribuciones territoriales al país del jugador
+  return updatedCountries.map(country => {
+    if (country.id === playerCountryId && territorialContributions > 0) {
+      return {
+        ...country,
+        economy: {
+          ...country.economy,
+          gdp: country.economy.gdp + territorialContributions,
+        },
+        territorialIncome: territorialContributions, // Para tracking
+      }
+    }
+    return country
+  })
+}
+
+//------------------------------------------------------------
+// Sistema de rebeliones en territorios conquistados
+//------------------------------------------------------------
+export function checkTerritorialRebellions(countries: Country[], playerCountryId: string): {
+  updatedCountries: Country[]
+  rebellionEvents: GameEvent[]
+} {
+  const rebellionEvents: GameEvent[] = []
+  let updatedCountries = [...countries]
+  
+  // Buscar territorios conquistados por el jugador
+  const conqueredTerritories = countries.filter(country => 
+    country.ownedBy === playerCountryId && country.id !== playerCountryId
+  )
+  
+  conqueredTerritories.forEach(territory => {
+    // Calcular probabilidad de rebelión basada en estabilidad y tiempo
+    const baseRebellionChance = territory.stability < 40 ? 0.15 : 0.05
+    const stabilityFactor = Math.max(0, (50 - territory.stability) / 100) // Más probable con baja estabilidad
+    const rebellionChance = Math.min(0.25, baseRebellionChance + stabilityFactor)
+    
+    if (Math.random() < rebellionChance) {
+      const rebellionStrength = Math.random() * 0.6 + 0.2 // Entre 20% y 80%
+      const stabilityLoss = Math.floor(rebellionStrength * 40) + 10
+      const economicDamage = Math.floor(territory.economy.gdp * rebellionStrength * 0.1)
+      
+      // Aplicar efectos de la rebelión
+      updatedCountries = updatedCountries.map(country => {
+        if (country.id === territory.id) {
+          return {
+            ...country,
+            stability: Math.max(0, country.stability - stabilityLoss),
+            economy: {
+              ...country.economy,
+              gdp: Math.max(100, country.economy.gdp - economicDamage)
+            }
+          }
+        }
+        return country
+      })
+      
+      // Si la rebelión es muy fuerte, el territorio puede independizarse
+      if (rebellionStrength > 0.7 && territory.stability - stabilityLoss <= 10) {
+        updatedCountries = updatedCountries.map(country => {
+          if (country.id === territory.id) {
+            return {
+              ...country,
+              ownedBy: undefined,
+              stability: 25, // Estabilidad mínima tras independencia
+              isSovereign: true
+            }
+          }
+          return country
+        })
+        
+        rebellionEvents.push({
+          id: `independence_rebellion_${Date.now()}`,
+          type: "rebellion",
+          title: "🔥 Rebelión de Independencia",
+          description: `${territory.name} se ha rebelado exitosamente y ha declarado su independencia`,
+          effects: [
+            `${territory.name} ya no está bajo tu control`,
+            "Movimiento independentista exitoso",
+            "Pérdida de ingresos territoriales",
+            "Ejemplo peligroso para otros territorios"
+          ],
+          timestamp: Date.now(),
+          countryEffects: {
+            [territory.id]: {
+              stabilityChange: 0, // Ya aplicado arriba
+              economyChange: 0
+            }
+          }
+        })
+      } else {
+        rebellionEvents.push({
+          id: `territorial_rebellion_${Date.now()}`,
+          type: "rebellion",
+          title: "⚡ Rebelión Territorial",
+          description: `Disturbios y protestas en ${territory.name} han causado inestabilidad`,
+          effects: [
+            `Estabilidad de ${territory.name} reducida en ${stabilityLoss}%`,
+            `Daño económico: ${economicDamage.toLocaleString()}B`,
+            "Resistencia a la ocupación",
+            "Costos de mantenimiento aumentados"
+          ],
+          timestamp: Date.now(),
+          countryEffects: {
+            [territory.id]: {
+              stabilityChange: -stabilityLoss,
+              economyChange: -economicDamage
+            }
+          }
+        })
+      }
+    }
+  })
+  
+  return { updatedCountries, rebellionEvents }
+}
+
+//------------------------------------------------------------
+// Sistema de costos de mantenimiento imperial
+//------------------------------------------------------------
+export function applyImperialMaintenanceCosts(countries: Country[], playerCountryId: string): {
+  updatedCountries: Country[]
+  maintenanceEvents: GameEvent[]
+} {
+  const maintenanceEvents: GameEvent[] = []
+  let updatedCountries = [...countries]
+  
+  // Buscar territorios conquistados por el jugador
+  const conqueredTerritories = countries.filter(country => 
+    country.ownedBy === playerCountryId && country.id !== playerCountryId
+  )
+  
+  if (conqueredTerritories.length === 0) {
+    return { updatedCountries, maintenanceEvents }
+  }
+  
+  const playerCountry = countries.find(c => c.id === playerCountryId)
+  if (!playerCountry) {
+    return { updatedCountries, maintenanceEvents }
+  }
+  
+  // Calcular costos de mantenimiento
+  const territoryCount = conqueredTerritories.length
+  const baseCostPerTerritory = 200 // Costo base por territorio
+  
+  // Escalado exponencial: más territorios = costos mucho mayores
+  const scalingFactor = Math.pow(1.3, territoryCount - 1) // Escalado exponencial
+  const totalMaintenanceCost = Math.floor(baseCostPerTerritory * territoryCount * scalingFactor)
+  
+  // Costo adicional por territorios inestables
+  const unstableTerritories = conqueredTerritories.filter(t => t.stability < 50)
+  const instabilityCost = unstableTerritories.length * 150
+  
+  const finalCost = totalMaintenanceCost + instabilityCost
+  
+  // Aplicar costos de mantenimiento
+  updatedCountries = updatedCountries.map(country => {
+    if (country.id === playerCountryId) {
+      const newGDP = Math.max(100, country.economy.gdp - finalCost)
+      const stabilityLoss = territoryCount > 5 ? Math.floor(territoryCount / 2) : 0 // Penalización por sobreextensión
+      
+      return {
+        ...country,
+        economy: {
+          ...country.economy,
+          gdp: newGDP
+        },
+        stability: Math.max(0, country.stability - stabilityLoss),
+        imperialMaintenanceCost: finalCost // Para tracking
+      }
+    }
+    return country
+  })
+  
+  // Generar evento de mantenimiento si el costo es significativo
+  if (finalCost > 500) {
+    const costPercentage = ((finalCost / playerCountry.economy.gdp) * 100).toFixed(1)
+    
+    maintenanceEvents.push({
+      id: `imperial_maintenance_${Date.now()}`,
+      type: "economic",
+      title: "💰 Costos de Mantenimiento Imperial",
+      description: `Mantener ${territoryCount} territorio${territoryCount > 1 ? 's' : ''} conquistado${territoryCount > 1 ? 's' : ''} requiere recursos significativos`,
+      effects: [
+        `Costo de mantenimiento: ${finalCost.toLocaleString()}B (${costPercentage}% del PIB)`,
+        `Territorios bajo control: ${territoryCount}`,
+        `Territorios inestables: ${unstableTerritories.length}`,
+        territoryCount > 5 ? "Sobreextensión imperial causando inestabilidad interna" : "Imperio dentro de límites manejables"
+      ],
+      timestamp: Date.now(),
+      countryEffects: {
+        [playerCountryId]: {
+          economyChange: -finalCost,
+          stabilityChange: territoryCount > 5 ? -Math.floor(territoryCount / 2) : 0
+        }
+      }
+    })
+  }
+  
+  return { updatedCountries, maintenanceEvents }
 }
 
 //------------------------------------------------------------
@@ -3620,6 +3822,59 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
 
+      // Verificar límites de alianzas para superpotencias
+      const sourceAlliances = source.alliances || []
+      const targetAlliances = target.alliances || []
+      
+      // Límites basados en el nivel de poder del país
+      const getAllianceLimit = (country: Country): number => {
+        if (country.economy.gdp >= 20000) return 3 // Superpotencias: máximo 3 alianzas
+        if (country.economy.gdp >= 15000) return 4 // Potencias mayores: máximo 4 alianzas
+        if (country.economy.gdp >= 10000) return 5 // Potencias regionales: máximo 5 alianzas
+        return 8 // Países menores: máximo 8 alianzas
+      }
+      
+      const sourceLimit = getAllianceLimit(source)
+      const targetLimit = getAllianceLimit(target)
+      
+      // Verificar si alguno de los países ha alcanzado su límite
+      if (sourceAlliances.length >= sourceLimit) {
+        return {
+          success: false,
+          updatedCountries: countries,
+          event: {
+            id: `alliance_limit_${Date.now()}`,
+            type: "error",
+            title: "🚫 Límite de Alianzas Alcanzado",
+            description: `${source.name} ha alcanzado su límite máximo de ${sourceLimit} alianzas simultáneas`,
+            effects: [
+              "Las superpotencias tienen límites en sus alianzas",
+              "Considera romper alianzas existentes primero",
+              "El poder excesivo genera desconfianza internacional"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+      
+      if (targetAlliances.length >= targetLimit) {
+        return {
+          success: false,
+          updatedCountries: countries,
+          event: {
+            id: `alliance_limit_target_${Date.now()}`,
+            type: "error",
+            title: "🚫 País Objetivo Saturado",
+            description: `${target.name} ha alcanzado su límite máximo de ${targetLimit} alianzas simultáneas`,
+            effects: [
+              `${target.name} no puede formar más alianzas`,
+              "Busca otros socios estratégicos disponibles"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+
       deductCostFromSource(action.cost)
 
       // Formar la alianza
@@ -4463,6 +4718,52 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
             timestamp: Date.now(),
           },
         }
+      }
+    }
+    
+    case "economic_aid": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+      
+      // Calcular beneficios basados en el costo de la ayuda
+      const aidAmount = action.cost
+      const stabilityBoost = Math.min(25, Math.max(8, Math.floor(aidAmount / 150))) // 8-25% según la cantidad
+      const economicBoost = Math.round(aidAmount * 0.7) // 70% del costo se convierte en PIB
+      const debtReduction = Math.max(2, Math.floor(aidAmount / 400)) // Reducción de deuda
+      
+      // Aplicar efectos al país objetivo
+      updated = updated.map((c) => {
+        if (c.id === target.id) {
+          return {
+            ...c,
+            economy: {
+              ...c.economy,
+              gdp: c.economy.gdp + economicBoost,
+              debt: Math.max(0, c.economy.debt - debtReduction),
+            },
+            stability: clamp(c.stability + stabilityBoost, 0, 100),
+          }
+        }
+        return c
+      })
+      
+      return {
+        success: true,
+        updatedCountries: updated,
+        event: {
+          id: `economic_aid_${Date.now()}`,
+          type: "success",
+          title: "🤝 Ayuda Económica Exitosa",
+          description: `${source.name} ha proporcionado ayuda económica vital a ${target.name}`,
+          effects: [
+            `PIB de ${target.name} aumentado en $${economicBoost}B`,
+            `Estabilidad de ${target.name} mejorada en ${stabilityBoost}%`,
+            `Deuda de ${target.name} reducida en ${debtReduction}%`,
+            "Relaciones diplomáticas fortalecidas",
+            "Confianza internacional restaurada"
+          ],
+          timestamp: Date.now(),
+        },
       }
     }
     

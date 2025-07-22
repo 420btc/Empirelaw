@@ -227,7 +227,7 @@ export function CountryPanel({ country, isPlayerCountry, countries = [] }: Count
                 <span className="text-gray-300">Alianzas:</span>
               </div>
               <div className="flex flex-wrap gap-1">
-                {country.alliances.slice(0, 4).map((allyId, index) => {
+                {country.alliances.map((allyId, index) => {
                   const allyCountry = countries.find(c => c.id === allyId)
                   const allyName = allyCountry ? allyCountry.name : allyId.toUpperCase()
                   return (
@@ -236,11 +236,6 @@ export function CountryPanel({ country, isPlayerCountry, countries = [] }: Count
                     </Badge>
                   )
                 })}
-                {country.alliances.length > 4 && (
-                  <Badge variant="outline" className="text-xs text-gray-400">
-                    +{country.alliances.length - 4} más
-                  </Badge>
-                )}
               </div>
             </div>
           )}
