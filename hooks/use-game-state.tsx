@@ -96,7 +96,7 @@ export function useGameState() {
     }
     
     // Verificar si hay zonas desestabilizadas (estabilidad < 30)
-    const destabilizedCountries = countries.filter(country => country.stability < 30)
+    const destabilizedCountries = countries.filter(country => country.stability < 15)
     const hasDestabilizedZones = destabilizedCountries.length > 0
     
     if (hasDestabilizedZones) {
@@ -198,7 +198,7 @@ export function useGameState() {
     // --- Verificar invasión del jugador ---
     if (playerCountry && !isGameOver) {
       const playerCountryData = countries.find(c => c.id === playerCountry)
-      if (playerCountryData && playerCountryData.stability < 30) {
+      if (playerCountryData && playerCountryData.stability < 15) {
         // Buscar países que puedan invadir al jugador
         const potentialInvaders = countries.filter(c => 
           c.id !== playerCountry && 
@@ -209,7 +209,7 @@ export function useGameState() {
         
         if (potentialInvaders.length > 0) {
           // Probabilidad de invasión basada en la estabilidad del jugador
-          const invasionChance = Math.max(0.1, (30 - playerCountryData.stability) / 100)
+          const invasionChance = Math.max(0.1, (15 - playerCountryData.stability) / 100)
           
           if (Math.random() < invasionChance) {
             // Seleccionar el invasor más fuerte
@@ -518,7 +518,7 @@ export function useGameState() {
       if (gameEvents.length < 20) {
         currentInterval = 5000
       } else {
-        const destabilizedCountries = countries.filter(country => country.stability < 30)
+        const destabilizedCountries = countries.filter(country => country.stability < 15)
         if (destabilizedCountries.length > 0) {
           currentInterval = 8000
         }

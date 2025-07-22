@@ -199,7 +199,7 @@ export function calculateChaosLevel(countries: Country[], recentEvents: GameEven
   const stabilityFactor = Math.max(0, 100 - avgStability) // 0-100
 
   // Factor 2: Número de países en crisis severa
-  const countriesInCrisis = countries.filter((c) => c.stability < 30 && !c.isSovereign).length
+  const countriesInCrisis = countries.filter((c) => c.stability < 15 && !c.isSovereign).length
   const crisisFactor = Math.min(100, (countriesInCrisis / countries.length) * 200) // 0-100
 
   // Factor 3: Eventos negativos recientes (últimos 5 minutos)
@@ -444,7 +444,7 @@ export function checkForCollapses(
   let updatedCountries = [...countries]
 
   // Primero aplicar ayuda mutua a países en crisis
-  const countriesInCrisis = countries.filter((c) => c.stability <= 30 && c.stability > 0 && !c.isSovereign)
+  const countriesInCrisis = countries.filter((c) => c.stability <= 15 && c.stability > 0 && !c.isSovereign)
 
   countriesInCrisis.forEach((country) => {
     if (country.alliances && country.alliances.length > 0) {
@@ -2682,7 +2682,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           requestValue += (request[r] || 0) * scarcity;
         });
         // Si la IA está en crisis económica, pide más
-        const isTargetInCrisis = target.economy.gdp < 800 || target.stability < 30;
+        const isTargetInCrisis = target.economy.gdp < 800 || target.stability < 15;
         if (isTargetInCrisis && requestValue > offerValue * 0.7) {
           aiAccept = false;
           aiReason = "Mi país está en crisis y no puedo aceptar esta oferta.";

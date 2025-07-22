@@ -59,6 +59,19 @@ export default function GeopoliticsGame() {
   const [recentAction, setRecentAction] = useState<GameAction | null>(null)
   const [showIntro, setShowIntro] = useState(true)
 
+  // Función personalizada de reinicio que resetea tanto el estado del juego como los estados locales
+  const handleRestart = () => {
+    restartGame() // Resetea el estado del juego
+    setShowCountrySelection(true) // Muestra el modal de selección de país
+    setShowIntro(true) // Muestra la intro
+    setHoveredCountry(null)
+    setShowDiplomaticChat(false)
+    setShowTradeCenter(false)
+    setShowEventHistory(false)
+    setShowAchievements(false)
+    setRecentAction(null)
+  }
+
   const handleCountrySelection = (country: Country) => {
     console.log("🏛️ handleCountrySelection llamado con:", country.name, country.id)
     setPlayerCountry(country.id)
@@ -255,7 +268,7 @@ export default function GeopoliticsGame() {
         isOpen={isGameOver}
         conquerorCountry={conquerorCountry}
         playerCountry={countries.find((c) => c.id === playerCountry)?.name || "Tu País"}
-        onRestart={restartGame}
+        onRestart={handleRestart}
       />
     </div>
   )
