@@ -21,7 +21,19 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  BarChart3,
 } from "lucide-react"
+import { TradingChart } from "@/components/trading-chart"
+
+interface MarketOrder {
+  id: string
+  type: 'buy' | 'sell'
+  resource: string
+  quantity: number
+  price: number
+  timestamp: number
+  status: 'pending' | 'filled' | 'cancelled'
+}
 
 interface WorldTradeCenterProps {
   playerCountry: Country
@@ -33,14 +45,21 @@ interface WorldTradeCenterProps {
 export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExecuted }: WorldTradeCenterProps) {
   const [activeOffers, setActiveOffers] = useState<TradeOffer[]>([])
   const [tradeHistory, setTradeHistory] = useState<TradeHistory[]>([])
+  const [marketOrders, setMarketOrders] = useState<MarketOrder[]>([])
+  const [selectedTradingResource, setSelectedTradingResource] = useState<string>("")
 
   // --- Persistencia en localStorage ---
-  // Cargar historial y ofertas activas al montar
+  // Cargar historial, ofertas activas y órdenes de mercado al montar
   useEffect(() => {
     const savedHistory = localStorage.getItem("tradeHistory")
     const savedOffers = localStorage.getItem("activeOffers")
+    const savedMarketOrders = localStorage.getItem("marketOrders")
+    const savedTradingResource = localStorage.getItem("selectedTradingResource")
+    
     if (savedHistory) setTradeHistory(JSON.parse(savedHistory))
     if (savedOffers) setActiveOffers(JSON.parse(savedOffers))
+    if (savedMarketOrders) setMarketOrders(JSON.parse(savedMarketOrders))
+    if (savedTradingResource) setSelectedTradingResource(savedTradingResource)
   }, [])
 
   // Guardar historial en localStorage cuando cambie
@@ -52,6 +71,35 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
   useEffect(() => {
     localStorage.setItem("activeOffers", JSON.stringify(activeOffers))
   }, [activeOffers])
+
+  // Guardar órdenes de mercado en localStorage cuando cambien
+  useEffect(() => {
+    localStorage.setItem("marketOrders", JSON.stringify(marketOrders))
+  }, [marketOrders])
+
+  // Guardar recurso de trading seleccionado
+  useEffect(() => {
+    localStorage.setItem("selectedTradingResource", selectedTradingResource)
+  }, [selectedTradingResource])
+
+  // Función para manejar nuevas órdenes de mercado
+  const handleMarketOrder = (order: MarketOrder) => {
+    setMarketOrders(prev => [...prev, order])
+    
+    // Agregar al historial de comercio
+    const newTrade: TradeHistory = {
+      id: order.id,
+      fromCountry: playerCountry.id,
+      toCountry: "market", // Mercado global
+      resource: order.resource,
+      quantity: order.quantity,
+      pricePerUnit: order.price,
+      totalValue: order.quantity * order.price,
+      timestamp: order.timestamp
+    }
+    
+    setTradeHistory(prev => [...prev, newTrade])
+  }
   const [resourcePrices, setResourcePrices] = useState<ResourcePrice[]>([])
   const [selectedResource, setSelectedResource] = useState<string>("")
   const [offerQuantity, setOfferQuantity] = useState<number>(0)
@@ -317,8 +365,9 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
 
         <CardContent className="flex-1 overflow-hidden">
           <Tabs defaultValue="market" className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="market">Mercado Global</TabsTrigger>
+              <TabsTrigger value="trading">Trading</TabsTrigger>
               <TabsTrigger value="trade">Crear Oferta</TabsTrigger>
               <TabsTrigger value="offers">Ofertas Activas</TabsTrigger>
               <TabsTrigger value="history">Historial</TabsTrigger>
@@ -390,6 +439,40 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
                     </ScrollArea>
                   </CardContent>
                 </Card>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="trading" className="flex-1 overflow-hidden">
+              <div className="h-full">
+                {selectedTradingResource ? (
+                  <TradingChart
+                    resource={selectedTradingResource}
+                    currentPrice={resourcePrices.find(p => p.resource === selectedTradingResource)?.currentPrice || 100}
+                    onOrderPlaced={handleMarketOrder}
+                  />
+                ) : (
+                  <Card className="bg-slate-800/50 h-full flex items-center justify-center">
+                    <CardContent className="text-center">
+                      <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                      <h3 className="text-xl font-semibold text-white mb-2">Selecciona un Recurso</h3>
+                      <p className="text-gray-400 mb-6">Elige un recurso para ver sus gráficas de precios y realizar órdenes de mercado</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-w-2xl">
+                        {resourcePrices.slice(0, 12).map((price) => (
+                          <Button
+                            key={price.resource}
+                            variant="outline"
+                            onClick={() => setSelectedTradingResource(price.resource)}
+                            className="p-4 h-auto flex flex-col items-center gap-2 bg-slate-700/50 hover:bg-slate-600/50 border-slate-600"
+                          >
+                            <span className="text-2xl">{getResourceIcon(price.resource)}</span>
+                            <span className="text-sm text-white capitalize">{price.resource}</span>
+                            <span className="text-xs text-green-400">${price.currentPrice}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </TabsContent>
 
