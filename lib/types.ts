@@ -44,6 +44,16 @@ export interface Country {
   playerBonus?: number // Bonus que genera para el jugador (si es territorio conquistado)
 }
 
+export interface GameProgression {
+  totalXP: number
+  level: number
+  achievements: string[] // IDs de logros desbloqueados
+  unlockedUpgrades: string[]
+  lastAchievementTime: number
+  streak: number // Racha de acciones exitosas
+  playTime: number // Tiempo total jugado en minutos
+}
+
 export interface GameEvent {
   id: string
   type: "info" | "warning" | "error" | "success"

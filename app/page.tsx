@@ -10,6 +10,8 @@ import { GameHeader } from "@/components/game-header"
 import { CountrySelectionModal } from "@/components/country-selection-modal"
 import { DiplomaticChat } from "@/components/diplomatic-chat"
 import { WorldTradeCenter } from "@/components/world-trade-center"
+import { AchievementNotifications } from "@/components/achievement-notifications"
+import { LevelUpNotification } from "@/components/level-up-notification"
 import { useGameState } from "@/hooks/use-game-state"
 import type { Country, TradeOffer } from "@/lib/types"
 
@@ -29,6 +31,12 @@ export default function GeopoliticsGame() {
     actionHistory,
     updateDiplomaticRelations,
     executeTradeOffer,
+    // Sistema de gamificación
+    achievements,
+    gameProgression,
+    recentAchievements,
+    showLevelUp,
+    playerLevel,
   } = useGameState()
 
   const [showCountrySelection, setShowCountrySelection] = useState(true)
@@ -94,6 +102,8 @@ export default function GeopoliticsGame() {
           onShowEventHistory={() => setShowEventHistory(true)}
           onShowDiplomacy={() => setShowDiplomaticChat(true)}
           onShowTrade={() => setShowTradeCenter(true)}
+          playerLevel={playerLevel}
+          gameProgression={gameProgression}
         />
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
@@ -154,6 +164,19 @@ export default function GeopoliticsGame() {
 
         {/* Notificaciones flotantes - SOLO visibleNotifications */}
         <EventNotifications events={visibleNotifications} onDismiss={dismissNotification} />
+
+        {/* Sistema de gamificación - Notificaciones de logros */}
+        <AchievementNotifications 
+          achievements={recentAchievements} 
+          onDismiss={(id) => console.log('Achievement dismissed:', id)} 
+        />
+
+        {/* Notificación de subida de nivel */}
+        <LevelUpNotification 
+          show={showLevelUp} 
+          playerLevel={playerLevel}
+          onDismiss={() => console.log('Level up dismissed')}
+        />
       </div>
 
       {/* Modales */}

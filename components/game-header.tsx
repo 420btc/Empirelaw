@@ -20,6 +20,8 @@ import {
   AlertTriangle,
   Shield,
   MessageCircle,
+  Star,
+  Zap,
 } from "lucide-react"
 
 interface GameHeaderProps {
@@ -30,9 +32,25 @@ interface GameHeaderProps {
   onShowEventHistory: () => void
   onShowDiplomacy?: () => void
   onShowTrade?: () => void
+  playerLevel?: {
+    level: number
+    xp: number
+    xpToNext: number
+    title: string
+    perks: string[]
+  }
+  gameProgression?: {
+    totalXP: number
+    level: number
+    achievements: string[]
+    unlockedUpgrades: string[]
+    lastAchievementTime: number
+    streak: number
+    playTime: number
+  }
 }
 
-export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade }: GameHeaderProps) {
+export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade, playerLevel, gameProgression }: GameHeaderProps) {
   const [showHistory, setShowHistory] = useState(false)
 
   const getActionIcon = (actionType: string) => {
@@ -104,12 +122,47 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
               </div>
 
               {playerCountry && (
-                <div className="flex items-center gap-2">
-                  <Crown className="w-4 h-4 text-yellow-400" />
-                  <span className="text-white font-semibold">{playerCountry.name}</span>
-                  <Badge variant="outline" className="border-cyan-500 text-cyan-400 text-xs">
-                    {playerCountry.president}
-                  </Badge>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Crown className="w-4 h-4 text-yellow-400" />
+                    <span className="text-white font-semibold">{playerCountry.name}</span>
+                    <Badge variant="outline" className="border-cyan-500 text-cyan-400 text-xs">
+                      {playerCountry.president}
+                    </Badge>
+                  </div>
+
+                  {/* Progresión del jugador */}
+                  {playerLevel && gameProgression && (
+                    <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1 rounded-lg border border-yellow-500/30">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-yellow-400" />
+                        <span className="text-yellow-400 font-bold text-sm">Lv.{playerLevel.level}</span>
+                      </div>
+                      
+                      <div className="flex flex-col">
+                        <div className="text-xs text-gray-300 truncate max-w-24" title={playerLevel.title}>
+                          {playerLevel.title.replace(/[🌱🏛️⚔️🌟👑🌍🔥⚡🌌👹]/g, '')}
+                        </div>
+                        <div className="w-16 h-1 bg-gray-700 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500"
+                            style={{ 
+                              width: playerLevel.xpToNext > 0 
+                                ? `${Math.max(10, 100 - (playerLevel.xpToNext / (playerLevel.xpToNext + 50)) * 100)}%`
+                                : "100%"
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {gameProgression.streak > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Zap className="w-3 h-3 text-orange-400" />
+                          <span className="text-orange-400 font-bold text-xs">{gameProgression.streak}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

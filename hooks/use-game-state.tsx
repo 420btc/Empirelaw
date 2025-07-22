@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import type { Country, GameEvent, GameAction, GameStats, ActionHistory, TradeOffer } from "@/lib/types"
 import { initialCountries } from "@/lib/data/countries"
 import { generateRandomEvent, processAction, checkForCollapses, calculateChaosLevel, applyGDPGrowth, provideMutualAidToCriticalCountries } from "@/lib/game-engine"
+import { ACHIEVEMENTS, checkAchievements, calculateXPGain, getPlayerLevel, type Achievement } from "@/lib/achievement-system"
+import type { GameProgression } from "@/lib/types"
 
 export function useGameState() {
   const [countries, setCountries] = useState<Country[]>(initialCountries)
@@ -29,6 +31,20 @@ export function useGameState() {
   const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastPauseTimeRef = useRef<number>(0)
   const isEventsPausedRef = useRef<boolean>(false)
+
+  // Sistema de progresión y logros
+  const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS)
+  const [gameProgression, setGameProgression] = useState<GameProgression>({
+    totalXP: 0,
+    level: 1,
+    achievements: [],
+    unlockedUpgrades: [],
+    lastAchievementTime: 0,
+    streak: 0,
+    playTime: 0
+  })
+  const [recentAchievements, setRecentAchievements] = useState<Achievement[]>([])
+  const [showLevelUp, setShowLevelUp] = useState(false)
 
   // Calculate global stats including chaos level
   useEffect(() => {
@@ -552,6 +568,38 @@ export function useGameState() {
       console.log("🎯 Ejecutando acción:", action.type)
       const result = processAction(action, countries)
 
+      // 🎮 SISTEMA DE GAMIFICACIÓN - Calcular XP y progresión
+      const impact = action.type === "conquest" || action.type === "special_conquest" ? 3 : 1
+      const xpGained = calculateXPGain(action.type, result.success, impact)
+      const oldLevel = getPlayerLevel(gameProgression.totalXP).level
+      const newTotalXP = gameProgression.totalXP + xpGained
+      const newLevel = getPlayerLevel(newTotalXP).level
+
+      // Actualizar progresión con feedback inmediato
+      setGameProgression(prev => ({
+        ...prev,
+        totalXP: newTotalXP,
+        level: newLevel,
+        streak: result.success ? prev.streak + 1 : Math.max(0, prev.streak - 1)
+      }))
+
+      // 🎊 SUBIDA DE NIVEL - Feedback emocionante
+      if (newLevel > oldLevel) {
+        console.log(`🎊 ¡SUBIDA DE NIVEL! ${oldLevel} → ${newLevel}`)
+        setShowLevelUp(true)
+        setTimeout(() => setShowLevelUp(false), 5000)
+        
+        // Recompensa por subir de nivel
+        const levelUpBonus = newLevel * 200
+        if (playerCountry) {
+          setCountries(prev => prev.map(c => 
+            c.id === playerCountry 
+              ? { ...c, economy: { ...c.economy, gdp: c.economy.gdp + levelUpBonus } }
+              : c
+          ))
+        }
+      }
+
       const sourceCountry = countries.find((c) => c.id === action.sourceCountry)
       const targetCountry = countries.find((c) => c.id === action.targetCountry)
 
@@ -566,7 +614,9 @@ export function useGameState() {
         cost: action.cost,
         success: result.success,
         timestamp: action.timestamp,
-        result: result.event?.description,
+        result: result.success 
+          ? `${result.event?.description} 🎯 +${xpGained} XP` 
+          : result.event?.description,
         severity: action.severity || 0,
       }
 
@@ -581,6 +631,51 @@ export function useGameState() {
           setGameEvents((prev) => [...prev, result.event!])
           setVisibleNotifications((prev) => [...prev.slice(-2), result.event!])
         }
+
+        // 🏆 VERIFICAR LOGROS - Feedback instantáneo
+        setTimeout(() => {
+          const playerCountryData = result.updatedCountries.find(c => c.id === playerCountry)
+          if (playerCountryData) {
+            const { updatedAchievements, newUnlocks } = checkAchievements(
+              achievements,
+              playerCountryData,
+              result.updatedCountries,
+              gameEvents,
+              [...actionHistory, historyEntry],
+              gameStats
+            )
+            
+            setAchievements(updatedAchievements)
+            
+            if (newUnlocks.length > 0) {
+              console.log(`🏆 ¡LOGROS DESBLOQUEADOS! ${newUnlocks.map(a => a.name).join(', ')}`)
+              setRecentAchievements(prev => [...prev, ...newUnlocks])
+              
+              // Aplicar recompensas de logros
+              newUnlocks.forEach(achievement => {
+                if (achievement.reward.type === "money") {
+                  setCountries(prev => prev.map(c => 
+                    c.id === playerCountry 
+                      ? { ...c, economy: { ...c.economy, gdp: c.economy.gdp + achievement.reward.amount } }
+                      : c
+                  ))
+                } else if (achievement.reward.type === "stability") {
+                  setCountries(prev => prev.map(c => 
+                    c.id === playerCountry 
+                      ? { ...c, stability: Math.min(100, c.stability + achievement.reward.amount) }
+                      : c
+                  ))
+                }
+              })
+              
+              // Auto-dismiss logros después de 8 segundos
+              setTimeout(() => {
+                setRecentAchievements(prev => prev.filter(a => !newUnlocks.includes(a)))
+              }, 8000)
+            }
+          }
+        }, 100)
+
       } else {
         console.log("❌ Acción falló")
         if (result.event) {
@@ -589,7 +684,7 @@ export function useGameState() {
         }
       }
     },
-    [countries],
+    [countries, playerCountry, gameProgression.totalXP, achievements, gameEvents, actionHistory, gameStats],
   )
 
   const executeTradeOffer = useCallback(
@@ -707,5 +802,11 @@ export function useGameState() {
     dismissNotification,
     updateDiplomaticRelations,
     executeTradeOffer,
+    // 🎮 Sistema de Gamificación
+    achievements,
+    gameProgression,
+    recentAchievements,
+    showLevelUp,
+    playerLevel: getPlayerLevel(gameProgression.totalXP),
   }
 }
