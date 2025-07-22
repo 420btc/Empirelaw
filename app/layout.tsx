@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Analytics } from '@vercel/analytics/react'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -16,7 +17,10 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/images/icconoweb.png" type="image/png" />
       </head>
-      <body className="h-full">{children}</body>
+      <body className="h-full">
+        {children}
+        <Analytics />
+      </body>
     </html>
   )
 }
