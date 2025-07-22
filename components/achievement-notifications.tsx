@@ -11,76 +11,50 @@ interface AchievementNotificationsProps {
   onDismiss?: (achievementId: string) => void
 }
 
-interface QueuedAchievement extends Achievement {
-  isVisible: boolean
-  showTime: number
-}
-
 export function AchievementNotifications({ achievements, onDismiss }: AchievementNotificationsProps) {
-  const [queuedAchievements, setQueuedAchievements] = useState<QueuedAchievement[]>([])
-  const [visibleAchievements, setVisibleAchievements] = useState<QueuedAchievement[]>([])
-  const timeoutRefs = useRef<NodeJS.Timeout[]>([])
+  const [visibleAchievements, setVisibleAchievements] = useState<Achievement[]>([])
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Sistema de cascada: cuando llegan nuevos logros, los ponemos en cola
+  // Sistema simplificado: mostrar todos los logros a la vez
   useEffect(() => {
     if (achievements.length === 0) {
-      // Si no hay logros, limpiar todo
-      setQueuedAchievements([])
       setVisibleAchievements([])
-      timeoutRefs.current.forEach(timeout => clearTimeout(timeout))
-      timeoutRefs.current = []
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
       return
     }
 
-    // Detectar nuevos logros que no están en la cola actual
-    const currentIds = queuedAchievements.map(a => a.id)
+    // Detectar nuevos logros
+    const currentIds = visibleAchievements.map(a => a.id)
     const newAchievements = achievements.filter(a => !currentIds.includes(a.id))
 
     if (newAchievements.length > 0) {
-      console.log(`🏆 Nuevos logros detectados: ${newAchievements.length}`)
+      console.log(`🏆 Mostrando ${newAchievements.length} logros simultáneamente`)
       
-      // Agregar nuevos logros a la cola con cascada MÁS LENTA
-      const newQueuedAchievements = newAchievements.map((achievement, index) => ({
-        ...achievement,
-        isVisible: false,
-        showTime: Date.now() + (index * 4000) // 4 segundos entre cada logro (más lento)
-      }))
+      // Mostrar todos los nuevos logros inmediatamente
+      setVisibleAchievements(prev => [...prev, ...newAchievements])
 
-      setQueuedAchievements(prev => [...prev, ...newQueuedAchievements])
-
-      // Programar la aparición escalonada
-      newQueuedAchievements.forEach((queuedAchievement, index) => {
-        const timeout = setTimeout(() => {
-          console.log(`🎊 Mostrando logro: ${queuedAchievement.name}`)
-          
-          setQueuedAchievements(prev => 
-            prev.map(qa => 
-              qa.id === queuedAchievement.id 
-                ? { ...qa, isVisible: true }
-                : qa
-            )
-          )
-          
-          setVisibleAchievements(prev => [...prev, { ...queuedAchievement, isVisible: true }])
-
-          // Auto-dismiss después de 4 segundos (más rápido)
-          const dismissTimeout = setTimeout(() => {
-            handleDismiss(queuedAchievement.id)
-          }, 4000)
-          
-          timeoutRefs.current.push(dismissTimeout)
-
-        }, index * 4000) // 4 segundos entre cada logro
-        
-        timeoutRefs.current.push(timeout)
-      })
+      // Auto-dismiss todos después de 2.5 segundos
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+      
+      timeoutRef.current = setTimeout(() => {
+        console.log(`🎊 Ocultando todos los logros`)
+        setVisibleAchievements([])
+        timeoutRef.current = null
+      }, 2500) // 2.5 segundos
     }
-  }, [achievements])
+  }, [achievements, visibleAchievements])
 
-  // Limpiar timeouts al desmontar
+  // Limpiar timeout al desmontar
   useEffect(() => {
     return () => {
-      timeoutRefs.current.forEach(timeout => clearTimeout(timeout))
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
     }
   }, [])
 
@@ -114,9 +88,8 @@ export function AchievementNotifications({ achievements, onDismiss }: Achievemen
   const handleDismiss = (achievementId: string) => {
     console.log(`🗑️ Ocultando logro: ${achievementId}`)
     
-    // Remover de ambas listas
+    // Remover de la lista visible
     setVisibleAchievements(prev => prev.filter(a => a.id !== achievementId))
-    setQueuedAchievements(prev => prev.filter(a => a.id !== achievementId))
     
     onDismiss?.(achievementId)
   }
@@ -199,10 +172,10 @@ export function AchievementNotifications({ achievements, onDismiss }: Achievemen
                 {/* Barra de tiempo restante MÁS PEQUEÑA */}
                 <div className="mt-1 w-full h-0.5 bg-gray-800 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-yellow-500 to-red-500 transition-all duration-[4000ms] ease-linear"
+                    className="h-full bg-gradient-to-r from-yellow-500 to-red-500 transition-all duration-[2500ms] ease-linear"
                     style={{ 
                       width: "100%",
-                      animation: "shrink 4s linear forwards"
+                      animation: "shrink 2.5s linear forwards"
                     }}
                   />
                 </div>

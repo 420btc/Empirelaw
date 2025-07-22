@@ -180,12 +180,12 @@ export function CountryPanel({ country, isPlayerCountry }: CountryPanelProps) {
             <p className="font-semibold text-white">${country.economy.gdp}B PIB</p>
 
             {/* Nuevo: Mostrar deuda */}
-            <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center justify-between mt-1 gap-2">
               <div className="flex items-center gap-2 text-sm">
                 <TrendingDown className="w-4 h-4 text-red-400" />
                 <span className="text-gray-300">Deuda:</span>
               </div>
-              <span className={`font-semibold ${getDebtColor(country.economy.debt)}`}>{country.economy.debt}% PIB</span>
+              <span className={`text-xs font-semibold truncate max-w-[80px] ${getDebtColor(country.economy.debt)}`}>{country.economy.debt}% PIB</span>
             </div>
 
             {country.economy.debt > 100 && (

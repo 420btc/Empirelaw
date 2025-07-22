@@ -284,7 +284,7 @@ export function WorldMap({
         <ComposableMap
           projection="geoMercator"
           projectionConfig={{
-            scale: 120,
+            scale: 145,
             center: [0, 20],
           }}
           className="w-full h-full"

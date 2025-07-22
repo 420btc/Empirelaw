@@ -95,7 +95,7 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
   if (visibleEvents.length === 0) return null
 
   return (
-    <div className="fixed bottom-4 right-4 space-y-3 z-50 max-w-sm">
+    <div className="fixed bottom-4 left-4 space-y-3 z-50 max-w-sm">
       {visibleEvents.map((event, index) => {
         const Icon = getEventIcon(event.type)
         const isAnimatingOut = animatingOut.has(event.id)
@@ -109,8 +109,8 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
               transform transition-all duration-300 ease-out
               ${
                 isAnimatingOut
-                  ? "translate-x-full opacity-0 scale-95"
-                  : "translate-x-0 opacity-100 scale-100 animate-in slide-in-from-right"
+                  ? "-translate-x-full opacity-0 scale-95"
+                  : "translate-x-0 opacity-100 scale-100 animate-in slide-in-from-left"
               }
               hover:scale-105 hover:shadow-xl
             `}

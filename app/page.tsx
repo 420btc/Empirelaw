@@ -32,6 +32,7 @@ export default function GeopoliticsGame() {
     actionHistory,
     updateDiplomaticRelations,
     executeTradeOffer,
+    markEventsAsSeen, // Nueva función
     // Sistema de gamificación
     achievements,
     gameProgression,
@@ -116,7 +117,10 @@ export default function GeopoliticsGame() {
           gameStats={gameStats}
           actionHistory={actionHistory}
           events={gameEvents} // Cronología completa para el badge
-                      onShowEventHistory={() => setShowEventHistory(true)}
+                      onShowEventHistory={() => {
+              setShowEventHistory(true)
+              markEventsAsSeen() // Marcar eventos como vistos al abrir el historial
+            }}
             onShowDiplomacy={() => setShowDiplomaticChat(true)}
             onShowTrade={() => setShowTradeCenter(true)}
             onShowAchievements={() => setShowAchievements(true)}
@@ -125,7 +129,7 @@ export default function GeopoliticsGame() {
         />
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
-          <div className="lg:col-span-3 relative">
+          <div className="lg:col-span-3 relative h-[600px] lg:h-[720px]">
             <WorldMap
               countries={countries}
               selectedCountry={selectedCountry}
@@ -164,7 +168,7 @@ export default function GeopoliticsGame() {
 
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[600px] lg:max-h-[720px] overflow-y-auto scrollbar-hide">
             <CountryPanel
               country={selectedCountry ? countries.find((c) => c.id === selectedCountry) || null : null}
               isPlayerCountry={selectedCountry === playerCountry}

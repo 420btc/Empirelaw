@@ -789,6 +789,13 @@ export function useGameState() {
 
   const ownedTerritories = countries.filter((country) => country.ownedBy === playerCountry)
 
+  // Función para marcar eventos como vistos
+  const markEventsAsSeen = useCallback(() => {
+    setGameEvents(prevEvents => 
+      prevEvents.map(event => ({ ...event, seen: true }))
+    )
+  }, [])
+
   return {
     countries,
     selectedCountry,
@@ -804,6 +811,7 @@ export function useGameState() {
     dismissNotification,
     updateDiplomaticRelations,
     executeTradeOffer,
+    markEventsAsSeen, // Nueva función
     // 🎮 Sistema de Gamificación
     achievements,
     gameProgression,

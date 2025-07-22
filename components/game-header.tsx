@@ -230,7 +230,7 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
                     variant="outline"
                     size="sm"
                     onClick={onShowDiplomacy}
-                    className="border-red-600 hover:border-red-500 bg-transparent h-7 px-2"
+                    className="bg-red-600 hover:bg-red-700 border-red-500 text-white font-semibold h-7 px-2 shadow-lg"
                   >
                     <MessageCircle className="w-3 h-3 mr-1" />
                     <span className="text-xs">Diplomacia</span>
@@ -242,7 +242,7 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
                     variant="outline"
                     size="sm"
                     onClick={onShowTrade}
-                    className="border-green-600 hover:border-green-500 bg-transparent h-7 px-2"
+                    className="bg-green-600 hover:bg-green-700 border-green-500 text-white font-semibold h-7 px-2 shadow-lg"
                   >
                     <TrendingUp className="w-3 h-3 mr-1" />
                     <span className="text-xs">Comercio</span>
@@ -253,18 +253,21 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
                   variant="outline"
                   size="sm"
                   onClick={onShowEventHistory}
-                  className="border-purple-600 hover:border-purple-500 relative bg-transparent h-7 px-2"
+                  className="bg-purple-600 hover:bg-purple-700 border-purple-500 text-white font-semibold relative h-7 px-2 shadow-lg"
                 >
                   <Bell className="w-3 h-3 mr-1" />
                   <span className="text-xs">Eventos</span>
-                  {events.length > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs animate-pulse"
-                    >
-                      {events.length > 9 ? "9+" : events.length}
-                    </Badge>
-                  )}
+                  {(() => {
+                    const unseenCount = events.filter(event => !event.seen).length
+                    return unseenCount > 0 && (
+                      <Badge
+                        variant="destructive"
+                        className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs animate-pulse"
+                      >
+                        {unseenCount > 99 ? "99+" : unseenCount}
+                      </Badge>
+                    )
+                  })()}
                 </Button>
 
                 <Button
@@ -282,7 +285,7 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
                   variant="outline"
                   size="sm"
                   onClick={onShowAchievements}
-                  className="border-yellow-600 hover:border-yellow-500 h-7 px-2"
+                  className="bg-yellow-600 hover:bg-yellow-700 border-yellow-500 text-white font-semibold h-7 px-2 shadow-lg"
                 >
                   <Star className="w-3 h-3 mr-1" />
                   <span className="text-xs">Logros</span>

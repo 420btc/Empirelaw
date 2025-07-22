@@ -83,6 +83,7 @@ export interface GameEvent {
   isPlayerTriggered?: boolean // Si fue causado por acciones del jugador
   targetedCountry?: string // País específicamente afectado por karma
   chaosLevel?: number // Nivel de caos cuando se generó
+  seen?: boolean // Si el evento ha sido visto por el jugador
 }
 
 export interface GameAction {
