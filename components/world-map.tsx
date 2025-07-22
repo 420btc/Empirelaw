@@ -93,6 +93,16 @@ export function WorldMap({
     israel: [34, 31],
     indonesia: [113, -0],
     philippines: [121, 13],
+    // NUEVOS PAÍSES AÑADIDOS
+    greece: [22, 39],
+    algeria: [3, 28],
+    niger: [8, 16],
+    syria: [38, 35],
+    bulgaria: [25, 43],
+    romania: [25, 46],
+    croatia: [15, 45],
+    yemen: [48, 15],
+    afghanistan: [67, 33],
   }
 
   // Efecto de parpadeo para el país seleccionado
@@ -247,6 +257,16 @@ export function WorldMap({
       "578": "norway", // Noruega
       "360": "indonesia", // Indonesia
       "608": "philippines", // Filipinas
+      // NUEVOS PAÍSES AÑADIDOS
+      "300": "greece", // Grecia
+      "012": "algeria", // Argelia
+      "562": "niger", // Níger
+      "760": "syria", // Siria
+      "100": "bulgaria", // Bulgaria
+      "642": "romania", // Rumanía
+      "191": "croatia", // Croacia
+      "887": "yemen", // Yemen
+      "004": "afghanistan", // Afganistán
     }
 
     return countryMapping[geoId] || null
