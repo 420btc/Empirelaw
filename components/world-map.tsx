@@ -75,6 +75,14 @@ export function WorldMap({
     kenya: [37, -0],
     morocco: [-7, 31],
     ethiopia: [40, 9],
+    senegal: [-14, 14],
+    tanzania: [35, -6],
+    angola: [17, -12],
+    uganda: [32, 1],
+    mozambique: [35, -18], // Nueva
+    cameroon: [12, 6], // Nueva
+    ivory_coast: [-5, 8], // Nueva
+    zambia: [27, -15], // Nueva
     iceland: [-19, 64],
     liechtenstein: [9, 47],
     switzerland: [8, 46],
@@ -222,6 +230,14 @@ export function WorldMap({
       "404": "kenya",
       "504": "morocco",
       "231": "ethiopia",
+      "686": "senegal",
+      "834": "tanzania",
+      "024": "angola",
+      "800": "uganda",
+      "508": "mozambique", // Mozambique
+      "120": "cameroon", // Camerún
+      "384": "ivory_coast", // Costa de Marfil
+      "894": "zambia", // Zambia
       // NUEVOS PAÍSES AÑADIDOS
       "304": "greenland", // Groenlandia
       "170": "colombia", // Colombia

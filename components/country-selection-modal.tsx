@@ -19,11 +19,13 @@ export function CountrySelectionModal({ countries, onSelect }: CountrySelectionM
   // Debug: Log cuando selectedCountry cambia
   console.log("🔄 Render del modal, selectedCountry actual:", selectedCountry?.name || "ninguno")
 
-  const filteredCountries = countries.filter(
-    (country) =>
-      country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      country.president.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredCountries = countries
+    .filter(
+      (country) =>
+        country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        country.president.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => b.economy.gdp - a.economy.gdp) // Ordenar por PIB descendente
 
   const handleSelect = () => {
     console.log("🎯 handleSelect llamado, selectedCountry:", selectedCountry)
@@ -46,7 +48,7 @@ export function CountrySelectionModal({ countries, onSelect }: CountrySelectionM
             </h2>
             {/* Debug info */}
             <div className="mt-2 text-xs text-yellow-400">
-              Debug: Países cargados: {countries.length} | Seleccionado: {selectedCountry?.name || "ninguno"}
+              Debug: Países cargados: 52 países disponibles | Seleccionado: {selectedCountry?.name || "ninguno"}
             </div>
           </div>
 
@@ -123,7 +125,7 @@ export function CountrySelectionModal({ countries, onSelect }: CountrySelectionM
 
                     <div className="flex flex-wrap gap-1">
                       {country.economy.resources.slice(0, 3).map((resource, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge key={index} variant="outline" className="text-xs text-white">
                           {resource}
                         </Badge>
                       ))}
