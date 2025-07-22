@@ -115,24 +115,10 @@ export function WorldMap({
       return
     }
 
-    // Determinar duración basada en el tipo de acción
-    const getAnimationDuration = (actionType: string): number => {
-      switch (actionType) {
-        case "military_action":
-        case "naval_blockade":
-        case "cyber_attack":
-        case "biological_warfare":
-          return 2000 // 2 segundos para acciones militares
-        case "economic_sanction":
-        case "trade_embargo":
-          return 1500 // 1.5 segundos para acciones económicas
-        case "diplomatic_alliance":
-        case "diplomatic_message":
-          return 1000 // 1 segundo para diplomacia
-        default:
-          return 1800 // 1.8 segundos por defecto
-      }
-    }
+         // Duración simple y rápida para todas las acciones
+     const getAnimationDuration = (actionType: string): number => {
+       return 800 // 0.8 segundos para todas las acciones - más rápido y simple
+     }
 
     const newAnimation: MissileAnimation = {
       id: `missile_${Date.now()}`,
@@ -143,7 +129,7 @@ export function WorldMap({
       duration: getAnimationDuration(recentAction.type)
     }
 
-    console.log(`🚀 Creando animación de misil: ${recentAction.sourceCountry} → ${recentAction.targetCountry}`)
+    console.log(`🚀 Creando animación SIMPLE: ${recentAction.sourceCountry} → ${recentAction.targetCountry} (${recentAction.type})`)
     
     setActiveAnimations(prev => [...prev, newAnimation])
 
@@ -248,33 +234,16 @@ export function WorldMap({
     return countryMapping[geoId] || null
   }
 
-  // Función para generar path curvo entre dos puntos (efecto misil)
-  const generateMissilePath = (start: [number, number], end: [number, number], progress: number): string => {
+  // Función para generar línea simple entre dos puntos
+  const generateSimplePath = (start: [number, number], end: [number, number], progress: number): string => {
     const [x1, y1] = start
     const [x2, y2] = end
     
-    // Calcular punto medio elevado para crear la curva
-    const midX = (x1 + x2) / 2
-    const midY = (y1 + y2) / 2 - Math.abs(x2 - x1) * 0.3 // Elevar la curva
-    
-    // Calcular posición actual basada en el progreso (0-1)
+    // Línea recta simple desde inicio hasta posición actual
     const currentX = x1 + (x2 - x1) * progress
-    const currentY = y1 + (y2 - y1) * progress - Math.sin(progress * Math.PI) * Math.abs(x2 - x1) * 0.3
+    const currentY = y1 + (y2 - y1) * progress
     
-    // Crear path desde inicio hasta posición actual
-    if (progress < 0.5) {
-      // Primera mitad: desde inicio hasta punto medio
-      const t = progress * 2
-      const cx = x1 + (midX - x1) * t
-      const cy = y1 + (midY - y1) * t
-      return `M ${x1} ${y1} Q ${cx} ${cy} ${currentX} ${currentY}`
-    } else {
-      // Segunda mitad: desde punto medio hasta destino
-      const t = (progress - 0.5) * 2
-      const cx = midX + (x2 - midX) * t
-      const cy = midY + (y2 - midY) * t
-      return `M ${x1} ${y1} Q ${midX} ${midY} ${currentX} ${currentY}`
-    }
+    return `M ${x1} ${y1} L ${currentX} ${currentY}`
   }
 
   // Función para obtener color del misil basado en tipo de acción
@@ -367,72 +336,49 @@ export function WorldMap({
             
             if (!sourceCoords || !targetCoords) return null
             
-            const missilePath = generateMissilePath(sourceCoords, targetCoords, progress)
-            const missileColor = getMissileColor(animation.actionType)
+            const simplePath = generateSimplePath(sourceCoords, targetCoords, progress)
+            const lineColor = getMissileColor(animation.actionType)
             
             return (
               <g key={animation.id}>
-                {/* Línea de trayectoria (más tenue) */}
+                {/* Línea simple y delgada */}
                 <path
-                  d={generateMissilePath(sourceCoords, targetCoords, 1)}
+                  d={simplePath}
                   fill="none"
-                  stroke={missileColor}
-                  strokeWidth="1"
-                  strokeOpacity="0.3"
-                  strokeDasharray="5,5"
+                  stroke={lineColor}
+                  strokeWidth="2"
+                  strokeOpacity="0.8"
                 />
                 
-                {/* Línea del misil (brillante) */}
-                <path
-                  d={missilePath}
-                  fill="none"
-                  stroke={missileColor}
-                  strokeWidth="3"
-                  strokeOpacity="0.9"
-                  filter="url(#glow)"
-                />
-                
-                {/* Punto del misil (cabeza) */}
-                {progress > 0 && (
+                {/* Punto del proyectil (pequeño) */}
+                {progress > 0 && progress < 1 && (
                   <circle
                     cx={sourceCoords[0] + (targetCoords[0] - sourceCoords[0]) * progress}
-                    cy={sourceCoords[1] + (targetCoords[1] - sourceCoords[1]) * progress - Math.sin(progress * Math.PI) * Math.abs(targetCoords[0] - sourceCoords[0]) * 0.3}
-                    r="3"
-                    fill={missileColor}
+                    cy={sourceCoords[1] + (targetCoords[1] - sourceCoords[1]) * progress}
+                    r="2"
+                    fill={lineColor}
                     opacity="1"
-                    filter="url(#glow)"
-                  >
-                    <animate attributeName="r" values="2;4;2" dur="0.5s" repeatCount="indefinite" />
-                  </circle>
+                  />
                 )}
                 
-                {/* Explosión al final */}
+                {/* Flash al final (más simple) */}
                 {progress >= 1 && (
                   <circle
                     cx={targetCoords[0]}
                     cy={targetCoords[1]}
-                    r="0"
-                    fill={missileColor}
-                    opacity="0.8"
+                    r="5"
+                    fill={lineColor}
+                    opacity="0.6"
                   >
-                    <animate attributeName="r" values="0;15;0" dur="0.6s" begin="0s" />
-                    <animate attributeName="opacity" values="0.8;0.3;0" dur="0.6s" begin="0s" />
+                    <animate attributeName="r" values="5;10;0" dur="0.3s" begin="0s" />
+                    <animate attributeName="opacity" values="0.6;0.2;0" dur="0.3s" begin="0s" />
                   </circle>
                 )}
               </g>
             )
           })}
           
-          {/* Definir filtro de brillo */}
-          <defs>
-            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-              <feMerge> 
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
+
         </ComposableMap>
       </div>
 

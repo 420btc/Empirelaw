@@ -39,11 +39,11 @@ export function AchievementNotifications({ achievements, onDismiss }: Achievemen
     if (newAchievements.length > 0) {
       console.log(`🏆 Nuevos logros detectados: ${newAchievements.length}`)
       
-      // Agregar nuevos logros a la cola con cascada
+      // Agregar nuevos logros a la cola con cascada MÁS LENTA
       const newQueuedAchievements = newAchievements.map((achievement, index) => ({
         ...achievement,
         isVisible: false,
-        showTime: Date.now() + (index * 1500) // 1.5 segundos entre cada logro
+        showTime: Date.now() + (index * 4000) // 4 segundos entre cada logro (más lento)
       }))
 
       setQueuedAchievements(prev => [...prev, ...newQueuedAchievements])
@@ -63,14 +63,14 @@ export function AchievementNotifications({ achievements, onDismiss }: Achievemen
           
           setVisibleAchievements(prev => [...prev, { ...queuedAchievement, isVisible: true }])
 
-          // Auto-dismiss después de 6 segundos
+          // Auto-dismiss después de 4 segundos (más rápido)
           const dismissTimeout = setTimeout(() => {
             handleDismiss(queuedAchievement.id)
-          }, 6000)
+          }, 4000)
           
           timeoutRefs.current.push(dismissTimeout)
 
-        }, index * 1500) // 1.5 segundos entre cada logro
+        }, index * 4000) // 4 segundos entre cada logro
         
         timeoutRefs.current.push(timeout)
       })
@@ -137,7 +137,7 @@ export function AchievementNotifications({ achievements, onDismiss }: Achievemen
         }
       `}</style>
       
-      <div className="fixed top-20 right-4 z-50 space-y-3 max-w-sm">
+      <div className="fixed top-20 right-4 z-50 space-y-2 max-w-xs">
       {visibleAchievements.map((achievement, index) => (
         <Card
           key={achievement.id}
@@ -152,29 +152,29 @@ export function AchievementNotifications({ achievements, onDismiss }: Achievemen
           }}
           onClick={() => handleDismiss(achievement.id)}
         >
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              {/* Ícono principal */}
+          <CardContent className="p-3">
+            <div className="flex items-start gap-2">
+              {/* Ícono principal MÁS PEQUEÑO */}
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-2xl shadow-lg animate-pulse">
-                  <Trophy className="w-6 h-6 text-white" />
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg">
+                  <Trophy className="w-4 h-4 text-white" />
                 </div>
               </div>
 
-              {/* Contenido */}
+              {/* Contenido MÁS COMPACTO */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-bold text-white text-sm truncate">
-                    🏆 ¡LOGRO DESBLOQUEADO!
+                <div className="flex items-center gap-1 mb-1">
+                  <h3 className="font-bold text-white text-xs truncate">
+                    🏆 LOGRO
                   </h3>
                   {getRarityIcon(achievement.rarity)}
                 </div>
                 
-                <h4 className="font-semibold text-white text-base mb-1">
+                <h4 className="font-semibold text-white text-sm mb-1">
                   {achievement.name}
                 </h4>
                 
-                <p className="text-gray-300 text-xs mb-2 leading-tight">
+                <p className="text-gray-300 text-xs mb-1 leading-tight line-clamp-2">
                   {achievement.description}
                 </p>
 
@@ -191,48 +191,30 @@ export function AchievementNotifications({ achievements, onDismiss }: Achievemen
                     {getRarityText(achievement.rarity)}
                   </Badge>
 
-                  <div className="text-xs text-green-400 font-semibold">
+                  <div className="text-xs text-green-400 font-medium">
                     {achievement.reward.description}
                   </div>
                 </div>
 
-                {/* Barra de progreso completa */}
-                <div className="mt-2 w-full h-1 bg-gray-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all duration-1000"
-                    style={{ width: "100%" }}
-                  />
-                </div>
-
-                {/* Barra de tiempo restante */}
+                {/* Barra de tiempo restante MÁS PEQUEÑA */}
                 <div className="mt-1 w-full h-0.5 bg-gray-800 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-yellow-500 to-red-500 transition-all duration-[6000ms] ease-linear"
+                    className="h-full bg-gradient-to-r from-yellow-500 to-red-500 transition-all duration-[4000ms] ease-linear"
                     style={{ 
                       width: "100%",
-                      animation: "shrink 6s linear forwards"
+                      animation: "shrink 4s linear forwards"
                     }}
                   />
                 </div>
               </div>
             </div>
 
-            {/* Efectos de partículas mejorados */}
+            {/* Efectos simplificados */}
             <div className="absolute inset-0 pointer-events-none">
-              {/* Brillo de aparición */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/10 to-transparent animate-pulse" />
-              
-              {/* Partículas flotantes */}
-              <div className="absolute top-2 right-2 w-1 h-1 bg-yellow-400 rounded-full animate-ping" />
-              <div className="absolute top-4 right-6 w-1 h-1 bg-yellow-300 rounded-full animate-ping" 
-                   style={{ animationDelay: "0.5s" }} />
-              <div className="absolute top-6 right-4 w-1 h-1 bg-yellow-500 rounded-full animate-ping" 
+              {/* Solo 2 partículas pequeñas */}
+              <div className="absolute top-2 right-2 w-0.5 h-0.5 bg-yellow-400 rounded-full animate-ping" />
+              <div className="absolute bottom-2 right-4 w-0.5 h-0.5 bg-orange-400 rounded-full animate-ping" 
                    style={{ animationDelay: "1s" }} />
-              <div className="absolute bottom-2 right-8 w-1 h-1 bg-orange-400 rounded-full animate-ping" 
-                   style={{ animationDelay: "1.5s" }} />
-              
-              {/* Efecto de destello inicial */}
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent animate-pulse opacity-50" />
             </div>
           </CardContent>
         </Card>
