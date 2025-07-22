@@ -15,6 +15,8 @@ import { AchievementsPanel } from "@/components/achievements-panel"
 import { useGameState } from "@/hooks/use-game-state"
 import type { Country, TradeOffer, GameAction } from "@/lib/types"
 
+import { IntroZoom } from "@/components/intro-zoom"
+
 export default function GeopoliticsGame() {
   const {
     countries,
@@ -48,6 +50,7 @@ export default function GeopoliticsGame() {
   const [showEventHistory, setShowEventHistory] = useState(false)
   const [showAchievements, setShowAchievements] = useState(false)
   const [recentAction, setRecentAction] = useState<GameAction | null>(null)
+  const [showIntro, setShowIntro] = useState(true)
 
   const handleCountrySelection = (country: Country) => {
     console.log("🏛️ handleCountrySelection llamado con:", country.name, country.id)
@@ -107,6 +110,10 @@ export default function GeopoliticsGame() {
     if (selectedCountryData.ownedBy === playerCountry) return null
     
     return selectedCountryData
+  }
+
+  if (showIntro) {
+    return <IntroZoom onEnd={() => setShowIntro(false)} />
   }
 
   return (
