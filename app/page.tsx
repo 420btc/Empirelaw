@@ -10,7 +10,6 @@ import { GameHeader } from "@/components/game-header"
 import { CountrySelectionModal } from "@/components/country-selection-modal"
 import { DiplomaticChat } from "@/components/diplomatic-chat"
 import { WorldTradeCenter } from "@/components/world-trade-center"
-import { AchievementNotifications } from "@/components/achievement-notifications"
 import { LevelUpNotification } from "@/components/level-up-notification"
 import { AchievementsPanel } from "@/components/achievements-panel"
 import { useGameState } from "@/hooks/use-game-state"
@@ -35,6 +34,7 @@ export default function GeopoliticsGame() {
     markEventsAsSeen, // Nueva función
     // Sistema de gamificación
     achievements,
+    setAchievements,
     gameProgression,
     recentAchievements,
     showLevelUp,
@@ -116,16 +116,22 @@ export default function GeopoliticsGame() {
           playerCountry={playerCountry ? countries.find((c) => c.id === playerCountry) || null : null}
           gameStats={gameStats}
           actionHistory={actionHistory}
-          events={gameEvents} // Cronología completa para el badge
-                      onShowEventHistory={() => {
-              setShowEventHistory(true)
-              markEventsAsSeen() // Marcar eventos como vistos al abrir el historial
-            }}
-            onShowDiplomacy={() => setShowDiplomaticChat(true)}
-            onShowTrade={() => setShowTradeCenter(true)}
-            onShowAchievements={() => setShowAchievements(true)}
+          events={gameEvents}
+          onShowEventHistory={() => {
+            setShowEventHistory(true)
+            markEventsAsSeen()
+          }}
+          onShowDiplomacy={() => setShowDiplomaticChat(true)}
+          onShowTrade={() => setShowTradeCenter(true)}
+          onShowAchievements={() => {
+            // Marcar logros desbloqueados como vistos
+            const updated = achievements.map(a => a.unlocked ? { ...a, seen: true } : a)
+            setAchievements(updated)
+            setShowAchievements(true)
+          }}
           playerLevel={playerLevel}
           gameProgression={gameProgression}
+          unseenAchievementsCount={achievements.filter(a => a.unlocked && !a.seen).length}
         />
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
@@ -187,12 +193,6 @@ export default function GeopoliticsGame() {
 
         {/* Notificaciones flotantes - SOLO visibleNotifications */}
         <EventNotifications events={visibleNotifications} onDismiss={dismissNotification} />
-
-        {/* Sistema de gamificación - Notificaciones de logros */}
-        <AchievementNotifications 
-          achievements={recentAchievements} 
-          onDismiss={(id) => console.log('Achievement dismissed:', id)} 
-        />
 
         {/* Notificación de subida de nivel */}
         <LevelUpNotification 

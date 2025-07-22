@@ -5,6 +5,10 @@ import type { Country, GameEvent, ActionHistory } from "./types"
 //------------------------------------------------------------
 
 export interface Achievement {
+  /**
+   * Indica si el logro ya fue revisado por el jugador (para badge de no vistos)
+   */
+  seen?: boolean;
   id: string
   name: string
   description: string

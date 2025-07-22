@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 
 interface GameHeaderProps {
+  unseenAchievementsCount?: number;
   playerCountry: Country | null
   gameStats: GameStats
   actionHistory: ActionHistory[]
@@ -51,7 +52,7 @@ interface GameHeaderProps {
   }
 }
 
-export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade, onShowAchievements, playerLevel, gameProgression }: GameHeaderProps) {
+export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade, onShowAchievements, playerLevel, gameProgression, unseenAchievementsCount = 0 }: GameHeaderProps) {
   const [showHistory, setShowHistory] = useState(false)
 
   const getActionIcon = (actionType: string) => {
@@ -285,10 +286,18 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
                   variant="outline"
                   size="sm"
                   onClick={onShowAchievements}
-                  className="bg-yellow-600 hover:bg-yellow-700 border-yellow-500 text-white font-semibold h-7 px-2 shadow-lg"
+                  className="bg-yellow-600 hover:bg-yellow-700 border-yellow-500 text-white font-semibold relative h-7 px-2 shadow-lg"
                 >
                   <Star className="w-3 h-3 mr-1" />
                   <span className="text-xs">Logros</span>
+                  {unseenAchievementsCount > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs animate-pulse"
+                    >
+                      {unseenAchievementsCount > 99 ? "99+" : unseenAchievementsCount}
+                    </Badge>
+                  )}
                 </Button>
               </div>
             </div>

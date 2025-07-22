@@ -800,20 +800,21 @@ export function useGameState() {
     countries,
     selectedCountry,
     playerCountry,
-    gameEvents,
-    visibleNotifications,
-    gameStats,
-    actionHistory,
-    ownedTerritories,
+    gameEvents, // Cronología completa
+    visibleNotifications, // Solo notificaciones
+    ownedTerritories, // Territorios conquistados
     selectCountry,
     setPlayerCountry,
     executeAction,
-    dismissNotification,
+    dismissNotification, // Cambiado
+    gameStats,
+    actionHistory,
     updateDiplomaticRelations,
     executeTradeOffer,
     markEventsAsSeen, // Nueva función
-    // 🎮 Sistema de Gamificación
+    // Sistema de gamificación
     achievements,
+    setAchievements,
     gameProgression,
     recentAchievements,
     showLevelUp,
