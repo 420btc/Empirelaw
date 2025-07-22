@@ -157,7 +157,7 @@ export function provideMutualAidToCriticalCountries(countries: Country[], player
             ...c,
             economy: {
               ...c.economy,
-              gdp: c.economy.gdp - Math.round(aidAmount * 0.7), // El ayudante pierde menos de lo que da
+              gdp: Math.max(0, c.economy.gdp - Math.round(aidAmount * 0.7)), // El ayudante pierde menos de lo que da
             }
           }
         }
@@ -824,6 +824,7 @@ export function generateRandomEvent(
           stabilityChange: -35 - Math.floor((affectedCountry.playerKarma || 0) / 10),
           economyChange: -1200 - (affectedCountry.playerKarma || 0) * 5,
           populationChange: -1500000,
+          debtChange: 20,
           resourceEffects: {
             agricultura: -60,
             madera: -50,
@@ -2251,6 +2252,105 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
   }
 
   switch (action.type) {
+    case "trade_offer": {
+      // Acción manual de comercio entre países
+      if (!target || target.id === source.id) break;
+      const offer = action.parameters?.offer || {};
+      const request = action.parameters?.request || {};
+      const offeredResources = Object.keys(offer);
+      const requestedResources = Object.keys(request);
+      // Evaluar si el país objetivo tiene los recursos que se le piden
+      const targetHasResources = requestedResources.every(r => (target.economy.resourceReserves?.[r] || 0) >= (request[r] || 0));
+      // Evaluar si el jugador tiene lo que ofrece
+      const sourceHasResources = offeredResources.every(r => (source.economy.resourceReserves?.[r] || 0) >= (offer[r] || 0));
+      // Evaluar si la oferta es atractiva para la IA: simple, acepta si recibe más valor del que da, o si necesita el recurso solicitado
+      let aiAccept = false;
+      let aiReason = "";
+      if (!targetHasResources) {
+        aiAccept = false;
+        aiReason = "No tengo suficientes recursos para cumplir la oferta.";
+      } else if (!sourceHasResources) {
+        aiAccept = false;
+        aiReason = "No tienes suficientes recursos para ofrecer.";
+      } else {
+        // Calcular valor total para ambos países (puedes sofisticar el cálculo)
+        let offerValue = 0;
+        let requestValue = 0;
+        offeredResources.forEach(r => {
+          // Si el recurso es escaso, vale más para la IA
+          const scarcity = (target.economy.resourceReserves?.[r] || 0) < 200 ? 1.5 : 1;
+          offerValue += (offer[r] || 0) * scarcity;
+        });
+        requestedResources.forEach(r => {
+          const scarcity = (target.economy.resourceReserves?.[r] || 0) < 200 ? 1.5 : 1;
+          requestValue += (request[r] || 0) * scarcity;
+        });
+        // Si la IA está en crisis económica, pide más
+        const isTargetInCrisis = target.economy.gdp < 800 || target.stability < 30;
+        if (isTargetInCrisis && requestValue > offerValue * 0.7) {
+          aiAccept = false;
+          aiReason = "Mi país está en crisis y no puedo aceptar esta oferta.";
+        } else if (offerValue >= requestValue * 0.95) {
+          aiAccept = true;
+          aiReason = "La oferta es justa y útil para mi economía.";
+        } else {
+          aiAccept = false;
+          aiReason = "La oferta no es suficientemente atractiva para mi país.";
+        }
+      }
+      let event: any = {
+        id: `trade_${Date.now()}`,
+        type: aiAccept ? "success" : "info",
+        title: aiAccept ? "✅ Oferta Comercial Aceptada" : "❌ Oferta Comercial Rechazada",
+        description: aiAccept
+          ? `${target.name} ha aceptado la oferta comercial de ${source.name}.`
+          : `${target.name} ha rechazado la oferta comercial de ${source.name}.`,
+        effects: [aiReason],
+        timestamp: Date.now(),
+      };
+      if (aiAccept) {
+        // Transferir recursos entre países
+        updated = updated.map(c => {
+          if (c.id === source.id) {
+            let newReserves = { ...c.economy.resourceReserves };
+            offeredResources.forEach(r => {
+              newReserves[r] = (newReserves[r] || 0) - (offer[r] || 0);
+              newReserves[r] = Math.max(0, newReserves[r]);
+            });
+            requestedResources.forEach(r => {
+              newReserves[r] = (newReserves[r] || 0) + (request[r] || 0);
+            });
+            return {
+              ...c,
+              economy: {
+                ...c.economy,
+                resourceReserves: newReserves,
+              },
+            };
+          }
+          if (c.id === target.id) {
+            let newReserves = { ...c.economy.resourceReserves };
+            requestedResources.forEach(r => {
+              newReserves[r] = (newReserves[r] || 0) - (request[r] || 0);
+              newReserves[r] = Math.max(0, newReserves[r]);
+            });
+            offeredResources.forEach(r => {
+              newReserves[r] = (newReserves[r] || 0) + (offer[r] || 0);
+            });
+            return {
+              ...c,
+              economy: {
+                ...c.economy,
+                resourceReserves: newReserves,
+              },
+            };
+          }
+          return c;
+        });
+      }
+      return { success: aiAccept, updatedCountries: updated, event };
+    }
+
     case "economic_investment": {
       deductCostFromSource(action.cost)
       const stabilityBoost = Math.min(10, Math.max(3, Math.floor(action.cost / 200)))

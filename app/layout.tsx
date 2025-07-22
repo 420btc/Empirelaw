@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Geo Law Empire 1',
+  title: 'Geo Law Empire',
   description: 'Create by Carlos Freire',
 }
 
@@ -13,6 +13,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
+      <head>
+        <link rel="icon" href="/images/icconoweb.png" type="image/png" />
+      </head>
       <body className="h-full">{children}</body>
     </html>
   )

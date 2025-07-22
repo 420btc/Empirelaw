@@ -33,6 +33,25 @@ interface WorldTradeCenterProps {
 export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExecuted }: WorldTradeCenterProps) {
   const [activeOffers, setActiveOffers] = useState<TradeOffer[]>([])
   const [tradeHistory, setTradeHistory] = useState<TradeHistory[]>([])
+
+  // --- Persistencia en localStorage ---
+  // Cargar historial y ofertas activas al montar
+  useEffect(() => {
+    const savedHistory = localStorage.getItem("tradeHistory")
+    const savedOffers = localStorage.getItem("activeOffers")
+    if (savedHistory) setTradeHistory(JSON.parse(savedHistory))
+    if (savedOffers) setActiveOffers(JSON.parse(savedOffers))
+  }, [])
+
+  // Guardar historial en localStorage cuando cambie
+  useEffect(() => {
+    localStorage.setItem("tradeHistory", JSON.stringify(tradeHistory))
+  }, [tradeHistory])
+
+  // Guardar ofertas activas en localStorage cuando cambien
+  useEffect(() => {
+    localStorage.setItem("activeOffers", JSON.stringify(activeOffers))
+  }, [activeOffers])
   const [resourcePrices, setResourcePrices] = useState<ResourcePrice[]>([])
   const [selectedResource, setSelectedResource] = useState<string>("")
   const [offerQuantity, setOfferQuantity] = useState<number>(0)
@@ -173,7 +192,11 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
       expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 horas
     }
 
-    setActiveOffers((prev) => [...prev, newOffer])
+    setActiveOffers((prev) => {
+      const updated = [...prev, newOffer]
+      localStorage.setItem("activeOffers", JSON.stringify(updated))
+      return updated
+    })
 
     // IA inteligente para respuesta de comercio
     setTimeout(
@@ -228,11 +251,13 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
           result: success ? 'ACEPTADO' : 'RECHAZADO'
         })
 
-        setActiveOffers((prev) =>
-          prev.map((offer) =>
-            offer.id === newOffer.id ? { ...offer, status: success ? "accepted" : "rejected" } : offer,
-          ),
-        )
+        setActiveOffers((prev) => {
+          const updated = prev.map((offer) =>
+            offer.id === newOffer.id ? { ...offer, status: (success ? "accepted" : "rejected") as "accepted" | "rejected" } : offer
+          )
+          localStorage.setItem("activeOffers", JSON.stringify(updated))
+          return updated
+        })
 
         if (success) {
           onTradeExecuted(newOffer)
@@ -246,7 +271,11 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
             totalValue: newOffer.totalValue,
             timestamp: Date.now(),
           }
-          setTradeHistory((prev) => [...prev, historyEntry])
+          setTradeHistory((prev) => {
+            const updated = [...prev, historyEntry]
+            localStorage.setItem("tradeHistory", JSON.stringify(updated))
+            return updated
+          })
         }
       },
       6000, // Exactamente 6 segundos como solicitaste
