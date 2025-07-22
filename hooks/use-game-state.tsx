@@ -54,6 +54,12 @@ export function useGameState() {
   })
   const [recentAchievements, setRecentAchievements] = useState<Achievement[]>([])
   const [showLevelUp, setShowLevelUp] = useState(false)
+  
+  // Estado para game over y rachas
+  const [isGameOver, setIsGameOver] = useState(false)
+  const [conquerorCountry, setConquerorCountry] = useState<string>('')
+  const [eventStreak, setEventStreak] = useState({ type: 'neutral', count: 0 }) // 'positive', 'negative', 'neutral'
+  const streakRef = useRef({ type: 'neutral', count: 0 })
 
   // Calculate global stats including chaos level
   useEffect(() => {
@@ -189,6 +195,53 @@ export function useGameState() {
       }
     }
 
+    // --- Verificar invasión del jugador ---
+    if (playerCountry && !isGameOver) {
+      const playerCountryData = countries.find(c => c.id === playerCountry)
+      if (playerCountryData && playerCountryData.stability < 30) {
+        // Buscar países que puedan invadir al jugador
+        const potentialInvaders = countries.filter(c => 
+          c.id !== playerCountry && 
+          !c.ownedBy && 
+          c.stability > 50 && 
+          c.economy.gdp > 800
+        )
+        
+        if (potentialInvaders.length > 0) {
+          // Probabilidad de invasión basada en la estabilidad del jugador
+          const invasionChance = Math.max(0.1, (30 - playerCountryData.stability) / 100)
+          
+          if (Math.random() < invasionChance) {
+            // Seleccionar el invasor más fuerte
+            const invader = potentialInvaders.sort((a, b) => 
+              (b.economy.gdp + b.stability) - (a.economy.gdp + a.stability)
+            )[0]
+            
+            setIsGameOver(true)
+            setConquerorCountry(invader.name)
+            
+            const gameOverEvent: GameEvent = {
+              id: `game_over_${Date.now()}`,
+              type: "error",
+              title: `💀 ${invader.name} conquista ${playerCountryData.name}`,
+              description: `La baja estabilidad de ${playerCountryData.name} permitió que ${invader.name} invadiera y conquistara el territorio. ¡GAME OVER!`,
+              effects: [
+                `${playerCountryData.name} ha sido conquistado`,
+                `Estabilidad crítica: ${Math.round(playerCountryData.stability)}%`,
+                "El gobierno ha colapsado",
+                "Las fuerzas enemigas han tomado control"
+              ],
+              timestamp: Date.now(),
+            }
+            
+            setGameEvents((prev) => [...prev, gameOverEvent])
+            setVisibleNotifications((prev) => [...prev.slice(-2), gameOverEvent])
+            return // No generar más eventos
+          }
+        }
+      }
+    }
+
       // Verificar ayuda mutua para países en crisis ANTES de verificar colapsos
     const { updatedCountries: countriesAfterAid, aidEvents } = provideMutualAidToCriticalCountries(countries, playerCountry!)
     
@@ -266,6 +319,51 @@ export function useGameState() {
         // Rastrear eventos bloqueados por caos
         if (mainEvent.title.includes("bloqueando eventos negativos")) {
           setGameStats((prev) => ({ ...prev, negativeEventsBlocked: prev.negativeEventsBlocked + 1 }))
+        }
+
+        // --- Sistema de rachas de eventos ---
+        const eventType = mainEvent.type === 'success' ? 'positive' : 
+                         mainEvent.type === 'error' || mainEvent.type === 'warning' ? 'negative' : 'neutral'
+        
+        if (eventType === streakRef.current.type) {
+          streakRef.current.count += 1
+        } else {
+          streakRef.current = { type: eventType, count: 1 }
+        }
+        
+        setEventStreak(streakRef.current)
+        
+        // Aplicar bonificaciones por rachas
+        if (streakRef.current.count >= 3) {
+          const streakBonus = Math.min(streakRef.current.count * 0.2, 1.0) // Máximo 100% de bonus
+          
+          if (eventType === 'positive' && mainEvent.countryEffects) {
+            // Aumentar efectos positivos durante rachas buenas
+            Object.keys(mainEvent.countryEffects).forEach(countryId => {
+              const effect = mainEvent.countryEffects![countryId]
+              if (effect.economyChange && effect.economyChange > 0) {
+                effect.economyChange = Math.round(effect.economyChange * (1 + streakBonus))
+              }
+              if (effect.stabilityChange && effect.stabilityChange > 0) {
+                effect.stabilityChange = Math.round(effect.stabilityChange * (1 + streakBonus))
+              }
+            })
+            
+            console.log(`🔥 Racha positiva x${streakRef.current.count}! Bonus: +${Math.round(streakBonus * 100)}%`)
+          } else if (eventType === 'negative' && mainEvent.countryEffects) {
+            // Reducir efectos negativos durante rachas malas (el mundo se adapta)
+            Object.keys(mainEvent.countryEffects).forEach(countryId => {
+              const effect = mainEvent.countryEffects![countryId]
+              if (effect.economyChange && effect.economyChange < 0) {
+                effect.economyChange = Math.round(effect.economyChange * (1 - streakBonus * 0.3)) // Reducir daño
+              }
+              if (effect.stabilityChange && effect.stabilityChange < 0) {
+                effect.stabilityChange = Math.round(effect.stabilityChange * (1 - streakBonus * 0.3))
+              }
+            })
+            
+            console.log(`🛡️ Racha negativa x${streakRef.current.count}. Resistencia: -${Math.round(streakBonus * 30)}% daño`)
+          }
         }
 
         contagionEvents.forEach((contagionEvent) => {
@@ -504,6 +602,151 @@ export function useGameState() {
       clearInterval(improvementInterval)
     }
   }, [playerCountry, countries])
+
+  // Sistema de retaliaciones automáticas
+  useEffect(() => {
+    if (!playerCountry) return
+
+    console.log("⚔️ Sistema de retaliaciones automáticas iniciado")
+
+    const retaliationInterval = setInterval(() => {
+      setCountries(prev => {
+        let updatedCountries = [...prev]
+        let hasRetaliations = false
+
+        // Buscar países que han sido atacados recientemente
+        const recentAttacks = actionHistory.slice(-10).filter(action => 
+          action.success && 
+          (action.type === "military_action" || action.type === "cyber_attack" || 
+           action.type === "economic_sanction" || action.type === "espionage") &&
+          action.sourceCountry === playerCountry
+        )
+
+        recentAttacks.forEach(attack => {
+          const attackedCountry = updatedCountries.find(c => c.id === attack.targetCountry)
+          const playerCountryData = updatedCountries.find(c => c.id === playerCountry)
+          
+          if (!attackedCountry || !playerCountryData || attackedCountry.ownedBy === playerCountry) return
+
+          // Probabilidad de retaliación basada en la estabilidad del país atacado
+          const retaliationChance = Math.max(0.15, Math.min(0.6, (100 - attackedCountry.stability) / 100))
+          
+          if (Math.random() < retaliationChance) {
+            hasRetaliations = true
+            console.log(`🎯 ${attackedCountry.name} ejecuta retaliación contra ${playerCountryData.name}!`)
+
+            // Determinar tipo de retaliación basado en el ataque original
+            let retaliationType = "military_action"
+            let retaliationTitle = "⚔️ Retaliación Militar"
+            let retaliationDescription = `${attackedCountry.name} ha lanzado un contraataque militar contra ${playerCountryData.name}`
+            
+            if (attack.type === "cyber_attack") {
+              retaliationType = "cyber_counter"
+              retaliationTitle = "💻 Contra-Ciberataque"
+              retaliationDescription = `${attackedCountry.name} ha ejecutado un ciberataque de venganza contra ${playerCountryData.name}`
+            } else if (attack.type === "economic_sanction") {
+              retaliationType = "economic_counter"
+              retaliationTitle = "💰 Contra-Sanciones"
+              retaliationDescription = `${attackedCountry.name} ha impuesto sanciones económicas de represalia contra ${playerCountryData.name}`
+            } else if (attack.type === "espionage") {
+              retaliationType = "espionage_counter"
+              retaliationTitle = "🕵️ Contra-Espionaje"
+              retaliationDescription = `${attackedCountry.name} ha infiltrado agentes de venganza en ${playerCountryData.name}`
+            }
+
+            // Calcular daño de retaliación
+            const economicDamage = Math.floor(playerCountryData.economy.gdp * 0.08)
+            const stabilityDamage = Math.floor(Math.random() * 12) + 8
+            const militaryDamage = Math.floor(Math.random() * 10) + 5
+
+            // Aplicar daño al jugador
+            updatedCountries = updatedCountries.map(c => {
+              if (c.id === playerCountry) {
+                return {
+                  ...c,
+                  economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) },
+                  stability: Math.max(0, c.stability - stabilityDamage),
+                  militaryStrength: Math.max(10, (c.militaryStrength || 50) - militaryDamage),
+                }
+              }
+              return c
+            })
+
+            // Incluir aliados en la retaliación
+            const allies = updatedCountries.filter(c => 
+              (attackedCountry.alliances || []).includes(c.id) && c.id !== attackedCountry.id
+            )
+
+            let allyEffects: string[] = []
+            if (allies.length > 0) {
+              const randomAlly = allies[Math.floor(Math.random() * allies.length)]
+              const allyDamage = Math.floor(economicDamage * 0.3)
+              const allyStabilityDamage = Math.floor(stabilityDamage * 0.4)
+              
+              updatedCountries = updatedCountries.map(c => {
+                if (c.id === randomAlly.id) {
+                  return {
+                    ...c,
+                    economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp + allyDamage) },
+                    stability: Math.min(100, c.stability + 3),
+                  }
+                }
+                return c
+              })
+              
+              allyEffects = [
+                `${randomAlly.name} apoya la retaliación`,
+                `PIB de ${randomAlly.name} aumentado en $${allyDamage}B`,
+              ]
+            }
+
+            // Crear evento de retaliación
+            const retaliationEvent: GameEvent = {
+              id: `retaliation_${Date.now()}_${Math.random()}`,
+              type: "warning",
+              title: retaliationTitle,
+              description: retaliationDescription,
+              effects: [
+                `PIB de ${playerCountryData.name} reducido en $${economicDamage}B`,
+                `Estabilidad de ${playerCountryData.name} reducida en ${stabilityDamage}%`,
+                `Fuerza militar de ${playerCountryData.name} reducida en ${militaryDamage}`,
+                "⚠️ Las acciones agresivas tienen consecuencias",
+                ...allyEffects,
+              ],
+              timestamp: Date.now(),
+            }
+
+            // Agregar evento a la lista
+            setGameEvents(prevEvents => [...prevEvents, retaliationEvent])
+            setVisibleNotifications(prevNotifications => [...prevNotifications, retaliationEvent])
+
+            // Agregar a historial de acciones
+            const retaliationHistory: ActionHistory = {
+              id: `retaliation_history_${Date.now()}`,
+              type: retaliationType as any,
+              actionName: retaliationEvent.title,
+              sourceCountry: attackedCountry.id,
+              sourceCountryName: attackedCountry.name,
+              targetCountry: playerCountry,
+              targetCountryName: countries.find(c => c.id === playerCountry)?.name || "Tu País",
+              cost: 0,
+              timestamp: Date.now(),
+              success: true,
+              result: retaliationDescription,
+            }
+            setActionHistory(prevHistory => [...prevHistory, retaliationHistory])
+          }
+        })
+
+        return updatedCountries
+      })
+    }, 25000) // Cada 25 segundos
+
+    return () => {
+      console.log("🛑 Sistema de retaliaciones detenido")
+      clearInterval(retaliationInterval)
+    }
+  }, [playerCountry, actionHistory])
 
   // Sistema de crecimiento económico dinámico
   useEffect(() => {
@@ -843,6 +1086,45 @@ export function useGameState() {
     setShowLevelUp(false)
   }, [])
 
+  // Función para reiniciar el juego
+  const restartGame = useCallback(() => {
+    setCountries(initialCountries)
+    setSelectedCountry(null)
+    setPlayerCountry(null)
+    setGameEvents([])
+    setVisibleNotifications([])
+    setActionHistory([])
+    setIsGameOver(false)
+    setConquerorCountry('')
+    setEventStreak({ type: 'neutral', count: 0 })
+    streakRef.current = { type: 'neutral', count: 0 }
+    setGameProgression({
+      totalXP: 0,
+      level: 1,
+      achievements: [],
+      unlockedUpgrades: [],
+      lastAchievementTime: 0,
+      streak: 0,
+      playTime: 0
+    })
+    setAchievements(ACHIEVEMENTS)
+    setRecentAchievements([])
+    setShowLevelUp(false)
+    inactivityTicksRef.current = 0
+    lastActionTimeRef.current = Date.now()
+    
+    // Limpiar intervalos
+    if (eventIntervalRef.current) {
+      clearInterval(eventIntervalRef.current)
+    }
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current)
+    }
+    
+    isEventsPausedRef.current = false
+    lastPauseTimeRef.current = 0
+  }, [])
+
   return {
     countries,
     selectedCountry,
@@ -869,5 +1151,10 @@ export function useGameState() {
     playerLevel: getPlayerLevel(gameProgression.totalXP),
     // Nueva función para notificar acción del jugador (reset inactividad IA)
     registerPlayerAction,
+    // Estados y funciones para game over y rachas
+    isGameOver,
+    conquerorCountry,
+    eventStreak,
+    restartGame,
   }
 }

@@ -12,6 +12,7 @@ import { DiplomaticChat } from "@/components/diplomatic-chat"
 import { WorldTradeCenter } from "@/components/world-trade-center"
 import { LevelUpNotification } from "@/components/level-up-notification"
 import { AchievementsPanel } from "@/components/achievements-panel"
+import { GameOverModal } from "@/components/game-over-modal"
 import { useGameState } from "@/hooks/use-game-state"
 import type { Country, TradeOffer, GameAction } from "@/lib/types"
 
@@ -42,6 +43,11 @@ export default function GeopoliticsGame() {
     showLevelUp,
     dismissLevelUp,
     playerLevel,
+    // Estados y funciones para game over y rachas
+    isGameOver,
+    conquerorCountry,
+    eventStreak,
+    restartGame,
   } = useGameState()
 
   const [showCountrySelection, setShowCountrySelection] = useState(true)
@@ -140,6 +146,7 @@ export default function GeopoliticsGame() {
           playerLevel={playerLevel}
           gameProgression={gameProgression}
           unseenAchievementsCount={achievements.filter(a => a.unlocked && !a.seen).length}
+          eventStreak={eventStreak}
         />
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
@@ -242,6 +249,14 @@ export default function GeopoliticsGame() {
           onClose={() => setShowAchievements(false)}
         />
       )}
+
+      {/* Modal de Game Over */}
+      <GameOverModal
+        isOpen={isGameOver}
+        conquerorCountry={conquerorCountry}
+        playerCountry={countries.find((c) => c.id === playerCountry)?.name || "Tu País"}
+        onRestart={restartGame}
+      />
     </div>
   )
 }

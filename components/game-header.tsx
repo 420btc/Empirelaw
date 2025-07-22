@@ -50,9 +50,13 @@ interface GameHeaderProps {
     streak: number
     playTime: number
   }
+  eventStreak?: {
+    type: string
+    count: number
+  }
 }
 
-export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade, onShowAchievements, playerLevel, gameProgression, unseenAchievementsCount = 0 }: GameHeaderProps) {
+export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade, onShowAchievements, playerLevel, gameProgression, unseenAchievementsCount = 0, eventStreak }: GameHeaderProps) {
   const [showHistory, setShowHistory] = useState(false)
 
   const getActionIcon = (actionType: string) => {
@@ -161,6 +165,24 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
                         <div className="flex items-center gap-1">
                           <Zap className="w-3 h-3 text-orange-400" />
                           <span className="text-orange-400 font-bold text-xs">{gameProgression.streak}</span>
+                        </div>
+                      )}
+                      
+                      {/* Racha de eventos */}
+                      {eventStreak && eventStreak.count >= 2 && (
+                        <div className="flex items-center gap-1 bg-slate-700/50 px-2 py-1 rounded border border-purple-500/30">
+                          <div className={`w-2 h-2 rounded-full ${
+                            eventStreak.type === 'positive' ? 'bg-green-400' :
+                            eventStreak.type === 'negative' ? 'bg-red-400' :
+                            'bg-yellow-400'
+                          }`} />
+                          <span className={`font-bold text-xs ${
+                            eventStreak.type === 'positive' ? 'text-green-400' :
+                            eventStreak.type === 'negative' ? 'text-red-400' :
+                            'text-yellow-400'
+                          }`}>
+                            {eventStreak.count}x {eventStreak.type === 'positive' ? '📈' : eventStreak.type === 'negative' ? '📉' : '⚖️'}
+                          </span>
                         </div>
                       )}
                     </div>

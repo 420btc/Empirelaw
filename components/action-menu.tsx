@@ -501,7 +501,13 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
       const Icon = action.icon
       const canAfford = canAffordAction(action.id)
       const neighborRequired = action.requiresNeighbor && !isNeighbor(targetCountry?.id || "")
-      const isDisabled = !canAfford || neighborRequired || action.disabled
+      
+      // Verificar si ya existe una alianza para la acción diplomatic_alliance
+      const allianceExists = action.id === "diplomatic_alliance" && 
+        targetCountry && 
+        playerCountry.alliances?.includes(targetCountry.id)
+      
+      const isDisabled = !canAfford || neighborRequired || action.disabled || allianceExists
 
       // Debug logging
       if (action.id === "military_action") {
@@ -574,6 +580,9 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
                   )}
                   {neighborRequired && (
                     <p>• Requiere ser país vecino de {targetCountry?.name}</p>
+                  )}
+                  {allianceExists && (
+                    <p>• Ya existe una alianza con {targetCountry?.name}</p>
                   )}
                   {action.disabled && action.id === "debt_emission" && (
                     <p>• Tiempo restante: {getDebtEmissionCooldown()}</p>

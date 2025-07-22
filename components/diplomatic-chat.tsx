@@ -105,7 +105,13 @@ export function DiplomaticChat({ playerCountry, countries, onClose, onDiplomatic
     // Respuestas específicas a palabras clave
     const lowerMessage = message.toLowerCase()
     if (lowerMessage.includes("alianza") || lowerMessage.includes("alliance")) {
-      if (relation > 0) {
+      // Verificar si ya existe una alianza
+      const allianceExists = playerCountry.alliances?.includes(targetCountry.id) || 
+                            targetCountry.alliances?.includes(playerCountry.id)
+      
+      if (allianceExists) {
+        contextualResponse += ` Ya somos aliados estratégicos. Nuestra cooperación continúa fortaleciéndose.`
+      } else if (relation > 0) {
         contextualResponse += ` Una alianza podría beneficiar a ambas naciones.`
       } else {
         contextualResponse += ` Las alianzas requieren confianza mutua, algo que falta actualmente.`

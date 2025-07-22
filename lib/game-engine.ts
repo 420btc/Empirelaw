@@ -11,6 +11,13 @@ function applyStabilityChange(country: Country, delta: number): Country {
   return { ...country, stability: clamp(country.stability + delta, 0, 100) }
 }
 
+// Sistema de retaliación
+function scheduleRetaliation(countries: Country[], attackedCountryId: string, attackerCountryId: string, retaliationType: string): void {
+  // Esta función programa una retaliación que se ejecutará en el próximo turno
+  // Por ahora, simplemente marca que habrá consecuencias
+  console.log(`🎯 Retaliación programada: ${attackedCountryId} vs ${attackerCountryId} (${retaliationType})`)
+}
+
 //------------------------------------------------------------
 // Sistema de Control de Caos Global
 //------------------------------------------------------------
@@ -561,6 +568,17 @@ export function generateRandomEvent(
     "educational_reform_success",
     "infrastructure_modernization",
     "agricultural_innovation",
+    // 10 nuevos eventos positivos adicionales
+    "quantum_computing_breakthrough",
+    "ocean_cleanup_success",
+    "universal_basic_income_trial",
+    "fusion_energy_achievement",
+    "biodiversity_restoration",
+    "mental_health_revolution",
+    "smart_city_implementation",
+    "genetic_disease_cure",
+    "sustainable_transport_boom",
+    "cultural_exchange_program",
   ]
 
   const negativeEvents = [
@@ -608,9 +626,30 @@ export function generateRandomEvent(
     "ancient_curse_activated",
     "gravity_anomaly",
     "reality_glitch",
+    // 8 nuevos eventos negativos adicionales
+    "social_media_manipulation",
+    "supply_chain_collapse",
+    "digital_infrastructure_attack",
+    "water_scarcity_crisis",
+    "space_debris_collision",
+    "genetic_modification_disaster",
+    "quantum_computer_hack",
+    "artificial_intelligence_malfunction",
   ]
 
-  const neutralEvents = ["diplomatic_incident", "alien_contact", "AI_singularity"]
+  const neutralEvents = [
+    "diplomatic_incident", 
+    "alien_contact", 
+    "AI_singularity",
+    // 7 nuevos eventos neutrales
+    "international_summit",
+    "cultural_festival",
+    "scientific_collaboration",
+    "trade_agreement_proposal",
+    "environmental_conference",
+    "space_exploration_mission",
+    "archaeological_discovery"
+  ]
 
   // SELECCIÓN INTELIGENTE DE PAÍS AFECTADO CON HOSTILIDAD DIRIGIDA
   let affectedCountry: Country = countries[Math.floor(Math.random() * countries.length)] // Inicialización por defecto
@@ -1559,6 +1598,35 @@ export function generateRandomEvent(
       timestamp: Date.now(),
     }),
 
+    economic_boom: () => ({
+      id: makeId(),
+      type: "success",
+      title: "💰 Boom Económico Extraordinario",
+      description: `${affectedCountry.name} experimenta un boom económico sin precedentes que impulsa todos los sectores`,
+      effects: [
+        `PIB de ${affectedCountry.name} aumentado dramáticamente`,
+        "Crecimiento económico acelerado",
+        "Inversión extranjera masiva",
+        "Creación de empleos sin precedentes",
+        "Mercados financieros en alza",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          economyChange: 1800,
+          stabilityChange: 25,
+          debtChange: -15,
+          resourceEffects: {
+            "servicios financieros": 120,
+            tecnología: 90,
+            servicios: 100,
+            industria: 80,
+          },
+        },
+      },
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
     // EVENTOS CAÓTICOS (9-15)
     ai_rebellion: () => ({
       id: makeId(),
@@ -1844,6 +1912,40 @@ export function generateRandomEvent(
         description: `${affectedCountry.name} es víctima de una represalia cibernética coordinada`
       },
       
+      // Nuevos eventos negativos adicionales
+      social_media_manipulation: {
+        title: "📱 Manipulación de Redes Sociales",
+        description: `${affectedCountry.name} sufre una campaña masiva de desinformación en redes sociales`
+      },
+      supply_chain_collapse: {
+        title: "📦 Colapso de Cadena de Suministro",
+        description: `Las cadenas de suministro globales de ${affectedCountry.name} han colapsado completamente`
+      },
+      digital_infrastructure_attack: {
+        title: "💾 Ataque a Infraestructura Digital",
+        description: `La infraestructura digital crítica de ${affectedCountry.name} ha sido comprometida`
+      },
+      water_scarcity_crisis: {
+        title: "💧 Crisis de Escasez de Agua",
+        description: `${affectedCountry.name} enfrenta una crisis severa de escasez de agua potable`
+      },
+      space_debris_collision: {
+        title: "🛰️ Colisión de Basura Espacial",
+        description: `Satélites críticos de ${affectedCountry.name} han sido destruidos por basura espacial`
+      },
+      genetic_modification_disaster: {
+        title: "🧬 Desastre de Modificación Genética",
+        description: `Un experimento de modificación genética ha salido terriblemente mal en ${affectedCountry.name}`
+      },
+      quantum_computer_hack: {
+        title: "⚛️ Hackeo de Computadora Cuántica",
+        description: `Los sistemas de computación cuántica de ${affectedCountry.name} han sido hackeados`
+      },
+      artificial_intelligence_malfunction: {
+        title: "🤖 Mal Funcionamiento de IA",
+        description: `Los sistemas de inteligencia artificial de ${affectedCountry.name} han comenzado a fallar peligrosamente`
+      },
+      
       // Eventos positivos específicos
       economic_boom: {
         title: "💰 Boom Económico Extraordinario",
@@ -1866,6 +1968,48 @@ export function generateRandomEvent(
         description: `${affectedCountry.name} ha hecho un descubrimiento espacial que cautiva al mundo`
       },
       
+      // Nuevos eventos positivos adicionales
+      quantum_computing_breakthrough: {
+        title: "⚛️ Avance en Computación Cuántica",
+        description: `${affectedCountry.name} ha logrado un avance revolucionario en computación cuántica`
+      },
+      ocean_cleanup_success: {
+        title: "🌊 Éxito en Limpieza Oceánica",
+        description: `${affectedCountry.name} ha desarrollado tecnología exitosa para limpiar los océanos`
+      },
+      universal_basic_income_trial: {
+        title: "💰 Prueba de Renta Básica Universal",
+        description: `${affectedCountry.name} implementa exitosamente un programa piloto de renta básica universal`
+      },
+      fusion_energy_achievement: {
+        title: "⚡ Logro en Energía de Fusión",
+        description: `${affectedCountry.name} ha conseguido energía de fusión comercialmente viable`
+      },
+      biodiversity_restoration: {
+        title: "🌿 Restauración de Biodiversidad",
+        description: `${affectedCountry.name} ha logrado restaurar exitosamente ecosistemas críticos`
+      },
+      mental_health_revolution: {
+        title: "🧠 Revolución en Salud Mental",
+        description: `${affectedCountry.name} ha revolucionado el tratamiento de la salud mental`
+      },
+      smart_city_implementation: {
+        title: "🏙️ Implementación de Ciudad Inteligente",
+        description: `${affectedCountry.name} ha transformado sus ciudades en modelos de tecnología inteligente`
+      },
+      genetic_disease_cure: {
+        title: "🧬 Cura de Enfermedad Genética",
+        description: `${affectedCountry.name} ha desarrollado la cura para una enfermedad genética importante`
+      },
+      sustainable_transport_boom: {
+        title: "🚗 Boom del Transporte Sostenible",
+        description: `${affectedCountry.name} lidera la revolución del transporte sostenible y limpio`
+      },
+      cultural_exchange_program: {
+        title: "🎭 Programa de Intercambio Cultural",
+        description: `${affectedCountry.name} ha creado un programa de intercambio cultural que une al mundo`
+      },
+      
       // Eventos neutrales específicos
       alien_contact: {
         title: "👽 Primer Contacto Extraterrestre",
@@ -1874,6 +2018,36 @@ export function generateRandomEvent(
       AI_singularity: {
         title: "🤖 Singularidad de la Inteligencia Artificial",
         description: `${affectedCountry.name} ha alcanzado la singularidad tecnológica con IA`
+      },
+      
+      // Nuevos eventos neutrales
+      international_summit: {
+        title: "🌍 Cumbre Internacional",
+        description: `${affectedCountry.name} organiza una cumbre internacional de gran importancia`
+      },
+      cultural_festival: {
+        title: "🎪 Festival Cultural Mundial",
+        description: `${affectedCountry.name} celebra un festival cultural que atrae atención mundial`
+      },
+      scientific_collaboration: {
+        title: "🔬 Colaboración Científica Internacional",
+        description: `${affectedCountry.name} lidera una colaboración científica internacional innovadora`
+      },
+      trade_agreement_proposal: {
+        title: "📋 Propuesta de Acuerdo Comercial",
+        description: `${affectedCountry.name} propone un nuevo acuerdo comercial internacional`
+      },
+      environmental_conference: {
+        title: "🌱 Conferencia Ambiental",
+        description: `${affectedCountry.name} organiza una conferencia ambiental de alcance global`
+      },
+      space_exploration_mission: {
+        title: "🚀 Misión de Exploración Espacial",
+        description: `${affectedCountry.name} lanza una ambiciosa misión de exploración espacial`
+      },
+      archaeological_discovery: {
+        title: "🏺 Descubrimiento Arqueológico",
+        description: `${affectedCountry.name} hace un fascinante descubrimiento arqueológico`
       }
     }
 
@@ -2127,8 +2301,8 @@ export function runAIActions(
         timestamp: now
       })
     }
-    // 6. Alianzas y traiciones (simplificado) - Reducida frecuencia
-    if (aiCountry.stability > 70 && Math.random() < 0.03) {
+    // 6. Alianzas y traiciones (simplificado) - Frecuencia muy reducida
+    if (aiCountry.stability > 70 && Math.random() < 0.01) {
       let ally: Country | undefined
       
       // Restricción: países africanos solo pueden aliarse entre ellos
@@ -2840,6 +3014,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
 
     case "diplomatic_alliance": {
       if (!target || target.id === source.id) {
+        const targetName = target ? target.name : "país no válido"
         return {
           success: false,
           updatedCountries: countries,
@@ -2847,8 +3022,12 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
             id: `alliance_failed_${Date.now()}`,
             type: "error",
             title: "❌ Alianza Imposible",
-            description: "No se puede formar una alianza sin un país objetivo válido",
-            effects: ["Selecciona un país válido para formar una alianza"],
+            description: `${source.name} intentó formar una alianza con ${targetName}, pero falló`,
+            effects: [
+              "No se puede formar una alianza sin un país objetivo válido",
+              `Objetivo intentado: ${targetName}`,
+              "Selecciona un país válido para formar una alianza"
+            ],
             timestamp: Date.now(),
           },
         }
@@ -2940,6 +3119,185 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           ],
           timestamp: Date.now(),
         },
+      }
+    }
+
+    case "cyber_attack": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+
+      const successChance = Math.max(0.4, Math.min(0.8, source.economy.gdp / target.economy.gdp))
+      const isSuccessful = Math.random() < successChance
+
+      if (isSuccessful) {
+        const economicDamage = Math.floor(target.economy.gdp * 0.15)
+        const stabilityDamage = Math.floor(Math.random() * 15) + 10
+
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return {
+              ...c,
+              economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) },
+              stability: Math.max(0, c.stability - stabilityDamage),
+            }
+          }
+          return c
+        })
+
+        // Programar retaliación
+        scheduleRetaliation(updated, target.id, source.id, "cyber_counter")
+
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `cyber_attack_${Date.now()}`,
+            type: "warning",
+            title: "💻 Ciberataque Exitoso",
+            description: `${source.name} ha ejecutado un ciberataque devastador contra ${target.name}`,
+            effects: [
+              `PIB de ${target.name} reducido en $${economicDamage}B`,
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              "Infraestructura digital severamente dañada",
+              "⚠️ Posible retaliación cibernética esperada",
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 8) + 5
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `cyber_failed_${Date.now()}`,
+            type: "error",
+            title: "💻 Ciberataque Fallido",
+            description: `El ciberataque de ${source.name} contra ${target.name} fue detectado y neutralizado`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Operación cibernética expuesta internacionalmente",
+              "Capacidades de hackeo comprometidas",
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+
+    case "economic_sanction": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+
+      const economicImpact = Math.floor(target.economy.gdp * 0.12)
+      const sourceCost = Math.floor(source.economy.gdp * 0.05)
+
+      updated = updated.map((c) => {
+        if (c.id === target.id) {
+          return {
+            ...c,
+            economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicImpact) },
+            stability: Math.max(0, c.stability - 8),
+          }
+        }
+        if (c.id === source.id) {
+          return {
+            ...c,
+            economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - sourceCost) },
+          }
+        }
+        return c
+      })
+
+      // Programar retaliación económica
+      scheduleRetaliation(updated, target.id, source.id, "economic_counter")
+
+      return {
+        success: true,
+        updatedCountries: updated,
+        event: {
+          id: `sanction_${Date.now()}`,
+          type: "warning",
+          title: "💰 Sanciones Económicas Impuestas",
+          description: `${source.name} ha impuesto severas sanciones económicas a ${target.name}`,
+          effects: [
+            `PIB de ${target.name} reducido en $${economicImpact}B`,
+            `PIB de ${source.name} reducido en $${sourceCost}B (costo de sanciones)`,
+            `Estabilidad de ${target.name} reducida en 8%`,
+            "⚠️ Posibles contra-sanciones esperadas",
+          ],
+          timestamp: Date.now(),
+        },
+      }
+    }
+
+    case "espionage": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+
+      const successChance = Math.max(0.5, Math.min(0.85, (source.militaryStrength || 50) / (target.militaryStrength || 50)))
+      const isSuccessful = Math.random() < successChance
+
+      if (isSuccessful) {
+        const intelGain = Math.floor(Math.random() * 20) + 15
+        const stabilityDamage = Math.floor(Math.random() * 10) + 5
+
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return applyStabilityChange(c, -stabilityDamage)
+          }
+          if (c.id === source.id) {
+            return {
+              ...c,
+              militaryStrength: Math.min(100, (c.militaryStrength || 50) + intelGain),
+            }
+          }
+          return c
+        })
+
+        // Programar retaliación de espionaje
+        scheduleRetaliation(updated, target.id, source.id, "espionage_counter")
+
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `espionage_${Date.now()}`,
+            type: "success",
+            title: "🕵️ Operación de Espionaje Exitosa",
+            description: `${source.name} ha infiltrado exitosamente agentes en ${target.name}`,
+            effects: [
+              `Inteligencia militar de ${source.name} mejorada (+${intelGain})`,
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              "Información clasificada obtenida",
+              "⚠️ Posible contra-espionaje esperado",
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 12) + 8
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `espionage_failed_${Date.now()}`,
+            type: "error",
+            title: "🕵️ Operación de Espionaje Descubierta",
+            description: `Los agentes de ${source.name} fueron capturados en ${target.name}`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Agentes capturados y ejecutados",
+              "Escándalo internacional",
+              "Red de espionaje comprometida",
+            ],
+            timestamp: Date.now(),
+          },
+        }
       }
     }
 

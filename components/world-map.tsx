@@ -178,8 +178,8 @@ export function WorldMap({
     // Prioridad 4: Territorios conquistados por el jugador (púrpura más oscuro)
     if (country.ownedBy === playerCountry) return "#7c3aed"
 
-    // Prioridad 5: Estados soberanos (ámbar)
-    if (country.isSovereign) return "#f59e0b"
+    // Prioridad 5: Estados soberanos (blanco)
+    if (country.isSovereign) return "#ffffff"
 
     // Prioridad 6: Países colapsados (rojo intenso)
     if (country.stability <= 0) return "#dc2626" // Rojo intenso para países colapsados
@@ -371,7 +371,7 @@ export function WorldMap({
             <span className="text-white">Conquistados</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-amber-500 rounded"></div>
+            <div className="w-2 h-2 bg-white rounded"></div>
             <span className="text-white">Soberano</span>
           </div>
           
