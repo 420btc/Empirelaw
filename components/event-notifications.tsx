@@ -140,23 +140,7 @@ return (
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2 mb-0.5">
-  <span
-    className={
-      event.type === "success"
-        ? "text-green-400 font-bold text-xs px-2 py-0.5 rounded-full bg-green-800/40 border border-green-500/40"
-        : event.type === "error"
-        ? "text-red-400 font-bold text-xs px-2 py-0.5 rounded-full bg-red-800/40 border border-red-500/40"
-        : event.type === "warning"
-        ? "text-yellow-300 font-bold text-xs px-2 py-0.5 rounded-full bg-yellow-800/40 border border-yellow-500/40"
-        : "text-blue-300 font-bold text-xs px-2 py-0.5 rounded-full bg-blue-800/40 border border-blue-500/40"
-    }
-    style={{ minWidth: 90, textAlign: "center" }}
-  >
-    {getTypeLabel(event.type)}
-  </span>
-  <h4 className="font-semibold text-white text-sm truncate">{event.title}</h4>
-</div>
+                    <h4 className="font-semibold text-white text-sm truncate">{event.title}</h4>
                     <div className="flex items-center gap-2 ml-2">
                       <div className="flex items-center gap-1 text-xs text-gray-400">
                         <Clock className="w-3 h-3" />
