@@ -26,10 +26,13 @@ export function CountryPanel({ country, isPlayerCountry }: CountryPanelProps) {
   }
 
   const getStabilityColor = (stability: number) => {
-    if (stability >= 80) return "text-green-400"
-    if (stability >= 60) return "text-yellow-400"
-    if (stability >= 40) return "text-orange-400"
-    return "text-red-400"
+    if (stability >= 85) return "text-green-600" // Verde fuerte
+    if (stability >= 70) return "text-green-400" // Verde lima
+    if (stability >= 50) return "text-yellow-400" // Amarillo
+    if (stability >= 30) return "text-orange-400" // Naranja
+    if (stability >= 15) return "text-red-400" // Rojo
+    if (stability >= 1) return "text-red-900" // Rojo oscuro
+    return "text-gray-700" // Gris oscuro/negro
   }
 
   const getDebtColor = (debt: number) => {

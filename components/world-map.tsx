@@ -176,12 +176,14 @@ export function WorldMap({
     // Prioridad 6: Países colapsados (rojo intenso)
     if (country.stability <= 0) return "#dc2626" // Rojo intenso para países colapsados
 
-    // Prioridad 7: Color basado en estabilidad
-    if (country.stability >= 80) return "#22c55e" // Verde - Estable
-    if (country.stability >= 60) return "#eab308" // Amarillo - Moderado
-    if (country.stability >= 40) return "#f97316" // Naranja - Inestable
-    if (country.stability >= 20) return "#ef4444" // Rojo - Crisis
-    return "#dc2626" // Rojo intenso - Colapso inminente
+    // Prioridad 7: Color basado en estabilidad (escala realista)
+    if (country.stability >= 85) return "#16a34a" // Verde fuerte - Muy estable
+    if (country.stability >= 70) return "#4ade80" // Verde lima - Estable
+    if (country.stability >= 50) return "#eab308" // Amarillo - Moderada
+    if (country.stability >= 30) return "#f97316" // Naranja - Inestable
+    if (country.stability >= 15) return "#ef4444" // Rojo - Crisis
+    if (country.stability >= 1) return "#7f1d1d" // Rojo oscuro - Colapso inminente
+    return "#18181b" // Gris oscuro/negro - Colapsado
   }
 
   const getCountryData = (geoId: string) => {

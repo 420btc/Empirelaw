@@ -1923,6 +1923,171 @@ export function selectAIOpponent(playerCountryId: string, countries: Country[]):
 }
 
 // =====================
+// Motor principal de IA: permite a superpotencias y países grandes actuar como jugadores
+// =====================
+/**
+ * Ejecuta acciones IA para todos los países potenciales (no jugador, no conquistados, con PIB y estabilidad suficiente).
+ * Si la estabilidad global es < 25%, la IA se vuelve más agresiva y prioriza conquistas.
+ * La IA puede atacar, conquistar, invertir, formar alianzas, ayudar a otros o fracasar.
+ * Puede traicionar alianzas y perder si falla una acción arriesgada.
+ * Devuelve países y eventos IA generados este ciclo.
+ */
+export function runAIActions(
+  countries: Country[],
+  playerCountryId: string,
+  globalStability: number
+): { updatedCountries: Country[]; aiEvents: GameEvent[] } {
+  let updatedCountries = [...countries]
+  let aiEvents: GameEvent[] = []
+  const now = Date.now()
+
+  // Determinar países IA activos (no jugador, no conquistados, con poder)
+  const aiCandidates = countries.filter(c =>
+    c.id !== playerCountryId && !c.ownedBy && !c.isSovereign && (c.powerLevel === "superpower" || c.powerLevel === "major")
+  )
+
+  aiCandidates.forEach(aiCountry => {
+    // Lógica de agresividad
+    const aggressiveMode = globalStability < 25
+    // Objetivos posibles: países vulnerables (no conquistados, baja estabilidad, no IA, no jugador)
+    const vulnerableTargets = updatedCountries.filter(t =>
+      !t.ownedBy && t.id !== aiCountry.id && t.id !== playerCountryId && !t.isSovereign && t.stability < (aggressiveMode ? 55 : 35)
+    )
+    // También puede atacar al jugador si está débil
+    const canAttackPlayer = aggressiveMode && countries.find(c => c.id === playerCountryId)?.stability! < 45
+    // PIB mínimo para conquistar: 80% del objetivo
+    let actionDone = false
+    // 1. Conquista agresiva
+    if (aggressiveMode && vulnerableTargets.length > 0) {
+      const target = vulnerableTargets.sort((a, b) => a.stability - b.stability)[0]
+      const conquestCost = Math.max(target.economy.gdp * 0.8, 500)
+      if (aiCountry.economy.gdp > conquestCost && aiCountry.stability > 45) {
+        updatedCountries = updatedCountries.map(c =>
+          c.id === target.id ? { ...c, ownedBy: aiCountry.id, stability: 35, playerKarma: 0 } : c
+        )
+        aiEvents.push({
+          id: `ai_conquest_${now}_${aiCountry.id}_${target.id}`,
+          type: "error",
+          title: `⚔️ ${aiCountry.name} conquista ${target.name}`,
+          description: `${aiCountry.name} ha conquistado agresivamente a ${target.name} aprovechando el caos global.`,
+          effects: [
+            `Costo: $${conquestCost}B PIB`,
+            `${target.name} ahora es territorio de ${aiCountry.name}`
+          ],
+          timestamp: now
+        })
+        actionDone = true
+      }
+    }
+    // 2. Ataque al jugador
+    if (!actionDone && canAttackPlayer) {
+      const player = updatedCountries.find(c => c.id === playerCountryId)
+      if (player && aiCountry.economy.gdp > player.economy.gdp * 0.5 && aiCountry.stability > 40) {
+        // Daño mutuo
+        const playerDamage = Math.round(Math.random() * 15 + 10)
+        const aiDamage = Math.round(Math.random() * 8 + 5)
+        updatedCountries = updatedCountries.map(c => {
+          if (c.id === playerCountryId) return applyStabilityChange(c, -playerDamage)
+          if (c.id === aiCountry.id) return applyStabilityChange(c, -aiDamage)
+          return c
+        })
+        aiEvents.push({
+          id: `ai_attack_${now}_${aiCountry.id}_${playerCountryId}`,
+          type: "warning",
+          title: `⚔️ ${aiCountry.name} ataca a ${player.name}`,
+          description: `${aiCountry.name} ha lanzado un ataque militar contra ${player.name}. Ambos países sufren daños en estabilidad.`,
+          effects: [
+            `Estabilidad de ${player.name} -${playerDamage}%`,
+            `Estabilidad de ${aiCountry.name} -${aiDamage}%`
+          ],
+          timestamp: now
+        })
+        actionDone = true
+      }
+    }
+    // 3. Expansión cauta (conquista si hay mucha estabilidad y PIB)
+    if (!actionDone && !aggressiveMode && aiCountry.stability > 70 && aiCountry.economy.gdp > 1200) {
+      const minorTargets = updatedCountries.filter(t => !t.ownedBy && t.id !== aiCountry.id && t.powerLevel === "minor" && t.stability < 50)
+      if (minorTargets.length > 0) {
+        const target = minorTargets[Math.floor(Math.random() * minorTargets.length)]
+        updatedCountries = updatedCountries.map(c =>
+          c.id === target.id ? { ...c, ownedBy: aiCountry.id, stability: 40, playerKarma: 0 } : c
+        )
+        aiEvents.push({
+          id: `ai_minor_conquest_${now}_${aiCountry.id}_${target.id}`,
+          type: "warning",
+          title: `🏳️ ${aiCountry.name} anexa ${target.name}`,
+          description: `${aiCountry.name} ha anexado pacíficamente a ${target.name} aprovechando su prosperidad.`,
+          effects: [
+            `${target.name} ahora es territorio de ${aiCountry.name}`
+          ],
+          timestamp: now
+        })
+        actionDone = true
+      }
+    }
+    // 4. Ayuda a países en crisis (si hay caos pero la IA es estable)
+    if (!actionDone && aiCountry.stability > 65 && aiCountry.economy.gdp > 900) {
+      const crisisTargets = updatedCountries.filter(t => t.stability < 25 && !t.ownedBy && t.id !== aiCountry.id)
+      if (crisisTargets.length > 0) {
+        const target = crisisTargets[Math.floor(Math.random() * crisisTargets.length)]
+        updatedCountries = updatedCountries.map(c =>
+          c.id === target.id ? applyStabilityChange(c, 18) : c
+        )
+        aiEvents.push({
+          id: `ai_aid_${now}_${aiCountry.id}_${target.id}`,
+          type: "success",
+          title: `🤝 ${aiCountry.name} ayuda a ${target.name}`,
+          description: `${aiCountry.name} ha enviado ayuda masiva a ${target.name} para estabilizar la región.`,
+          effects: [
+            `Estabilidad de ${target.name} +18%`,
+            `Prestigio internacional para ${aiCountry.name}`
+          ],
+          timestamp: now
+        })
+        actionDone = true
+      }
+    }
+    // 5. Si la IA falla (no tiene PIB, se arriesga y pierde)
+    if (!actionDone && Math.random() < 0.15) {
+      // Fracaso: pierde estabilidad o recursos
+      const loss = Math.round(Math.random() * 10 + 5)
+      updatedCountries = updatedCountries.map(c =>
+        c.id === aiCountry.id ? applyStabilityChange(c, -loss) : c
+      )
+      aiEvents.push({
+        id: `ai_fail_${now}_${aiCountry.id}`,
+        type: "info",
+        title: `❌ ${aiCountry.name} fracasa en su intento de expansión`,
+        description: `${aiCountry.name} ha fallado una maniobra arriesgada y pierde estabilidad.`,
+        effects: [
+          `Estabilidad de ${aiCountry.name} -${loss}%`
+        ],
+        timestamp: now
+      })
+    }
+    // 6. Alianzas y traiciones (simplificado)
+    if (aiCountry.stability > 60 && Math.random() < 0.10) {
+      const ally = updatedCountries.filter(t => t.id !== aiCountry.id && !t.ownedBy && !t.isSovereign && t.powerLevel !== "minor")[0]
+      if (ally) {
+        aiEvents.push({
+          id: `ai_alliance_${now}_${aiCountry.id}_${ally.id}`,
+          type: "info",
+          title: `🤝 ${aiCountry.name} forma una alianza con ${ally.name}`,
+          description: `${aiCountry.name} y ${ally.name} han firmado una alianza estratégica. ¡Pero podrían traicionarse en el futuro!`,
+          effects: [
+            `${aiCountry.name} y ${ally.name} ahora son aliados`
+          ],
+          timestamp: now
+        })
+        // (No muta el estado, solo evento)
+      }
+    }
+  })
+  return { updatedCountries, aiEvents }
+}
+
+// =====================
 // Utilidad: Evento de colapso global por inactividad
 // =====================
 export function checkGlobalCollapseAndTriggerAI(

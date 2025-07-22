@@ -229,13 +229,26 @@ export function useGameState() {
         })
       }
 
-      // Calcular nivel de caos actual
-      const currentChaosLevel = calculateChaosLevel(
-        updatedCountries.length > 0 ? updatedCountries : countries,
-        gameEvents,
-      )
+      // Ejecutar acciones IA activas (conquistas, ataques, alianzas, ayuda, etc)
+    const { runAIActions } = require("@/lib/game-engine")
+    const aiResult = runAIActions(
+      updatedCountries.length > 0 ? updatedCountries : countries,
+      playerCountry!,
+      gameStats.globalStability
+    )
+    if (aiResult.aiEvents.length > 0) {
+      setGameEvents((prev) => [...prev, ...aiResult.aiEvents])
+      setVisibleNotifications((prev) => [...prev.slice(-2), ...aiResult.aiEvents])
+      setCountries(aiResult.updatedCountries)
+    }
 
-      // Generar eventos aleatorios con control inteligente de caos
+    // Calcular nivel de caos actual
+    const currentChaosLevel = calculateChaosLevel(
+      aiResult.updatedCountries.length > 0 ? aiResult.updatedCountries : (updatedCountries.length > 0 ? updatedCountries : countries),
+      gameEvents,
+    )
+
+    // Generar eventos aleatorios con control inteligente de caos
       console.log("🎯 Generando evento aleatorio con control de caos...")
       const { mainEvent, contagionEvents } = generateRandomEvent(
         updatedCountries.length > 0 ? updatedCountries : countries,
