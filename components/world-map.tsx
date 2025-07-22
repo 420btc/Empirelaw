@@ -204,6 +204,49 @@ export function WorldMap({
     return "#18181b" // Gris oscuro/negro - Colapsado
   }
 
+  // Nueva función para obtener el color del borde según la alianza/bloque geopolítico
+  const getAllianceStrokeColor = (countryId: string) => {
+    const country = countries.find((c) => c.id === countryId)
+    if (!country) return "#1f2937"
+
+    // Si el país tiene alianzas específicas, usar un color único para esa alianza
+    if (country.alliances && country.alliances.length > 0) {
+      // Generar un color consistente basado en la primera alianza (alfabéticamente)
+      const sortedAlliances = [...country.alliances].sort()
+      const primaryAlly = sortedAlliances[0]
+      
+      // Crear un hash simple del nombre de la alianza para generar un color consistente
+      let hash = 0
+      for (let i = 0; i < primaryAlly.length; i++) {
+        hash = primaryAlly.charCodeAt(i) + ((hash << 5) - hash)
+      }
+      
+      // Convertir el hash a un color HSL para mejor distribución de colores
+      const hue = Math.abs(hash) % 360
+      return `hsl(${hue}, 70%, 60%)` // Saturación y luminosidad fijas para consistencia
+    }
+
+    // Si no tiene alianzas específicas, usar color del bloque geopolítico
+    switch (country.geopoliticalBlock) {
+      case "nato":
+        return "#3b82f6" // Azul - OTAN/Occidente
+      case "eu":
+        return "#fbbf24" // Amarillo/Dorado - Unión Europea
+      case "brics":
+        return "#ef4444" // Rojo - BRICS+
+      case "africa":
+        return "#10b981" // Verde - Unión Africana
+      case "latin_america":
+        return "#f59e0b" // Naranja - América Latina
+      case "middle_east":
+        return "#8b5cf6" // Púrpura - Oriente Medio
+      case "neutral":
+        return "#6b7280" // Gris - Países Neutrales
+      default:
+        return "#1f2937" // Gris oscuro por defecto
+    }
+  }
+
   const getCountryData = (geoId: string) => {
     // Map geographic IDs to our country IDs - Expandido para más países
     const countryMapping: Record<string, string> = {
@@ -318,8 +361,8 @@ export function WorldMap({
                     key={geo.rsmKey}
                     geography={geo}
                     fill={countryId ? getCountryColor(countryId) : "#374151"}
-                    stroke="#1f2937"
-                    strokeWidth={countryId === selectedCountry ? 1.5 : 0.5} // Borde más grueso para país seleccionado
+                    stroke={countryId ? getAllianceStrokeColor(countryId) : "#1f2937"}
+                    strokeWidth={countryId === selectedCountry ? 2.5 : (countryId ? 1.5 : 0.5)} // Borde más grueso para alianzas y selección
                     style={{
                       default: { outline: "none" },
                       hover: {
@@ -375,57 +418,92 @@ export function WorldMap({
       </div>
 
       {/* Leyenda horizontal en la parte inferior aprovechando el espacio de la Antártida */}
-      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm rounded-lg px-4 py-2">
-        <div className="flex items-center justify-center gap-4 text-xs">
-          {/* Primera fila de leyenda */}
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-blue-500 rounded animate-pulse"></div>
-            <span className="text-white">Seleccionado</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-purple-500 rounded"></div>
-            <span className="text-white">Tu país</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-purple-700 rounded"></div>
-            <span className="text-white">Conquistados</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-white rounded"></div>
-            <span className="text-white">Soberano</span>
+      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur-sm rounded-lg px-4 py-3">
+        <div className="flex flex-col gap-2">
+          {/* Primera fila: Estados y estabilidad */}
+          <div className="flex items-center justify-center gap-4 text-xs">
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-blue-500 rounded animate-pulse"></div>
+              <span className="text-white">Seleccionado</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-purple-500 rounded"></div>
+              <span className="text-white">Tu país</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-purple-700 rounded"></div>
+              <span className="text-white">Conquistados</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-white rounded"></div>
+              <span className="text-white">Soberano</span>
+            </div>
+            
+            {/* Separador */}
+            <div className="w-px h-4 bg-gray-500"></div>
+            
+            {/* Estabilidad */}
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-green-400 rounded"></div>
+              <span className="text-white">Estable</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-yellow-500 rounded"></div>
+              <span className="text-white">Moderado</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-orange-500 rounded"></div>
+              <span className="text-white">Inestable</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-red-500 rounded"></div>
+              <span className="text-white">Crisis</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-red-600 rounded animate-pulse"></div>
+              <span className="text-white">Colapsado</span>
+            </div>
           </div>
           
-          {/* Separador */}
-          <div className="w-px h-4 bg-gray-500"></div>
-          
-          {/* Estabilidad */}
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-green-400 rounded"></div>
-            <span className="text-white">Estable</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-yellow-500 rounded"></div>
-            <span className="text-white">Moderado</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-orange-500 rounded"></div>
-            <span className="text-white">Inestable</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-red-500 rounded"></div>
-            <span className="text-white">Crisis</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-red-600 rounded animate-pulse"></div>
-            <span className="text-white">Colapsado</span>
-          </div>
-          
-          {/* Separador */}
-          <div className="w-px h-4 bg-gray-500"></div>
-          
-          {/* Tip */}
-          <div className="text-gray-300 text-xs">
-            💡 Clic en océano para deseleccionar
+          {/* Segunda fila: Alianzas/Bloques Geopolíticos */}
+          <div className="flex items-center justify-center gap-3 text-xs border-t border-gray-600 pt-2">
+            <span className="text-gray-300 font-semibold">🌍 Alianzas (Bordes):</span>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-1 bg-blue-500 rounded"></div>
+              <span className="text-white">OTAN</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-1 bg-yellow-400 rounded"></div>
+              <span className="text-white">UE</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-1 bg-red-500 rounded"></div>
+              <span className="text-white">BRICS</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-1 bg-green-500 rounded"></div>
+              <span className="text-white">África</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-1 bg-orange-500 rounded"></div>
+              <span className="text-white">Latinoamérica</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-1 bg-purple-500 rounded"></div>
+              <span className="text-white">Oriente Medio</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-1 bg-gray-500 rounded"></div>
+              <span className="text-white">Neutrales</span>
+            </div>
+            
+            {/* Separador */}
+            <div className="w-px h-4 bg-gray-500"></div>
+            
+            {/* Tip */}
+            <div className="text-gray-300 text-xs">
+              💡 Clic en océano para deseleccionar
+            </div>
           </div>
         </div>
       </div>

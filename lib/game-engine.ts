@@ -2301,58 +2301,183 @@ export function runAIActions(
         timestamp: now
       })
     }
-    // 6. Alianzas y traiciones (simplificado) - Frecuencia muy reducida
-    if (aiCountry.stability > 70 && Math.random() < 0.01) {
-      let ally: Country | undefined
+    // 6. Acciones diplomáticas, económicas, militares y de conspiración de IA
+    if (!actionDone && Math.random() < 0.25) { // 25% de probabilidad de acción especial
+      const actionTypes = ['diplomatic', 'economic', 'military', 'conspiracy']
+      const actionType = actionTypes[Math.floor(Math.random() * actionTypes.length)]
       
-      // Restricción: países africanos solo pueden aliarse entre ellos
-      if (aiCountry.geopoliticalBlock === "africa") {
-        ally = updatedCountries.filter(t => 
-          t.id !== aiCountry.id && 
-          !t.ownedBy && 
-          !t.isSovereign && 
-          t.geopoliticalBlock === "africa" && 
-          t.powerLevel !== "minor"
-        )[0]
-      } else {
-        // Países no africanos pueden aliarse con cualquiera excepto países africanos
-        ally = updatedCountries.filter(t => 
-          t.id !== aiCountry.id && 
-          !t.ownedBy && 
-          !t.isSovereign && 
-          t.geopoliticalBlock !== "africa" && 
-          t.powerLevel !== "minor"
-        )[0]
-      }
-      
-      if (ally) {
-        // Actualizar alianzas en el estado del juego
-        updatedCountries = updatedCountries.map(c => {
-          if (c.id === aiCountry.id) {
-            const currentAlliances = c.alliances || []
-            if (!currentAlliances.includes(ally.id)) {
-              return { ...c, alliances: [...currentAlliances, ally.id] }
-            }
-          }
-          if (c.id === ally.id) {
-            const currentAlliances = c.alliances || []
-            if (!currentAlliances.includes(aiCountry.id)) {
-              return { ...c, alliances: [...currentAlliances, aiCountry.id] }
-            }
-          }
-          return c
-        })
+      if (actionType === 'diplomatic' && aiCountry.stability > 60) {
+        // Formar alianzas
+        let ally: Country | undefined
         
-        aiEvents.push({
-          id: `ai_alliance_${now}_${aiCountry.id}_${ally.id}`,
-          type: "info",
-          title: `🤝 ${aiCountry.name} forma una alianza con ${ally.name}`,
-          description: `${aiCountry.name} y ${ally.name} han firmado una alianza estratégica. ¡Pero podrían traicionarse en el futuro!`,
-          effects: [
-            `${aiCountry.name} y ${ally.name} ahora son aliados`
-          ],
-          timestamp: now
-        })
+        // Restricción: países africanos solo pueden aliarse entre ellos
+        if (aiCountry.geopoliticalBlock === "africa") {
+          ally = updatedCountries.filter(t => 
+            t.id !== aiCountry.id && 
+            !t.ownedBy && 
+            !t.isSovereign && 
+            t.geopoliticalBlock === "africa" && 
+            t.powerLevel !== "minor" &&
+            !(t.alliances || []).includes(aiCountry.id)
+          )[0]
+        } else {
+          ally = updatedCountries.filter(t => 
+            t.id !== aiCountry.id && 
+            !t.ownedBy && 
+            !t.isSovereign && 
+            t.geopoliticalBlock !== "africa" && 
+            t.powerLevel !== "minor" &&
+            !(t.alliances || []).includes(aiCountry.id)
+          )[0]
+        }
+        
+        if (ally) {
+          updatedCountries = updatedCountries.map(c => {
+            if (c.id === aiCountry.id) {
+              const currentAlliances = c.alliances || []
+              if (!currentAlliances.includes(ally.id)) {
+                return { ...c, alliances: [...currentAlliances, ally.id] }
+              }
+            }
+            if (c.id === ally.id) {
+              const currentAlliances = c.alliances || []
+              if (!currentAlliances.includes(aiCountry.id)) {
+                return { ...c, alliances: [...currentAlliances, aiCountry.id] }
+              }
+            }
+            return c
+          })
+          
+          aiEvents.push({
+            id: `ai_diplomatic_${now}_${aiCountry.id}_${ally.id}`,
+            type: "info",
+            title: `🤝 Acción Diplomática: ${aiCountry.name} se alía con ${ally.name}`,
+            description: `${aiCountry.name} ha establecido una alianza estratégica con ${ally.name} mediante negociaciones diplomáticas.`,
+            effects: [
+              `${aiCountry.name} y ${ally.name} ahora son aliados`,
+              `Mejora en las relaciones diplomáticas`
+            ],
+            timestamp: now
+          })
+          actionDone = true
+        }
+      } else if (actionType === 'economic' && aiCountry.economy.gdp > 800) {
+        // Sanciones económicas o inversiones
+        const targets = updatedCountries.filter(t => 
+          t.id !== aiCountry.id && 
+          !t.ownedBy && 
+          t.geopoliticalBlock !== aiCountry.geopoliticalBlock
+        )
+        
+        if (targets.length > 0) {
+          const target = targets[Math.floor(Math.random() * targets.length)]
+          const isPositive = Math.random() < 0.4 // 40% inversión, 60% sanción
+          
+          if (isPositive) {
+            // Inversión económica
+            updatedCountries = updatedCountries.map(c =>
+              c.id === target.id ? { ...c, economy: { ...c.economy, gdp: c.economy.gdp * 1.08 } } : c
+            )
+            
+            aiEvents.push({
+              id: `ai_economic_invest_${now}_${aiCountry.id}_${target.id}`,
+              type: "success",
+              title: `💰 Acción Económica: ${aiCountry.name} invierte en ${target.name}`,
+              description: `${aiCountry.name} ha realizado una gran inversión en ${target.name}, impulsando su economía.`,
+              effects: [
+                `PIB de ${target.name} +8%`,
+                `Fortalecimiento de lazos comerciales`
+              ],
+              timestamp: now
+            })
+          } else {
+            // Sanciones económicas
+            updatedCountries = updatedCountries.map(c =>
+              c.id === target.id ? { ...c, economy: { ...c.economy, gdp: c.economy.gdp * 0.94 } } : c
+            )
+            
+            aiEvents.push({
+              id: `ai_economic_sanction_${now}_${aiCountry.id}_${target.id}`,
+              type: "warning",
+              title: `📉 Acción Económica: ${aiCountry.name} sanciona a ${target.name}`,
+              description: `${aiCountry.name} ha impuesto sanciones económicas severas contra ${target.name}.`,
+              effects: [
+                `PIB de ${target.name} -6%`,
+                `Deterioro de relaciones comerciales`
+              ],
+              timestamp: now
+            })
+          }
+          actionDone = true
+        }
+      } else if (actionType === 'military' && aiCountry.powerLevel !== 'minor') {
+        // Ejercicios militares o amenazas
+        const targets = updatedCountries.filter(t => 
+          t.id !== aiCountry.id && 
+          !t.ownedBy && 
+          t.powerLevel === 'minor' &&
+          !(t.alliances || []).includes(aiCountry.id)
+        )
+        
+        if (targets.length > 0) {
+          const target = targets[Math.floor(Math.random() * targets.length)]
+          
+          updatedCountries = updatedCountries.map(c =>
+            c.id === target.id ? applyStabilityChange(c, -8) : c
+          )
+          
+          aiEvents.push({
+            id: `ai_military_${now}_${aiCountry.id}_${target.id}`,
+            type: "warning",
+            title: `⚔️ Acción Militar: ${aiCountry.name} intimida a ${target.name}`,
+            description: `${aiCountry.name} ha realizado ejercicios militares cerca de las fronteras de ${target.name}, generando tensión.`,
+            effects: [
+              `Estabilidad de ${target.name} -8%`,
+              `Aumento de tensiones militares en la región`
+            ],
+            timestamp: now
+          })
+          actionDone = true
+        }
+      } else if (actionType === 'conspiracy' && Math.random() < 0.3) {
+        // Operaciones encubiertas
+        const targets = updatedCountries.filter(t => 
+          t.id !== aiCountry.id && 
+          !t.ownedBy && 
+          t.stability < 70
+        )
+        
+        if (targets.length > 0) {
+          const target = targets[Math.floor(Math.random() * targets.length)]
+          
+          updatedCountries = updatedCountries.map(c =>
+            c.id === target.id ? applyStabilityChange(c, -12) : c
+          )
+          
+          const conspiracyTypes = [
+            'infiltración de agentes',
+            'manipulación mediática',
+            'sabotaje económico',
+            'operación de desinformación',
+            'financiamiento de grupos opositores'
+          ]
+          
+          const conspiracyType = conspiracyTypes[Math.floor(Math.random() * conspiracyTypes.length)]
+          
+          aiEvents.push({
+            id: `ai_conspiracy_${now}_${aiCountry.id}_${target.id}`,
+            type: "error",
+            title: `🕵️ Acción de Conspiración: ${aiCountry.name} opera contra ${target.name}`,
+            description: `Se han detectado indicios de ${conspiracyType} por parte de ${aiCountry.name} en ${target.name}.`,
+            effects: [
+              `Estabilidad de ${target.name} -12%`,
+              `Operaciones encubiertas detectadas`,
+              `Deterioro de la confianza pública`
+            ],
+            timestamp: now
+          })
+          actionDone = true
+        }
       }
     }
   })
