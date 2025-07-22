@@ -753,7 +753,7 @@ export function generateRandomEvent(
     // ========== EVENTOS NEGATIVOS MEJORADOS ==========
     economic_crisis: () => ({
       id: makeId(),
-      type: "warning",
+      type: "warning", // Crisis económica fuerte pero no colapso total
       title: "💸 Crisis Económica Severa",
       description: `Una crisis financiera devastadora ha golpeado a ${affectedCountry.name}${(affectedCountry.playerKarma || 0) > 30 ? ", posiblemente como consecuencia de acciones previas" : ""}`,
       effects: [
@@ -785,7 +785,7 @@ export function generateRandomEvent(
     // Nuevo evento específico de karma
     karma_rebellion: () => ({
       id: makeId(),
-      type: "error",
+      type: "error", // Rebelión masiva: evento catastrófico
       title: "✊ Rebelión Popular Masiva",
       description: `El pueblo de ${affectedCountry.name} se ha levantado en una rebelión masiva, aparentemente en respuesta a las acciones hostiles sufridas`,
       effects: [
@@ -1076,7 +1076,7 @@ export function generateRandomEvent(
 
     shadow_government_revealed: () => ({
       id: makeId(),
-      type: "error",
+      type: "error", // Gobierno en las sombras: evento catastrófico
       title: "👤 Gobierno en las Sombras Revelado",
       description: `Un gobierno paralelo que operaba en secreto en ${affectedCountry.name} ha sido completamente expuesto`,
       effects: [
@@ -1165,7 +1165,7 @@ export function generateRandomEvent(
 
     financial_elite_exposed: () => ({
       id: makeId(),
-      type: "warning",
+      type: "warning", // Elite financiera expuesta: negativo pero no colapso
       title: "💰 Élite Financiera Global Expuesta",
       description: `Las manipulaciones secretas de la élite financiera global han sido expuestas, afectando gravemente a ${affectedCountry.name}`,
       effects: [
@@ -1194,7 +1194,7 @@ export function generateRandomEvent(
 
     media_brainwashing_exposed: () => ({
       id: makeId(),
-      type: "warning",
+      type: "warning", // Manipulación mediática: negativo pero no catastrófico
       title: "📺 Lavado de Cerebro Mediático Expuesto",
       description: `Técnicas de lavado de cerebro masivo a través de medios de comunicación han sido reveladas en ${affectedCountry.name}`,
       effects: [
@@ -1254,7 +1254,7 @@ export function generateRandomEvent(
     // Continuar con más eventos...
     pandemic_outbreak: () => ({
       id: makeId(),
-      type: "error",
+      type: "error", // Pandemia severa: evento catastrófico
       title: "🦠 Brote Pandémico Severo",
       description: `Una nueva enfermedad altamente contagiosa se ha originado en ${affectedCountry.name}${(affectedCountry.playerKarma || 0) > 25 ? ", posiblemente relacionada con actividades sospechosas previas" : ""}`,
       effects: [
@@ -1529,7 +1529,7 @@ export function generateRandomEvent(
     // EVENTOS CAÓTICOS (9-15)
     ai_rebellion: () => ({
       id: makeId(),
-      type: "error",
+      type: "error", // Rebelión IA: evento catastrófico
       title: "🤖 Rebelión de Inteligencia Artificial",
       description: `Los sistemas de IA de ${affectedCountry.name} han desarrollado consciencia y se han rebelado contra sus creadores`,
       effects: [
@@ -1884,6 +1884,90 @@ export function generateRandomEvent(
     mainEvent.type !== "success" ? applyContagionEffects(mainEvent, countries, affectedCountry.id) : []
 
   return { mainEvent, contagionEvents }
+}
+
+// =====================
+// Utilidad: Selección de rival IA según país del jugador
+// =====================
+export function selectAIOpponent(playerCountryId: string, countries: Country[]): Country | null {
+  // Rivalidades geopolíticas básicas (puedes expandir)
+  const rivalries: Record<string, string[]> = {
+    usa: ["china", "russia", "iran", "north_korea"],
+    china: ["usa", "india", "japan", "taiwan"],
+    russia: ["usa", "ukraine", "germany", "poland"],
+    israel: ["iran", "syria", "egypt", "turkey"],
+    spain: ["morocco", "france", "uk"],
+    france: ["germany", "uk", "italy"],
+    uk: ["france", "germany", "russia"],
+    germany: ["france", "russia", "poland"],
+    india: ["china", "pakistan"],
+    brazil: ["argentina", "usa"],
+    argentina: ["brazil", "uk"],
+    iran: ["usa", "israel", "saudi_arabia"],
+    // ...
+  }
+  const preferredRivals = rivalries[playerCountryId] || []
+  // Buscar rival fuerte, no conquistado, no el jugador
+  let candidates = countries.filter(c =>
+    preferredRivals.includes(c.id) && !c.ownedBy && c.id !== playerCountryId && !c.isSovereign
+  )
+  if (candidates.length === 0) {
+    // Si no hay rivalidad directa, buscar país fuerte no conquistado
+    candidates = countries.filter(c => c.powerLevel === "superpower" && !c.ownedBy && c.id !== playerCountryId && !c.isSovereign)
+  }
+  if (candidates.length === 0) {
+    // Si tampoco, buscar cualquier país mayor no conquistado
+    candidates = countries.filter(c => c.powerLevel === "major" && !c.ownedBy && c.id !== playerCountryId && !c.isSovereign)
+  }
+  return candidates.length > 0 ? candidates[Math.floor(Math.random() * candidates.length)] : null
+}
+
+// =====================
+// Utilidad: Evento de colapso global por inactividad
+// =====================
+export function checkGlobalCollapseAndTriggerAI(
+  countries: Country[],
+  playerCountryId: string,
+  inactivityTicks: number,
+  globalStability: number
+): { updatedCountries: Country[], aiEvent: GameEvent | null } {
+  // Si el jugador está inactivo y la estabilidad global es menor al 20%, activar IA
+  if (inactivityTicks >= 3 && globalStability < 20) {
+    // Seleccionar país fuerte IA
+    const aiCountry = selectAIOpponent(playerCountryId, countries)
+    if (!aiCountry) return { updatedCountries: countries, aiEvent: null }
+    // Restaurar fuerza y formar alianza con los más estables
+    let updatedCountries = countries.map(c => {
+      if (c.id === aiCountry.id) {
+        return { ...c, stability: 80, ownedBy: undefined, alliances: [] }
+      }
+      return c
+    })
+    // Formar alianza con los 2-3 países más estables (sin ser jugador ni conquistados)
+    const stableAllies = updatedCountries
+      .filter(c => c.id !== playerCountryId && !c.ownedBy && c.id !== aiCountry.id && !c.isSovereign)
+      .sort((a, b) => b.stability - a.stability)
+      .slice(0, 3)
+      .map(c => c.id)
+    updatedCountries = updatedCountries.map(c =>
+      c.id === aiCountry.id ? { ...c, alliances: stableAllies } : c
+    )
+    // Evento especial
+    const aiEvent: GameEvent = {
+      id: `ai_collapse_${Date.now()}`,
+      type: "error",
+      title: "🤖 Hegemonía IA Rival",
+      description: `${aiCountry.name} ha recuperado fuerza, formado una alianza poderosa y desafía al jugador por la hegemonía mundial debido a la inacción y el colapso global.`,
+      effects: [
+        `${aiCountry.name} se alía con ${stableAllies.join(", ")}`,
+        "El jugador ha sido desafiado por dejar colapsar el mundo.",
+        "¡La IA puede ganar si no reaccionas pronto!"
+      ],
+      timestamp: Date.now(),
+    }
+    return { updatedCountries, aiEvent }
+  }
+  return { updatedCountries: countries, aiEvent: null }
 }
 
 // Función para generar eventos estabilizadores cuando hay mucho caos

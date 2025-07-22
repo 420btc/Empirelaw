@@ -8,6 +8,15 @@ import { ACHIEVEMENTS, checkAchievements, calculateXPGain, getPlayerLevel, type 
 import type { GameProgression } from "@/lib/types"
 
 export function useGameState() {
+  // --- Estado de inactividad para IA rival ---
+  const inactivityTicksRef = useRef<number>(0)
+  const lastActionTimeRef = useRef<number>(Date.now())
+
+  // Llama esto cada vez que el jugador ejecuta una acción
+  const registerPlayerAction = useCallback(() => {
+    inactivityTicksRef.current = 0
+    lastActionTimeRef.current = Date.now()
+  }, [])
   const [countries, setCountries] = useState<Country[]>(initialCountries)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
   const [playerCountry, setPlayerCountry] = useState<string | null>(null)
@@ -157,6 +166,27 @@ export function useGameState() {
     if (isEventsPausedRef.current) {
       console.log("⏸️ Eventos pausados, saltando generación")
       return
+    }
+
+    // --- Lógica de inactividad para IA rival ---
+    inactivityTicksRef.current += 1
+    // Si el jugador ejecuta una acción, inactivityTicksRef se resetea vía registerPlayerAction
+    // Si pasan 3 ciclos de eventos y la estabilidad global es baja, activar IA rival
+    if (inactivityTicksRef.current >= 3 && gameStats.globalStability < 20 && playerCountry) {
+      const { checkGlobalCollapseAndTriggerAI } = require("@/lib/game-engine")
+      const { updatedCountries, aiEvent } = checkGlobalCollapseAndTriggerAI(
+        countries,
+        playerCountry,
+        inactivityTicksRef.current,
+        gameStats.globalStability
+      )
+      if (aiEvent) {
+        setCountries(updatedCountries)
+        setGameEvents((prev) => [...prev, aiEvent])
+        setVisibleNotifications((prev) => [...prev.slice(-2), aiEvent])
+        inactivityTicksRef.current = 0 // Solo una vez por colapso
+        return // Saltar generación normal este ciclo
+      }
     }
 
       // Verificar ayuda mutua para países en crisis ANTES de verificar colapsos
@@ -819,5 +849,7 @@ export function useGameState() {
     recentAchievements,
     showLevelUp,
     playerLevel: getPlayerLevel(gameProgression.totalXP),
+    // Nueva función para notificar acción del jugador (reset inactividad IA)
+    registerPlayerAction,
   }
 }
