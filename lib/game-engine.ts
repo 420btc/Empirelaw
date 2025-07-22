@@ -618,6 +618,17 @@ export function generateRandomEvent(
     "financial_elite_exposed",
     "media_brainwashing_exposed",
     "population_control_agenda",
+    // NUEVOS EVENTOS DE CONSPIRACIÓN ESPECÍFICOS
+    "mossad_operation_exposed",
+    "cia_black_ops_revealed",
+    "fbi_surveillance_scandal",
+    "epstein_network_exposed",
+    // EVENTOS DE CORRUPCIÓN ESPECÍFICOS POR REGIÓN
+    "african_diamond_corruption",
+    "african_oil_embezzlement",
+    "latin_drug_cartel_corruption",
+    "asian_infrastructure_corruption",
+    "european_banking_scandal",
     // 7 nuevos eventos caóticos
     "ai_rebellion",
     "dimensional_rift",
@@ -733,6 +744,45 @@ export function generateRandomEvent(
   }
 
   let eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)]
+  
+  // 🌍 EVENTOS ESPECÍFICOS POR REGIÓN: Asegurar que ciertos eventos solo ocurran en regiones apropiadas
+  const regionalEvents = {
+    africa: ["african_diamond_corruption", "african_oil_embezzlement"],
+    latin_america: ["latin_drug_cartel_corruption"],
+    asia: ["asian_infrastructure_corruption"],
+    europe: ["european_banking_scandal"]
+  }
+  
+  // Si el evento seleccionado es específico de una región, verificar si el país pertenece a esa región
+  const isRegionalEvent = Object.values(regionalEvents).flat().includes(eventType)
+  
+  if (isRegionalEvent) {
+    const countryRegion = affectedCountry.geopoliticalBlock
+    const eventRegion = Object.keys(regionalEvents).find(region => 
+      regionalEvents[region as keyof typeof regionalEvents].includes(eventType)
+    )
+    
+    // Si el país no pertenece a la región del evento, cambiar el evento o el país
+    if (countryRegion !== eventRegion) {
+      // Opción 1: Cambiar a un país de la región correcta
+      const correctRegionCountries = countries.filter(c => 
+        c.geopoliticalBlock === eventRegion && 
+        !recentlyAffectedCountries.includes(c.id)
+      )
+      
+      if (correctRegionCountries.length > 0) {
+        affectedCountry = correctRegionCountries[Math.floor(Math.random() * correctRegionCountries.length)]
+        console.log(`🌍 Evento regional ${eventType} redirigido a ${affectedCountry.name} (${eventRegion})`)  
+      } else {
+        // Opción 2: Si no hay países disponibles en la región, cambiar el evento
+        const nonRegionalEvents = eventTypes.filter(type => !Object.values(regionalEvents).flat().includes(type))
+        eventType = nonRegionalEvents[Math.floor(Math.random() * nonRegionalEvents.length)]
+        console.log(`🌍 Evento regional no disponible, cambiado a: ${eventType}`)
+      }
+    } else {
+      console.log(`🌍 Evento regional ${eventType} aplicado correctamente en ${affectedCountry.name} (${countryRegion})`)
+    }
+  }
   
   // 🌍 RESTRICCIÓN AFRICANA: Limitar eventos científicos y tecnológicos para países africanos
   const scientificEvents = [
@@ -1321,6 +1371,289 @@ export function generateRandomEvent(
       targetedCountry: affectedCountry.id,
       chaosLevel: chaosLevel,
       timestamp: Date.now(),
+    }),
+
+    // ========== NUEVOS EVENTOS DE CONSPIRACIÓN ESPECÍFICOS ==========
+    
+    mossad_operation_exposed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🕵️ Operación del Mossad Expuesta",
+      description: `Una operación encubierta del Mossad israelí ha sido descubierta en ${affectedCountry.name}, causando una crisis diplomática internacional`,
+      effects: [
+        "Operaciones de inteligencia israelí reveladas",
+        "Crisis diplomática con Israel",
+        "Protestas anti-israelíes masivas",
+        "Investigación de violación de soberanía",
+        "Tensiones geopolíticas escalando",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -40,
+          economyChange: -800,
+          debtChange: 12,
+          resourceEffects: {
+            servicios: -50,
+            turismo: -60,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    cia_black_ops_revealed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🏴 Operaciones Negras de la CIA Reveladas",
+      description: `Documentos clasificados han expuesto operaciones encubiertas de la CIA en ${affectedCountry.name}, incluyendo manipulación política y económica`,
+      effects: [
+        "Operaciones encubiertas de la CIA expuestas",
+        "Manipulación política estadounidense revelada",
+        "Crisis de confianza en relaciones bilaterales",
+        "Demandas de compensación internacional",
+        "Protestas anti-estadounidenses masivas",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -50,
+          economyChange: -1200,
+          debtChange: 18,
+          resourceEffects: {
+            "servicios financieros": -70,
+            servicios: -60,
+            tecnología: -40,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    fbi_surveillance_scandal: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "👁️ Escándalo de Vigilancia del FBI",
+      description: `Se ha revelado que el FBI ha estado realizando vigilancia masiva e ilegal de ciudadanos en ${affectedCountry.name} sin autorización judicial`,
+      effects: [
+        "Vigilancia masiva del FBI expuesta",
+        "Violaciones de privacidad documentadas",
+        "Crisis de derechos civiles",
+        "Demandas legales masivas contra el gobierno",
+        "Reformas de vigilancia exigidas",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -35,
+          economyChange: -600,
+          debtChange: 15,
+          resourceEffects: {
+            servicios: -45,
+            tecnología: -30,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    epstein_network_exposed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🏝️ Red de Jeffrey Epstein Completamente Expuesta",
+      description: `La red completa de tráfico y chantaje de Jeffrey Epstein ha sido revelada, implicando a élites políticas y económicas de ${affectedCountry.name}`,
+      effects: [
+        "Red de tráfico de élites expuesta",
+        "Chantaje político masivo revelado",
+        "Renuncias masivas de funcionarios",
+        "Crisis de legitimidad gubernamental",
+        "Investigaciones internacionales iniciadas",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -60,
+          economyChange: -1800,
+          debtChange: 25,
+          resourceEffects: {
+            "servicios financieros": -80,
+            servicios: -70,
+            turismo: -90,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    // ========== EVENTOS DE CORRUPCIÓN ESPECÍFICOS POR REGIÓN ==========
+    
+    african_diamond_corruption: () => ({
+      id: makeId(),
+      type: "error",
+      title: "💎 Escándalo de Corrupción de Diamantes Africanos",
+      description: `Un masivo esquema de corrupción en la industria diamantífera ha sido expuesto en ${affectedCountry.name}, involucrando a funcionarios gubernamentales y corporaciones multinacionales`,
+      effects: [
+        "Corrupción masiva en industria diamantífera",
+        "Funcionarios gubernamentales implicados",
+        "Corporaciones multinacionales bajo investigación",
+        "Pérdida de ingresos por décadas",
+        "Reformas mineras urgentes requeridas",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -45,
+          economyChange: -1500,
+          debtChange: 30,
+          resourceEffects: {
+            diamantes: -70,
+            oro: -40,
+            "servicios financieros": -60,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+      // Solo aparece en países africanos con recursos minerales
+      regionSpecific: "africa",
+    }),
+
+    african_oil_embezzlement: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🛢️ Malversación Masiva de Petróleo Africano",
+      description: `Un esquema de malversación de miles de millones en ingresos petroleros ha sido descubierto en ${affectedCountry.name}, con fondos desviados a cuentas offshore`,
+      effects: [
+        "Malversación de ingresos petroleros por décadas",
+        "Fondos públicos desviados a paraísos fiscales",
+        "Élite política enriquecida ilegalmente",
+        "Infraestructura pública abandonada",
+        "Protestas populares masivas",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -55,
+          economyChange: -2000,
+          debtChange: 40,
+          resourceEffects: {
+            petróleo: -60,
+            "gas natural": -50,
+            "servicios financieros": -80,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+      // Solo aparece en países africanos con petróleo
+      regionSpecific: "africa",
+    }),
+
+    latin_drug_cartel_corruption: () => ({
+      id: makeId(),
+      type: "error",
+      title: "💊 Corrupción Masiva de Carteles de Drogas",
+      description: `La infiltración completa del gobierno de ${affectedCountry.name} por carteles de drogas ha sido expuesta, revelando décadas de corrupción sistemática`,
+      effects: [
+        "Gobierno infiltrado por carteles de drogas",
+        "Corrupción policial y judicial masiva",
+        "Narcotráfico institucionalizado",
+        "Crisis de estado de derecho",
+        "Intervención internacional considerada",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -65,
+          economyChange: -1600,
+          populationChange: -1000000,
+          debtChange: 35,
+          resourceEffects: {
+            servicios: -70,
+            agricultura: -50,
+            turismo: -80,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+      // Solo aparece en países latinoamericanos
+      regionSpecific: "latin_america",
+    }),
+
+    asian_infrastructure_corruption: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "🏗️ Corrupción en Megaproyectos de Infraestructura",
+      description: `Un escándalo masivo de corrupción en proyectos de infraestructura ha sido expuesto en ${affectedCountry.name}, con sobrecostos de miles de millones`,
+      effects: [
+        "Corrupción masiva en proyectos de infraestructura",
+        "Sobrecostos de miles de millones",
+        "Calidad de construcción comprometida",
+        "Funcionarios públicos arrestados",
+        "Reformas de contratación pública urgentes",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -40,
+          economyChange: -1200,
+          debtChange: 25,
+          resourceEffects: {
+            construcción: -60,
+            "servicios financieros": -50,
+            servicios: -40,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+      // Solo aparece en países asiáticos
+      regionSpecific: "asia",
+    }),
+
+    european_banking_scandal: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "🏦 Escándalo Bancario Europeo Masivo",
+      description: `Un esquema de lavado de dinero y evasión fiscal que involucra a los principales bancos de ${affectedCountry.name} ha sido completamente expuesto`,
+      effects: [
+        "Lavado de dinero bancario masivo expuesto",
+        "Evasión fiscal sistemática revelada",
+        "Confianza en sistema financiero colapsada",
+        "Multas multimillonarias impuestas",
+        "Reformas bancarias radicales exigidas",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -35,
+          economyChange: -1400,
+          debtChange: 20,
+          resourceEffects: {
+            "servicios financieros": -90,
+            servicios: -50,
+            oro: -30,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+      // Solo aparece en países europeos
+      regionSpecific: "europe",
     }),
 
     // Continuar con más eventos...
@@ -2588,6 +2921,77 @@ function generateStabilizingEvent(eventType: string, affectedCountry: Country, c
 //------------------------------------------------------------
 // Process Action con sistema de karma mejorado
 //------------------------------------------------------------
+// Función para calcular costos escalados basados en PIB
+function getScaledActionCost(actionType: string, sourceCountry: Country): number {
+  const baseCosts: Record<string, number> = {
+    military_action: 3000,
+    special_conquest: 5000,
+    naval_blockade: 1500,
+    regime_change: 2500,
+    biological_warfare: 3500,
+    cyber_attack: 1000,
+    espionage: 800,
+    geoengineering: 2000,
+    masonic_influence: 1500,
+    media_manipulation: 600,
+    technology_theft: 1200,
+    satellite_surveillance: 900,
+    economic_sanction: 200,
+    trade_embargo: 400,
+    resource_extraction: 800,
+    economic_aid: 600,
+    diplomatic_alliance: 300,
+    trade_agreement: 500,
+    diplomatic_message: 100,
+    peace_treaty: 200,
+    economic_investment: 1000,
+    social_policy: 500,
+    legal_system_change: 800,
+    military_buildup: 1200,
+    infrastructure_development: 1500,
+    education_reform: 600,
+    healthcare_expansion: 700,
+    propaganda_campaign: 400,
+    debt_emission: 0,
+    // Nuevos ataques de conspiración
+    financial_infiltration: 1800,
+    deep_state_operation: 2800,
+    social_engineering: 1000,
+    quantum_disruption: 4000,
+    psychological_warfare: 3200
+  }
+  
+  const baseCost = baseCosts[actionType] || 1000
+  
+  // Sistema de costos escalados para acciones militares y de conquista
+  const militaryActions = ['military_action', 'special_conquest', 'naval_blockade', 'regime_change', 'biological_warfare']
+  
+  if (militaryActions.includes(actionType)) {
+    const playerGDP = sourceCountry.economy.gdp
+    let costMultiplier = 1
+    
+    // Top 10 países más poderosos tienen costos escalados
+    if (playerGDP >= 20000) { // Superpotencias (USA, China)
+      costMultiplier = 8.0
+    } else if (playerGDP >= 15000) { // Potencias mayores (Alemania, Japón, Reino Unido)
+      costMultiplier = 6.0
+    } else if (playerGDP >= 10000) { // Potencias regionales (Francia, India, Italia)
+      costMultiplier = 4.5
+    } else if (playerGDP >= 5000) { // Potencias medianas (Brasil, Canadá, Rusia)
+      costMultiplier = 3.0
+    } else if (playerGDP >= 2000) { // Países desarrollados
+      costMultiplier = 2.0
+    } else if (playerGDP >= 1000) { // Países en desarrollo
+      costMultiplier = 1.5
+    }
+    // Países pobres (PIB < 1000) mantienen costo base (multiplicador = 1)
+    
+    return Math.round(baseCost * costMultiplier)
+  }
+  
+  return baseCost
+}
+
 export function processAction(action: GameAction, countries: Country[]): ActionResult {
   const source = countries.find((c) => c.id === action.sourceCountry)
   if (!source) return { success: false, updatedCountries: countries }
@@ -2878,7 +3282,8 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
 
     case "military_action": {
       if (!target) break
-      deductCostFromSource(action.cost)
+      const scaledCost = getScaledActionCost(action.type, source)
+      deductCostFromSource(scaledCost)
 
       const sourceMilitary = source.militaryStrength || 50
       const targetMilitary = target.militaryStrength || 50
@@ -2959,7 +3364,8 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
 
-      const conquestCost = Math.max(action.cost, target.economy.gdp * 0.8)
+      const scaledBaseCost = getScaledActionCost(action.type, source)
+      const conquestCost = Math.max(scaledBaseCost, target.economy.gdp * 0.8)
 
       if (conquestCost > maxAffordable) {
         return {
@@ -3426,6 +3832,640 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       }
     }
 
+    // ========== NUEVOS ATAQUES DE CONSPIRACIÓN ==========
+    
+    case "geoengineering": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+      
+      const successChance = 0.75 // 75% de éxito
+      const isSuccessful = Math.random() < successChance
+      
+      if (isSuccessful) {
+        const stabilityDamage = Math.floor(Math.random() * 25) + 20 // 20-45%
+        const economicDamage = Math.floor(target.economy.gdp * 0.15) // 15% del PIB
+        
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - stabilityDamage),
+              economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) }
+            }
+          }
+          return c
+        })
+        
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `geoengineering_${Date.now()}`,
+            type: "error",
+            title: "🌪️ Manipulación Climática Exitosa",
+            description: `${source.name} ha alterado artificialmente el clima en ${target.name}`,
+            effects: [
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              `PIB de ${target.name} reducido en $${economicDamage}B`,
+              "Desastres climáticos artificiales",
+              "Agricultura y turismo devastados"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 15) + 10
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+        
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `geoengineering_failed_${Date.now()}`,
+            type: "error",
+            title: "🌪️ Geoingeniería Expuesta",
+            description: `La operación de manipulación climática de ${source.name} fue descubierta`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Escándalo internacional masivo",
+              "Sanciones ambientales esperadas"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+    
+    case "masonic_influence": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+      
+      const successChance = 0.70 // 70% de éxito
+      const isSuccessful = Math.random() < successChance
+      
+      if (isSuccessful) {
+        const stabilityDamage = Math.floor(Math.random() * 20) + 15 // 15-35%
+        const economicDamage = Math.floor(target.economy.gdp * 0.08) // 8% del PIB
+        
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - stabilityDamage),
+              economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) }
+            }
+          }
+          return c
+        })
+        
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `masonic_${Date.now()}`,
+            type: "warning",
+            title: "🏛️ Influencia Masónica Exitosa",
+            description: `${source.name} ha infiltrado las élites políticas de ${target.name}`,
+            effects: [
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              `PIB de ${target.name} reducido en $${economicDamage}B`,
+              "Líderes políticos comprometidos",
+              "Decisiones políticas manipuladas"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 12) + 8
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+        
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `masonic_failed_${Date.now()}`,
+            type: "error",
+            title: "🏛️ Infiltración Masónica Descubierta",
+            description: `La red de influencia masónica de ${source.name} fue expuesta en ${target.name}`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Agentes masónicos arrestados",
+              "Escándalo de corrupción internacional"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+    
+    case "media_manipulation": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+      
+      const successChance = 0.80 // 80% de éxito (riesgo medio)
+      const isSuccessful = Math.random() < successChance
+      
+      if (isSuccessful) {
+        const stabilityDamage = Math.floor(Math.random() * 15) + 10 // 10-25%
+        const economicDamage = Math.floor(target.economy.gdp * 0.05) // 5% del PIB
+        
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - stabilityDamage),
+              economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) }
+            }
+          }
+          return c
+        })
+        
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `media_manipulation_${Date.now()}`,
+            type: "warning",
+            title: "📺 Manipulación Mediática Exitosa",
+            description: `${source.name} ha controlado los medios de comunicación en ${target.name}`,
+            effects: [
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              `PIB de ${target.name} reducido en $${economicDamage}B`,
+              "Opinión pública manipulada",
+              "Narrativa nacional alterada"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 8) + 5
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+        
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `media_failed_${Date.now()}`,
+            type: "error",
+            title: "📺 Manipulación Mediática Expuesta",
+            description: `La operación de propaganda de ${source.name} fue descubierta por medios independientes`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Operación de desinformación expuesta",
+              "Credibilidad internacional dañada"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+    
+    case "regime_change": {
+      if (!target || target.id === source.id) break
+      const scaledCost = getScaledActionCost(action.type, source)
+      deductCostFromSource(scaledCost)
+      
+      const successChance = 0.60 // 60% de éxito (muy alto riesgo)
+      const isSuccessful = Math.random() < successChance
+      
+      if (isSuccessful) {
+        const stabilityDamage = Math.floor(Math.random() * 35) + 30 // 30-65%
+        const economicDamage = Math.floor(target.economy.gdp * 0.25) // 25% del PIB
+        
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - stabilityDamage),
+              economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) }
+            }
+          }
+          return c
+        })
+        
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `regime_change_${Date.now()}`,
+            type: "error",
+            title: "🏛️ Cambio de Régimen Exitoso",
+            description: `${source.name} ha orquestado un golpe de estado en ${target.name}`,
+            effects: [
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              `PIB de ${target.name} reducido en $${economicDamage}B`,
+              "Gobierno derrocado",
+              "Régimen títere instalado",
+              "Crisis constitucional masiva"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 20) + 15
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+        
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `regime_failed_${Date.now()}`,
+            type: "error",
+            title: "🏛️ Golpe de Estado Fallido",
+            description: `El intento de golpe de estado de ${source.name} en ${target.name} fue frustrado`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Conspiración internacional expuesta",
+              "Agentes capturados y ejecutados",
+              "Sanciones internacionales severas"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+    
+    case "biological_warfare": {
+      if (!target || target.id === source.id) break
+      const scaledCost = getScaledActionCost(action.type, source)
+      deductCostFromSource(scaledCost)
+      
+      const successChance = 0.85 // 85% de éxito (riesgo extremo)
+      const isSuccessful = Math.random() < successChance
+      
+      if (isSuccessful) {
+        const stabilityDamage = Math.floor(Math.random() * 40) + 35 // 35-75%
+        const economicDamage = Math.floor(target.economy.gdp * 0.30) // 30% del PIB
+        
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - stabilityDamage),
+              economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) }
+            }
+          }
+          return c
+        })
+        
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `biological_warfare_${Date.now()}`,
+            type: "error",
+            title: "☣️ Guerra Biológica Devastadora",
+            description: `${source.name} ha desplegado armas biológicas en ${target.name}`,
+            effects: [
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              `PIB de ${target.name} reducido en $${economicDamage}B`,
+              "Pandemia artificial desatada",
+              "Sistema de salud colapsado",
+              "Crisis humanitaria masiva"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 25) + 20
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+        
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `biological_failed_${Date.now()}`,
+            type: "error",
+            title: "☣️ Guerra Biológica Expuesta",
+            description: `El ataque biológico de ${source.name} fue detectado y contenido`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Crimen contra la humanidad expuesto",
+              "Tribunal internacional convocado",
+              "Aislamiento diplomático total"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+    
+    case "financial_infiltration": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+      
+      const successChance = 0.85 // 85% de éxito (riesgo bajo)
+      const isSuccessful = Math.random() < successChance
+      
+      if (isSuccessful) {
+        const stabilityDamage = Math.floor(Math.random() * 12) + 8 // 8-20%
+        const economicDamage = Math.floor(target.economy.gdp * 0.10) // 10% del PIB
+        
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - stabilityDamage),
+              economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) }
+            }
+          }
+          return c
+        })
+        
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `financial_infiltration_${Date.now()}`,
+            type: "warning",
+            title: "💰 Infiltración Financiera Exitosa",
+            description: `${source.name} ha infiltrado el sistema bancario de ${target.name}`,
+            effects: [
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              `PIB de ${target.name} reducido en $${economicDamage}B`,
+              "Bancos centrales comprometidos",
+              "Flujos de capital manipulados"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 6) + 3
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+        
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `financial_failed_${Date.now()}`,
+            type: "error",
+            title: "💰 Infiltración Financiera Detectada",
+            description: `La operación financiera de ${source.name} fue detectada por auditores`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Transacciones sospechosas rastreadas",
+              "Investigación financiera iniciada"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+    
+    case "deep_state_operation": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+      
+      const successChance = 0.55 // 55% de éxito (muy alto riesgo)
+      const isSuccessful = Math.random() < successChance
+      
+      if (isSuccessful) {
+        const stabilityDamage = Math.floor(Math.random() * 45) + 40 // 40-85%
+        const economicDamage = Math.floor(target.economy.gdp * 0.35) // 35% del PIB
+        
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - stabilityDamage),
+              economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) }
+            }
+          }
+          return c
+        })
+        
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `deep_state_${Date.now()}`,
+            type: "error",
+            title: "🕴️ Operación Estado Profundo Exitosa",
+            description: `${source.name} ha activado células durmientes en ${target.name}`,
+            effects: [
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              `PIB de ${target.name} reducido en $${economicDamage}B`,
+              "Gobierno en la sombra activado",
+              "Instituciones democráticas subvertidas",
+              "Control total del aparato estatal"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 30) + 25
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+        
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `deep_state_failed_${Date.now()}`,
+            type: "error",
+            title: "🕴️ Estado Profundo Expuesto",
+            description: `La red del estado profundo de ${source.name} fue descubierta y desmantelada`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Células durmientes arrestadas",
+              "Conspiración internacional expuesta",
+              "Crisis diplomática masiva"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+    
+    case "social_engineering": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+      
+      const successChance = 0.75 // 75% de éxito (riesgo medio)
+      const isSuccessful = Math.random() < successChance
+      
+      if (isSuccessful) {
+        const stabilityDamage = Math.floor(Math.random() * 18) + 12 // 12-30%
+        const economicDamage = Math.floor(target.economy.gdp * 0.08) // 8% del PIB
+        
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - stabilityDamage),
+              economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) }
+            }
+          }
+          return c
+        })
+        
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `social_engineering_${Date.now()}`,
+            type: "warning",
+            title: "🧠 Ingeniería Social Exitosa",
+            description: `${source.name} ha manipulado la psicología colectiva de ${target.name}`,
+            effects: [
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              `PIB de ${target.name} reducido en $${economicDamage}B`,
+              "Comportamiento social alterado",
+              "Polarización extrema inducida"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 10) + 7
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+        
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `social_engineering_failed_${Date.now()}`,
+            type: "error",
+            title: "🧠 Ingeniería Social Detectada",
+            description: `La campaña de manipulación de ${source.name} fue identificada por psicólogos`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Técnicas de manipulación expuestas",
+              "Contramedidas psicológicas implementadas"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+    
+    case "quantum_disruption": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+      
+      const successChance = 0.65 // 65% de éxito (alto riesgo)
+      const isSuccessful = Math.random() < successChance
+      
+      if (isSuccessful) {
+        const stabilityDamage = Math.floor(Math.random() * 30) + 25 // 25-55%
+        const economicDamage = Math.floor(target.economy.gdp * 0.20) // 20% del PIB
+        
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - stabilityDamage),
+              economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) }
+            }
+          }
+          return c
+        })
+        
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `quantum_disruption_${Date.now()}`,
+            type: "error",
+            title: "⚛️ Disrupción Cuántica Exitosa",
+            description: `${source.name} ha alterado la realidad cuántica en ${target.name}`,
+            effects: [
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              `PIB de ${target.name} reducido en $${economicDamage}B`,
+              "Tecnología cuántica saboteada",
+              "Comunicaciones encriptadas comprometidas",
+              "Sistemas de defensa neutralizados"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 18) + 12
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+        
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `quantum_failed_${Date.now()}`,
+            type: "error",
+            title: "⚛️ Disrupción Cuántica Fallida",
+            description: `El ataque cuántico de ${source.name} fue bloqueado por defensas cuánticas`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Tecnología cuántica detectada",
+              "Contramedidas cuánticas activadas"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+    
+    case "psychological_warfare": {
+      if (!target || target.id === source.id) break
+      deductCostFromSource(action.cost)
+      
+      const successChance = 0.50 // 50% de éxito (riesgo extremo)
+      const isSuccessful = Math.random() < successChance
+      
+      if (isSuccessful) {
+        const stabilityDamage = Math.floor(Math.random() * 50) + 45 // 45-95%
+        const economicDamage = Math.floor(target.economy.gdp * 0.40) // 40% del PIB
+        
+        updated = updated.map((c) => {
+          if (c.id === target.id) {
+            return {
+              ...c,
+              stability: Math.max(0, c.stability - stabilityDamage),
+              economy: { ...c.economy, gdp: Math.max(100, c.economy.gdp - economicDamage) }
+            }
+          }
+          return c
+        })
+        
+        return {
+          success: true,
+          updatedCountries: updated,
+          event: {
+            id: `psychological_warfare_${Date.now()}`,
+            type: "error",
+            title: "🧠 Guerra Psicológica Devastadora",
+            description: `${source.name} ha quebrado la psique colectiva de ${target.name}`,
+            effects: [
+              `Estabilidad de ${target.name} reducida en ${stabilityDamage}%`,
+              `PIB de ${target.name} reducido en $${economicDamage}B`,
+              "Colapso mental masivo",
+              "Suicidios colectivos reportados",
+              "Sociedad completamente fragmentada",
+              "Realidad percibida alterada"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      } else {
+        const sourceDamage = Math.floor(Math.random() * 35) + 30
+        updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
+        
+        return {
+          success: false,
+          updatedCountries: updated,
+          event: {
+            id: `psychological_failed_${Date.now()}`,
+            type: "error",
+            title: "🧠 Guerra Psicológica Contraproducente",
+            description: `El ataque psicológico de ${source.name} se volvió contra ellos mismos`,
+            effects: [
+              `Estabilidad de ${source.name} reducida en ${sourceDamage}%`,
+              "Operación psicológica expuesta",
+              "Población propia afectada",
+              "Trauma psicológico masivo interno"
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+    }
+    
     // Continuar con otros casos de acción...
     default: {
       if (action.cost > 0) deductCostFromSource(action.cost)

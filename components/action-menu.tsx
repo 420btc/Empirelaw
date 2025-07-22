@@ -45,7 +45,7 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
   const [selectedTerritory, setSelectedTerritory] = useState<string | null>(null)
 
   const getActionCost = (actionType: string): number => {
-    const costs: Record<string, number> = {
+    const baseCosts: Record<string, number> = {
       // Acciones Internas
       economic_investment: 1000,
       social_policy: 500,
@@ -91,18 +91,52 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
       // Sistema de Deuda Internacional
       debt_emission: 0, // No cost to emit debt, generates money instead
     }
-    return costs[actionType] || 1000
+    
+    const baseCost = baseCosts[actionType] || 1000
+    
+    // Sistema de costos escalados para acciones militares y de conquista
+    const militaryActions = ['military_action', 'special_conquest', 'naval_blockade', 'regime_change', 'biological_warfare']
+    
+    if (militaryActions.includes(actionType)) {
+      // Calcular multiplicador basado en el PIB del país atacante
+      const playerGDP = playerCountry.economy.gdp
+      let costMultiplier = 1
+      
+      // Top 10 países más poderosos tienen costos escalados
+      if (playerGDP >= 20000) { // Superpotencias (USA, China)
+        costMultiplier = 8.0
+      } else if (playerGDP >= 15000) { // Potencias mayores (Alemania, Japón, Reino Unido)
+        costMultiplier = 6.0
+      } else if (playerGDP >= 10000) { // Potencias regionales (Francia, India, Italia)
+        costMultiplier = 4.5
+      } else if (playerGDP >= 5000) { // Potencias medianas (Brasil, Canadá, Rusia)
+        costMultiplier = 3.0
+      } else if (playerGDP >= 2000) { // Países desarrollados
+        costMultiplier = 2.0
+      } else if (playerGDP >= 1000) { // Países en desarrollo
+        costMultiplier = 1.5
+      }
+      // Países pobres (PIB < 1000) mantienen costo base (multiplicador = 1)
+      
+      return Math.round(baseCost * costMultiplier)
+    }
+    
+    return baseCost
   }
 
   const canAffordAction = (actionType: string): boolean => {
     if (actionType === "special_conquest" && targetCountry) {
-      const realCost = Math.max(getActionCost(actionType), targetCountry.economy.gdp * 0.8)
-      return playerCountry.economy.gdp >= realCost
+      const scaledCost = getActionCost(actionType)
+      const realCost = Math.max(scaledCost, targetCountry.economy.gdp * 0.8)
+      const maxAffordable = playerCountry.economy.gdp + (playerCountry.economy.gdp * (200 - playerCountry.economy.debt)) / 100
+      return maxAffordable >= realCost
     }
     if (actionType === "debt_emission") {
       return canEmitDebt()
     }
-    return playerCountry.economy.gdp >= getActionCost(actionType)
+    const actionCost = getActionCost(actionType)
+    const maxAffordable = playerCountry.economy.gdp + (playerCountry.economy.gdp * (200 - playerCountry.economy.debt)) / 100
+    return maxAffordable >= actionCost
   }
 
   const canEmitDebt = (): boolean => {
@@ -155,7 +189,19 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
   }
 
   const isNeighbor = (countryId: string): boolean => {
-    return playerCountry.neighbors?.includes(countryId) || false
+    // Verificar si es vecino del país principal
+    if (playerCountry.neighbors?.includes(countryId)) {
+      return true
+    }
+    
+    // Verificar si es vecino de algún territorio conquistado
+    for (const territory of ownedTerritories) {
+      if (territory.neighbors?.includes(countryId)) {
+        return true
+      }
+    }
+    
+    return false
   }
 
   const canConquer = (country: Country | null): boolean => {
@@ -163,7 +209,8 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
   }
 
   const getConquestCost = (country: Country): number => {
-    const baseCost = Math.max(getActionCost("special_conquest"), country.economy.gdp * 0.8)
+    const scaledBaseCost = getActionCost("special_conquest") // Ya incluye el escalado por PIB del atacante
+    const baseCost = Math.max(scaledBaseCost, country.economy.gdp * 0.8)
     
     // Si no es vecino, multiplicar el costo por 3-5 veces dependiendo de la distancia/poder
     if (!isNeighbor(country.id)) {
@@ -449,6 +496,51 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
           description: `Desplegar armas biológicas en ${targetCountry.name}`,
           icon: Bomb,
           cost: getActionCost("biological_warfare"),
+          risk: "Extremo",
+          requiresNeighbor: false,
+        },
+        {
+          id: "financial_infiltration",
+          name: "Infiltración Financiera",
+          description: `Infiltrar el sistema bancario de ${targetCountry.name}`,
+          icon: DollarSign,
+          cost: getActionCost("financial_infiltration"),
+          risk: "Bajo",
+          requiresNeighbor: false,
+        },
+        {
+          id: "deep_state_operation",
+          name: "Operación Estado Profundo",
+          description: `Activar células durmientes en ${targetCountry.name}`,
+          icon: Eye,
+          cost: getActionCost("deep_state_operation"),
+          risk: "Muy Alto",
+          requiresNeighbor: false,
+        },
+        {
+          id: "social_engineering",
+          name: "Ingeniería Social",
+          description: `Manipular opinión pública en ${targetCountry.name}`,
+          icon: Users,
+          cost: getActionCost("social_engineering"),
+          risk: "Medio",
+          requiresNeighbor: false,
+        },
+        {
+          id: "quantum_disruption",
+          name: "Disrupción Cuántica",
+          description: `Sabotear infraestructura cuántica de ${targetCountry.name}`,
+          icon: Zap,
+          cost: getActionCost("quantum_disruption"),
+          risk: "Alto",
+          requiresNeighbor: false,
+        },
+        {
+          id: "psychological_warfare",
+          name: "Guerra Psicológica",
+          description: `Operaciones psicológicas masivas en ${targetCountry.name}`,
+          icon: Microscope,
+          cost: getActionCost("psychological_warfare"),
           risk: "Extremo",
           requiresNeighbor: false,
         },
