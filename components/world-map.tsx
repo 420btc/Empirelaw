@@ -4,6 +4,7 @@ import type React from "react"
 
 import { ComposableMap, Geographies, Geography } from "react-simple-maps"
 import { useEffect, useState } from "react"
+import { geoMercator } from "d3-geo"
 import type { Country, GameAction } from "@/lib/types"
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"
@@ -133,9 +134,25 @@ export function WorldMap({
       return
     }
 
-         // Duración muy rápida para línea simple
-     const getAnimationDuration = (actionType: string): number => {
-       return 500 // 0.5 segundos para línea simple y rápida
+         // Duración dinámica basada en la distancia entre países
+     const getAnimationDuration = (sourceCountry: string, targetCountry: string): number => {
+       const sourceCoords = countryCoordinates[sourceCountry]
+       const targetCoords = countryCoordinates[targetCountry]
+       
+       if (!sourceCoords || !targetCoords) return 3000
+       
+       // Calcular distancia geográfica
+       const distance = Math.sqrt(
+         Math.pow(targetCoords[0] - sourceCoords[0], 2) + 
+         Math.pow(targetCoords[1] - sourceCoords[1], 2)
+       )
+       
+       // Duración mínima 2s, máxima 5s, escalada por distancia
+       const minDuration = 2000
+       const maxDuration = 5000
+       const scaledDuration = minDuration + (distance / 180) * (maxDuration - minDuration)
+       
+       return Math.min(Math.max(scaledDuration, minDuration), maxDuration)
      }
 
     const newAnimation: MissileAnimation = {
@@ -144,7 +161,7 @@ export function WorldMap({
       targetCountry: recentAction.targetCountry,
       actionType: recentAction.type,
       startTime: Date.now(),
-      duration: getAnimationDuration(recentAction.type)
+      duration: getAnimationDuration(recentAction.sourceCountry, recentAction.targetCountry)
     }
 
     console.log(`🚀 Creando animación SIMPLE: ${recentAction.sourceCountry} → ${recentAction.targetCountry} (${recentAction.type})`)
@@ -315,16 +332,66 @@ export function WorldMap({
     return countryMapping[geoId] || null
   }
 
-  // Función para generar línea simple entre dos puntos
+  // Configuración de proyección (debe coincidir con la del mapa)
+  const projection = geoMercator()
+    .scale(145)
+    .center([0, 20])
+    .translate([400, 300]) // Ajustar según el tamaño del contenedor
+
+  // Función para determinar el color del efecto de impacto
+  const getImpactColor = (actionType: string): string => {
+    // Acciones positivas (verde)
+    if (actionType === 'diplomatic_alliance' || actionType === 'trade_agreement') {
+      return '#22c55e' // Verde
+    }
+    // Acciones negativas (rojo)
+    if (actionType === 'military_action' || actionType === 'economic_sanction' || 
+        actionType === 'cyber_attack' || actionType === 'regime_change' || 
+        actionType === 'masonic_influence') {
+      return '#ef4444' // Rojo
+    }
+    // Acciones neutrales (amarillo)
+    return '#eab308' // Amarillo para otras acciones
+  }
+
+  // Función para generar trayectoria curva tipo misil entre dos puntos
   const generateSimplePath = (start: [number, number], end: [number, number], progress: number): string => {
-    const [x1, y1] = start
-    const [x2, y2] = end
+    // Convertir coordenadas geográficas a coordenadas de píxeles
+    const startPixels = projection(start)
+    const endPixels = projection(end)
     
-    // Línea recta simple desde inicio hasta posición actual
-    const currentX = x1 + (x2 - x1) * progress
-    const currentY = y1 + (y2 - y1) * progress
+    if (!startPixels || !endPixels) return ""
     
-    return `M ${x1} ${y1} L ${currentX} ${currentY}`
+    const [x1, y1] = startPixels
+    const [x2, y2] = endPixels
+    
+    // Calcular punto de control para crear una curva tipo misil
+    const midX = (x1 + x2) / 2
+    const midY = (y1 + y2) / 2
+    
+    // Altura de la curva reducida (más baja para movimiento más rápido)
+    const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    const curveHeight = Math.min(distance * 0.25, 80) // Altura reducida y máximo 80px
+    
+    // Punto de control elevado para crear el arco
+    const controlX = midX
+    const controlY = midY - curveHeight
+    
+    // Calcular posición actual en la curva usando interpolación acelerada
+    const t = Math.pow(progress, 0.7) // Aceleración más rápida
+    const currentX = (1 - t) ** 2 * x1 + 2 * (1 - t) * t * controlX + t ** 2 * x2
+    const currentY = (1 - t) ** 2 * y1 + 2 * (1 - t) * t * controlY + t ** 2 * y2
+    
+    // Crear path curvo desde inicio hasta posición actual
+    if (progress < 0.01) {
+      return `M ${x1} ${y1}`
+    }
+    
+    // Calcular punto de control proporcional al progreso acelerado
+    const partialControlX = x1 + (controlX - x1) * Math.min(t * 2, 1)
+    const partialControlY = y1 + (controlY - y1) * Math.min(t * 2, 1)
+    
+    return `M ${x1} ${y1} Q ${partialControlX} ${partialControlY} ${currentX} ${currentY}`
   }
 
   // Manejar clic en el mapa (para deseleccionar)
@@ -386,7 +453,7 @@ export function WorldMap({
             }
           </Geographies>
           
-          {/* Renderizar líneas simples blancas */}
+          {/* Renderizar líneas curvas con efectos de impacto */}
           {activeAnimations.map((animation) => {
             const now = Date.now()
             const elapsed = now - animation.startTime
@@ -398,17 +465,66 @@ export function WorldMap({
             if (!sourceCoords || !targetCoords) return null
             
             const simplePath = generateSimplePath(sourceCoords, targetCoords, progress)
+            const impactColor = getImpactColor(animation.actionType)
+            const lineColor = impactColor // Usar el mismo color para la línea
+            
+            // Convertir coordenadas del país de destino a píxeles
+            const targetPixels = projection(targetCoords)
+            if (!targetPixels) return null
+            const [targetX, targetY] = targetPixels
+            
+            // Mostrar efecto de impacto cuando la línea esté casi completa
+            const showImpact = progress > 0.9
+            const impactProgress = Math.max(0, (progress - 0.9) / 0.1) // 0 a 1 en los últimos 10%
+            const impactRadius = 8 + impactProgress * 12 // Crece de 8 a 20px
+            const impactOpacity = Math.max(0, 0.8 - impactProgress * 0.8) // Desvanece de 0.8 a 0
             
             return (
               <g key={animation.id}>
-                {/* Línea blanca simple y fina */}
+                {/* Línea curva con color según el tipo de acción */}
                 <path
                   d={simplePath}
                   fill="none"
-                  stroke="white"
-                  strokeWidth="1"
+                  stroke={lineColor}
+                  strokeWidth="3"
                   strokeOpacity="0.9"
+                  strokeLinecap="round"
                 />
+                {/* Efecto de brillo con color más claro */}
+                <path
+                  d={simplePath}
+                  fill="none"
+                  stroke={lineColor}
+                  strokeWidth="1"
+                  strokeOpacity="0.5"
+                  strokeLinecap="round"
+                  filter="blur(1px)"
+                />
+                
+                {/* Círculo de impacto en el país de destino */}
+                {showImpact && (
+                  <g>
+                    {/* Círculo exterior (más grande y transparente) */}
+                    <circle
+                      cx={targetX}
+                      cy={targetY}
+                      r={impactRadius + 5}
+                      fill={impactColor}
+                      fillOpacity={impactOpacity * 0.3}
+                      stroke={impactColor}
+                      strokeWidth="2"
+                      strokeOpacity={impactOpacity * 0.6}
+                    />
+                    {/* Círculo interior (más pequeño y opaco) */}
+                    <circle
+                      cx={targetX}
+                      cy={targetY}
+                      r={impactRadius}
+                      fill={impactColor}
+                      fillOpacity={impactOpacity * 0.6}
+                    />
+                  </g>
+                )}
               </g>
             )
           })}
