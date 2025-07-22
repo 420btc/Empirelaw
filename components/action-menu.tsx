@@ -87,6 +87,9 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
 
       // Conquista Especial
       special_conquest: 5000, // Base cost, real cost calculated dynamically
+      
+      // Sistema de Deuda Internacional
+      debt_emission: 0, // No cost to emit debt, generates money instead
     }
     return costs[actionType] || 1000
   }
@@ -96,7 +99,25 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
       const realCost = Math.max(getActionCost(actionType), targetCountry.economy.gdp * 0.8)
       return playerCountry.economy.gdp >= realCost
     }
+    if (actionType === "debt_emission") {
+      return canEmitDebt()
+    }
     return playerCountry.economy.gdp >= getActionCost(actionType)
+  }
+
+  const canEmitDebt = (): boolean => {
+    // Solo Estados Unidos e Israel pueden emitir deuda internacional
+    return playerCountry.id === "usa" || playerCountry.id === "israel"
+  }
+
+  const getDebtEmissionAmount = (): number => {
+    // Estados Unidos puede emitir más deuda que Israel
+    if (playerCountry.id === "usa") {
+      return Math.round(playerCountry.economy.gdp * 0.3) // 30% del PIB
+    } else if (playerCountry.id === "israel") {
+      return Math.round(playerCountry.economy.gdp * 0.2) // 20% del PIB
+    }
+    return 0
   }
 
   const isNeighbor = (countryId: string): boolean => {
@@ -108,7 +129,23 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
   }
 
   const getConquestCost = (country: Country): number => {
-    return Math.max(getActionCost("special_conquest"), country.economy.gdp * 0.8)
+    const baseCost = Math.max(getActionCost("special_conquest"), country.economy.gdp * 0.8)
+    
+    // Si no es vecino, multiplicar el costo por 3-5 veces dependiendo de la distancia/poder
+    if (!isNeighbor(country.id)) {
+      let multiplier = 3.5 // Base para conquista a distancia
+      
+      // Aumentar costo si es una superpotencia o potencia mayor
+      if (country.powerLevel === "superpower") multiplier = 6
+      else if (country.powerLevel === "major") multiplier = 4.5
+      
+      // Reducir algo el costo si el país está muy desestabilizado
+      if (country.stability <= 5) multiplier *= 0.8
+      
+      return Math.round(baseCost * multiplier)
+    }
+    
+    return baseCost
   }
 
   // Acciones internas (ahora incluye territorios conquistados)
@@ -172,6 +209,23 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
       risk: "Medio",
     },
   ]
+
+  // Agregar emisión de deuda solo para países elegibles
+  const debtEmissionActions = canEmitDebt() ? [
+    {
+      id: "debt_emission",
+      name: "💰 Emisión de Deuda Internacional",
+      description: `Emitir deuda internacional para obtener +$${getDebtEmissionAmount()}B`,
+      icon: DollarSign,
+      cost: 0, // No cost, generates money
+      risk: "Medio",
+      isSpecial: true,
+      generates: getDebtEmissionAmount(),
+    }
+  ] : []
+
+  // Combinar acciones internas con emisión de deuda si está disponible
+  const allInternalActions = [...internalActions, ...debtEmissionActions]
 
   const diplomaticActions = targetCountry
     ? [
@@ -260,13 +314,16 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
     targetCountry && canConquer(targetCountry)
       ? {
           id: "special_conquest",
-          name: "🏆 Conquista Imperial",
-          description: `Conquistar ${targetCountry.name} aprovechando su colapso total`,
+          name: isNeighbor(targetCountry.id) ? "🏆 Conquista Imperial" : "🚀 Conquista a Distancia",
+          description: isNeighbor(targetCountry.id) 
+            ? `Conquistar ${targetCountry.name} aprovechando su colapso total`
+            : `Conquistar ${targetCountry.name} a distancia con operación masiva (COSTO EXTREMO)`,
           icon: Crown,
           cost: getConquestCost(targetCountry),
           risk: "Extremo",
           requiresNeighbor: false,
           isSpecial: true,
+          isDistant: !isNeighbor(targetCountry.id),
         }
       : null
 
@@ -409,6 +466,19 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
       const neighborRequired = action.requiresNeighbor && !isNeighbor(targetCountry?.id || "")
       const isDisabled = !canAfford || neighborRequired
 
+      // Debug logging
+      if (action.id === "military_action") {
+        console.log("🔍 Debug Military Action:", {
+          canAfford,
+          playerGDP: playerCountry.economy.gdp,
+          actionCost: action.cost,
+          neighborRequired,
+          targetCountry: targetCountry?.name,
+          isNeighbor: targetCountry ? isNeighbor(targetCountry.id) : false,
+          isDisabled
+        })
+      }
+
       return (
         <div key={action.id} className="space-y-2">
           <Button
@@ -430,7 +500,10 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
                     <Badge className={getRiskColor(action.risk)} variant="secondary">
                       {action.risk}
                     </Badge>
-                    <span className="text-xs text-gray-400">${action.cost}B</span>
+                    <span className={`text-xs ${!canAfford ? "text-red-400 font-semibold" : "text-gray-400"}`}>
+                      ${action.cost}B
+                      {!canAfford && " ❌"}
+                    </span>
                   </div>
                 </div>
                 <p className="text-xs text-gray-400 mt-1">{action.description}</p>
@@ -446,6 +519,22 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
 
           {selectedAction === action.id && (
             <div className="ml-8 space-y-2">
+              {/* Avisos de por qué está deshabilitada la acción */}
+              {isDisabled && (
+                <div className="text-xs text-red-400 bg-red-900/20 p-2 rounded border border-red-600/30">
+                  <div className="flex items-center gap-1 mb-1">
+                    <AlertTriangle className="w-3 h-3" />
+                    <span className="font-semibold">Acción no disponible:</span>
+                  </div>
+                  {!canAfford && (
+                    <p>• Fondos insuficientes (Necesitas: ${action.cost}B, Tienes: ${playerCountry.economy.gdp}B)</p>
+                  )}
+                  {neighborRequired && (
+                    <p>• Requiere ser país vecino de {targetCountry?.name}</p>
+                  )}
+                </div>
+              )}
+              
               {action.risk === "Alto" || action.risk === "Muy Alto" || action.risk === "Extremo" ? (
                 <div className="text-xs text-yellow-400 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
@@ -453,9 +542,21 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
                 </div>
               ) : null}
               {action.isSpecial && (
-                <div className="text-xs text-yellow-300 bg-yellow-900/20 p-2 rounded border border-yellow-600/30">
-                  <p className="font-semibold">⚠️ CONQUISTA IMPERIAL:</p>
-                  <p>• Costo muy alto: ${action.cost}B</p>
+                <div className={`text-xs p-2 rounded border ${
+                  action.isDistant 
+                    ? "text-red-300 bg-red-900/20 border-red-600/30"
+                    : "text-yellow-300 bg-yellow-900/20 border-yellow-600/30"
+                }`}>
+                  <p className="font-semibold">
+                    {action.isDistant ? "⚠️ CONQUISTA A DISTANCIA:" : "⚠️ CONQUISTA IMPERIAL:"}
+                  </p>
+                  <p>• Costo {action.isDistant ? "EXTREMO" : "muy alto"}: ${action.cost}B</p>
+                  {action.isDistant && (
+                    <>
+                      <p>• Operación logística masiva requerida</p>
+                      <p>• Riesgo de resistencia internacional</p>
+                    </>
+                  )}
                   <p>• Deberás gestionar este territorio</p>
                   <p>• Costos de mantenimiento continuos</p>
                 </div>
@@ -464,7 +565,9 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
                 onClick={() => executeAction(action.id)}
                 className={
                   action.isSpecial
-                    ? "bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-black font-bold"
+                    ? action.isDistant
+                      ? "bg-gradient-to-r from-red-700 to-red-900 hover:from-red-800 hover:to-red-950 text-white font-bold"
+                      : "bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-black font-bold"
                     : action.risk === "Extremo"
                       ? "bg-red-800 hover:bg-red-900"
                       : action.risk === "Muy Alto"
@@ -473,7 +576,11 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
                 }
                 disabled={isDisabled}
               >
-                {action.isSpecial ? "👑 CONQUISTAR IMPERIO" : "Ejecutar Acción"}
+                {action.isSpecial 
+                  ? action.isDistant 
+                    ? "🚀 CONQUISTAR A DISTANCIA" 
+                    : "👑 CONQUISTAR IMPERIO" 
+                  : "Ejecutar Acción"}
               </Button>
             </div>
           )}
@@ -551,7 +658,7 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
               </div>
             )}
 
-            <div className="space-y-2">{renderActionList(internalActions)}</div>
+                            <div className="space-y-2">{renderActionList(allInternalActions)}</div>
           </TabsContent>
 
           <TabsContent value="external" className="space-y-4">
@@ -594,8 +701,25 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
                 </Tabs>
               </>
             ) : (
-              <div className="text-center text-gray-400 text-sm py-4">
-                Selecciona un país en el mapa para ver acciones externas
+              <div className="text-center py-8 text-gray-400">
+                <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <div className="space-y-2">
+                  <p className="font-semibold">Selecciona un país objetivo en el mapa</p>
+                  <div className="text-sm text-gray-500 space-y-1">
+                    <p>• Haz clic en un país enemigo para atacarlo</p>
+                    <p>• Los países conquistados por ti no pueden ser objetivos</p>
+                    <p>• Tu país principal tampoco puede ser objetivo</p>
+                  </div>
+                  {playerCountry.economy.gdp < 1000 && (
+                    <div className="mt-4 text-xs text-yellow-400 bg-yellow-900/20 p-2 rounded border border-yellow-600/30">
+                      <div className="flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" />
+                        <span>Advertencia: Fondos bajos (${playerCountry.economy.gdp}B)</span>
+                      </div>
+                      <p>Considera hacer inversiones económicas primero</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </TabsContent>

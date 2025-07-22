@@ -81,7 +81,7 @@
 }
 
 .animate-shrink-width {
-  animation: shrink-width 8s linear forwards;
+  animation: shrink-width 15s linear forwards;
 }
 
 /* Utilidades adicionales */

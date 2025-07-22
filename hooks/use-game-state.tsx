@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import type { Country, GameEvent, GameAction, GameStats, ActionHistory, TradeOffer } from "@/lib/types"
 import { initialCountries } from "@/lib/data/countries"
-import { generateRandomEvent, processAction, checkForCollapses, calculateChaosLevel } from "@/lib/game-engine"
+import { generateRandomEvent, processAction, checkForCollapses, calculateChaosLevel, applyGDPGrowth, provideMutualAidToCriticalCountries } from "@/lib/game-engine"
 
 export function useGameState() {
   const [countries, setCountries] = useState<Country[]>(initialCountries)
@@ -143,8 +143,20 @@ export function useGameState() {
       return
     }
 
-      // Verificar colapsos y conquistas con ayuda mutua
-    const { updatedCountries, conquestEvents } = checkForCollapses(countries, playerCountry!)
+      // Verificar ayuda mutua para países en crisis ANTES de verificar colapsos
+    const { updatedCountries: countriesAfterAid, aidEvents } = provideMutualAidToCriticalCountries(countries, playerCountry!)
+    
+    // Procesar eventos de ayuda mutua
+    if (aidEvents.length > 0) {
+      console.log(`🤝 ${aidEvents.length} eventos de ayuda mutua generados`)
+      aidEvents.forEach(event => {
+        setGameEvents((prev) => [...prev, event])
+        setVisibleNotifications((prev) => [...prev.slice(-2), event])
+      })
+    }
+
+    // Verificar colapsos y conquistas con países ya ayudados
+    const { updatedCountries, conquestEvents } = checkForCollapses(countriesAfterAid, playerCountry!)
 
       if (conquestEvents.length > 0) {
         console.log("🏴 Conquistas automáticas detectadas:", conquestEvents.length)
@@ -373,6 +385,128 @@ export function useGameState() {
       clearInterval(checkInterval)
     }
   }, [playerCountry, generateEvent, getEventInterval, gameEvents.length])
+
+  // Sistema de mejora automática de territorios conquistados
+  useEffect(() => {
+    if (!playerCountry) return
+
+    console.log("🏛️ Sistema de mejora de territorios conquistados iniciado")
+
+    const improvementInterval = setInterval(() => {
+      const playerCountryData = countries.find(c => c.id === playerCountry)
+      if (!playerCountryData) return
+
+      const conqueredTerritories = countries.filter(c => c.ownedBy === playerCountry)
+      
+      if (conqueredTerritories.length === 0) return
+
+      // Solo mejorar si el país principal está estable (estabilidad > 60)
+      if (playerCountryData.stability <= 60) {
+        console.log("🔸 País principal inestable, pausando mejoras de territorios")
+        return
+      }
+
+      console.log(`🔧 Mejorando ${conqueredTerritories.length} territorios conquistados`)
+
+      setCountries(prev => prev.map(country => {
+        if (country.ownedBy === playerCountry && country.id !== playerCountry) {
+          // Calcular mejoras basadas en la estabilidad del país principal
+          const improvementFactor = Math.min(1, playerCountryData.stability / 100)
+          
+          const stabilityImprovement = Math.round(2 * improvementFactor) // 1-2% por tick
+          const economyImprovement = Math.round(50 * improvementFactor * (country.economy.gdp / 1000)) // Proporcional al PIB
+          const debtReduction = Math.round(1 * improvementFactor) // 0-1% por tick
+
+          const newStability = Math.min(85, country.stability + stabilityImprovement) // Máximo 85% para territorios
+          const newGdp = country.economy.gdp + economyImprovement
+          const newDebt = Math.max(0, country.economy.debt - debtReduction)
+
+          // Solo aplicar mejoras si hay cambios significativos
+          if (stabilityImprovement > 0 || economyImprovement > 0 || debtReduction > 0) {
+            console.log(`📈 Mejorando ${country.name}: Estabilidad +${stabilityImprovement}%, PIB +$${economyImprovement}B, Deuda -${debtReduction}%`)
+            
+            return {
+              ...country,
+              stability: newStability,
+              economy: {
+                ...country.economy,
+                gdp: newGdp,
+                debt: newDebt,
+              }
+            }
+          }
+        }
+        return country
+      }))
+    }, 45000) // Cada 45 segundos
+
+    return () => {
+      console.log("🛑 Sistema de mejora de territorios detenido")
+      clearInterval(improvementInterval)
+    }
+  }, [playerCountry, countries])
+
+  // Sistema de crecimiento económico dinámico
+  useEffect(() => {
+    if (!playerCountry) return
+
+    console.log("💰 Sistema de crecimiento económico dinámico iniciado")
+
+    const economicGrowthInterval = setInterval(() => {
+      console.log("📊 Aplicando crecimiento económico global...")
+
+      setCountries(prev => {
+        const updatedCountries = applyGDPGrowth(prev, playerCountry)
+        
+        // Calcular ingresos totales del jugador desde territorios
+        const playerCountryData = updatedCountries.find(c => c.id === playerCountry)
+        const totalPlayerBonus = updatedCountries
+          .filter(c => c.ownedBy === playerCountry && c.id !== playerCountry)
+          .reduce((sum, c) => sum + (c.playerBonus || 0), 0)
+
+        if (totalPlayerBonus > 0) {
+          console.log(`💎 Ingresos de territorios conquistados: +$${totalPlayerBonus}B`)
+          
+          // Agregar los ingresos al país principal del jugador
+          return updatedCountries.map(c => 
+            c.id === playerCountry 
+              ? { 
+                  ...c, 
+                  economy: { 
+                    ...c.economy, 
+                    gdp: c.economy.gdp + totalPlayerBonus 
+                  } 
+                }
+              : c
+          )
+        }
+
+        return updatedCountries
+      })
+
+      // Crear evento de notificación del crecimiento económico
+      const economicUpdateEvent: GameEvent = {
+        id: `economic_growth_${Date.now()}`,
+        type: "info",
+        title: "📈 Actualización Económica Global",
+        description: "El PIB mundial se ha actualizado basado en la estabilidad, recursos y relaciones diplomáticas",
+        effects: [
+          "PIB actualizado para todos los países",
+          "Crecimiento basado en estabilidad y recursos",
+          "Territorios conquistados generando ingresos",
+          "Relaciones diplomáticas afectando comercio"
+        ],
+        timestamp: Date.now(),
+      }
+
+      setGameEvents((prev) => [...prev, economicUpdateEvent])
+    }, 30000) // Cada 30 segundos
+
+    return () => {
+      console.log("🛑 Sistema de crecimiento económico detenido")
+      clearInterval(economicGrowthInterval)
+    }
+  }, [playerCountry])
 
   const selectCountry = useCallback((countryId: string | null) => {
     setSelectedCountry(countryId)

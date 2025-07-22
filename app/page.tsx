@@ -71,15 +71,29 @@ export default function GeopoliticsGame() {
     executeTradeOffer(trade)
   }
 
+  // Helper para determinar si un país puede ser objetivo
+  const getTargetCountry = (): Country | null => {
+    if (!selectedCountry) return null
+    if (selectedCountry === playerCountry) return null
+    
+    const selectedCountryData = countries.find((c) => c.id === selectedCountry)
+    if (!selectedCountryData) return null
+    if (selectedCountryData.ownedBy === playerCountry) return null
+    
+    return selectedCountryData
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-red-900 to-black text-white">
       <div className="container mx-auto p-4 min-h-screen flex flex-col">
         <GameHeader
-          playerCountry={playerCountry ? countries.find((c) => c.id === playerCountry) : null}
+          playerCountry={playerCountry ? countries.find((c) => c.id === playerCountry) || null : null}
           gameStats={gameStats}
           actionHistory={actionHistory}
           events={gameEvents} // Cronología completa para el badge
           onShowEventHistory={() => setShowEventHistory(true)}
+          onShowDiplomacy={() => setShowDiplomaticChat(true)}
+          onShowTrade={() => setShowTradeCenter(true)}
         />
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
@@ -119,56 +133,18 @@ export default function GeopoliticsGame() {
               </div>
             )}
 
-            {/* Botones de acción */}
-            {playerCountry && (
-              <div className="absolute bottom-4 left-4 flex gap-2">
-                <button
-                  onClick={() => setShowDiplomaticChat(true)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg border border-red-500/50 backdrop-blur-sm flex items-center gap-2 transition-all"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                    />
-                  </svg>
-                  Diplomacia
-                </button>
-
-                <button
-                  onClick={() => setShowTradeCenter(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg border border-green-500/50 backdrop-blur-sm flex items-center gap-2 transition-all"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17M17 13v4a2 2 0 01-2 2H9a2 2 0 01-2-2v-4m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"
-                    />
-                  </svg>
-                  Comercio
-                </button>
-              </div>
-            )}
           </div>
 
           <div className="space-y-4">
             <CountryPanel
-              country={selectedCountry ? countries.find((c) => c.id === selectedCountry) : null}
+              country={selectedCountry ? countries.find((c) => c.id === selectedCountry) || null : null}
               isPlayerCountry={selectedCountry === playerCountry}
             />
 
             {playerCountry && (
               <ActionMenu
                 playerCountry={countries.find((c) => c.id === playerCountry)!}
-                targetCountry={
-                  selectedCountry && selectedCountry !== playerCountry
-                    ? countries.find((c) => c.id === selectedCountry)
-                    : null
-                }
+                targetCountry={getTargetCountry()}
                 onExecuteAction={executeAction}
                 ownedTerritories={ownedTerritories} // Pasar territorios conquistados
               />

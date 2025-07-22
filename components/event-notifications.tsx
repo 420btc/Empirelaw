@@ -26,11 +26,11 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
       }
     })
 
-    // Auto-dismiss después de 8 segundos
+    // Auto-dismiss después de 15 segundos (aumentado para mejor lectura)
     const timeouts = recentEvents.map((event) => {
       return setTimeout(() => {
         handleDismiss(event.id)
-      }, 8000)
+      }, 15000)
     })
 
     return () => {
@@ -70,13 +70,13 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
   const getEventColor = (type: string) => {
     switch (type) {
       case "success":
-        return "border-green-500/50 bg-green-900/20 shadow-green-500/20"
+        return "border-green-500/70 bg-green-900/60 shadow-green-500/30"
       case "warning":
-        return "border-yellow-500/50 bg-yellow-900/20 shadow-yellow-500/20"
+        return "border-yellow-500/70 bg-yellow-900/60 shadow-yellow-500/30"
       case "error":
-        return "border-red-500/50 bg-red-900/20 shadow-red-500/20"
+        return "border-red-500/70 bg-red-900/60 shadow-red-500/30"
       default:
-        return "border-blue-500/50 bg-blue-900/20 shadow-blue-500/20"
+        return "border-blue-500/70 bg-blue-900/60 shadow-blue-500/30"
     }
   }
 
@@ -165,9 +165,9 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
               {/* Barra de progreso para auto-dismiss */}
               <div className="mt-3 h-1 bg-gray-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-current opacity-50 rounded-full animate-shrink-width"
+                  className="h-full bg-current opacity-70 rounded-full animate-shrink-width"
                   style={{
-                    animationDuration: "8000ms",
+                    animationDuration: "15000ms",
                     animationTimingFunction: "linear",
                   }}
                 />

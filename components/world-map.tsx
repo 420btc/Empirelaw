@@ -111,7 +111,7 @@ export function WorldMap({
   }
 
   // Manejar clic en el mapa (para deseleccionar)
-  const handleMapClick = (event: React.MouseEvent) => {
+  const handleMapClick = (event: React.MouseEvent<HTMLDivElement>) => {
     // Solo deseleccionar si el clic no fue en un país
     const target = event.target as Element
     if (target.tagName === "path") {
@@ -134,8 +134,8 @@ export function WorldMap({
           className="w-full h-full"
         >
           <Geographies geography={geoUrl}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
+            {({ geographies }: { geographies: any[] }) =>
+              geographies.map((geo: any) => {
                 const countryId = getCountryData(geo.id)
                 const country = countryId ? countries.find((c) => c.id === countryId) : null
 
@@ -155,7 +155,7 @@ export function WorldMap({
                       },
                       pressed: { outline: "none" },
                     }}
-                    onClick={(event) => {
+                    onClick={(event: React.MouseEvent) => {
                       event.stopPropagation() // Evitar que se propague al mapa
                       if (countryId) onCountryClick(countryId)
                     }}
@@ -171,45 +171,57 @@ export function WorldMap({
         </ComposableMap>
       </div>
 
-      <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm rounded-lg p-3 text-xs">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-500 rounded animate-pulse"></div>
-            <span>País seleccionado</span>
+      {/* Leyenda horizontal en la parte inferior aprovechando el espacio de la Antártida */}
+      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm rounded-lg px-4 py-2">
+        <div className="flex items-center justify-center gap-4 text-xs">
+          {/* Primera fila de leyenda */}
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-blue-500 rounded animate-pulse"></div>
+            <span className="text-white">Seleccionado</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-purple-500 rounded"></div>
-            <span>Tu país principal</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-purple-500 rounded"></div>
+            <span className="text-white">Tu país</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-purple-700 rounded"></div>
-            <span>Territorios conquistados</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-purple-700 rounded"></div>
+            <span className="text-white">Conquistados</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-amber-500 rounded"></div>
-            <span>Estado soberano</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-amber-500 rounded"></div>
+            <span className="text-white">Soberano</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-400 rounded"></div>
-            <span>Estable (80%+)</span>
+          
+          {/* Separador */}
+          <div className="w-px h-4 bg-gray-500"></div>
+          
+          {/* Estabilidad */}
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-green-400 rounded"></div>
+            <span className="text-white">Estable</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-            <span>Moderado (60-79%)</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-yellow-500 rounded"></div>
+            <span className="text-white">Moderado</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-orange-500 rounded"></div>
-            <span>Inestable (40-59%)</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-orange-500 rounded"></div>
+            <span className="text-white">Inestable</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-500 rounded"></div>
-            <span>Crisis (20-39%)</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-red-500 rounded"></div>
+            <span className="text-white">Crisis</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-600 rounded animate-pulse"></div>
-            <span>Colapsado (0-19%)</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-red-600 rounded animate-pulse"></div>
+            <span className="text-white">Colapsado</span>
           </div>
-          <div className="text-gray-400 text-xs mt-2 border-t border-gray-600 pt-2">
+          
+          {/* Separador */}
+          <div className="w-px h-4 bg-gray-500"></div>
+          
+          {/* Tip */}
+          <div className="text-gray-300 text-xs">
             💡 Clic en océano para deseleccionar
           </div>
         </div>

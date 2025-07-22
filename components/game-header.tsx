@@ -19,6 +19,7 @@ import {
   Target,
   AlertTriangle,
   Shield,
+  MessageCircle,
 } from "lucide-react"
 
 interface GameHeaderProps {
@@ -27,9 +28,11 @@ interface GameHeaderProps {
   actionHistory: ActionHistory[]
   events: GameEvent[]
   onShowEventHistory: () => void
+  onShowDiplomacy?: () => void
+  onShowTrade?: () => void
 }
 
-export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory }: GameHeaderProps) {
+export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade }: GameHeaderProps) {
   const [showHistory, setShowHistory] = useState(false)
 
   const getActionIcon = (actionType: string) => {
@@ -86,102 +89,126 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
     <div className="space-y-2">
       <Card className="bg-slate-800/50 border-cyan-500/30">
         <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
+          <div className="flex flex-col gap-2">
+            {/* Primera fila: Título y país del jugador */}
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Globe className="w-6 h-6 text-cyan-400" />
-                <h1 className="text-2xl font-bold text-white">GeoPolitics 2025</h1>
+                <div className="flex flex-col">
+                  <h1 className="text-xl font-bold text-white tracking-tight">
+                    <span className="mr-1">Geo Law</span>
+                    <span>Empire</span>
+                  </h1>
+                  <span className="text-xs text-cyan-400 font-medium -mt-1">2025</span>
+                </div>
               </div>
 
               {playerCountry && (
                 <div className="flex items-center gap-2">
-                  <Crown className="w-5 h-5 text-yellow-400" />
+                  <Crown className="w-4 h-4 text-yellow-400" />
                   <span className="text-white font-semibold">{playerCountry.name}</span>
-                  <Badge variant="outline" className="border-cyan-500 text-cyan-400">
+                  <Badge variant="outline" className="border-cyan-500 text-cyan-400 text-xs">
                     {playerCountry.president}
                   </Badge>
                 </div>
               )}
+            </div>
 
-              {/* Objetivo del juego */}
-              <div className="flex items-center gap-2 bg-purple-900/30 px-3 py-1 rounded-lg border border-purple-500/30">
-                <Target className="w-4 h-4 text-purple-400" />
-                <span className="text-purple-300 text-sm font-medium">Dominación Mundial: {progressPercentage}%</span>
-                <div className="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-purple-600 to-purple-400 transition-all duration-500"
-                    style={{ width: `${progressPercentage}%` }}
-                  />
+            {/* Segunda fila: Estadísticas principales en línea horizontal */}
+            <div className="flex items-center justify-between gap-4 text-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-gray-400" />
+                  <span className="text-gray-300">Año {gameStats.currentYear}</span>
                 </div>
-              </div>
-            </div>
 
-            {/* Primera fila de estadísticas */}
-            <div className="flex items-center gap-4 text-sm flex-wrap">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-300">Año {gameStats.currentYear}</span>
-              </div>
+                <div className="flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3 text-green-400" />
+                  <span className="text-gray-300">PIB Global: ${gameStats.globalGDP}T</span>
+                  {playerCountry && (
+                    <Badge variant="outline" className="border-green-500 text-green-400 text-xs ml-1">
+                      Tu PIB: ${playerCountry.economy.gdp}B
+                      {playerCountry.lastGDPGrowth && (
+                        <span className="ml-1">
+                          {playerCountry.lastGDPGrowth > 0 ? '+' : ''}${playerCountry.lastGDPGrowth}B
+                        </span>
+                      )}
+                    </Badge>
+                  )}
+                </div>
 
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-green-400" />
-                <span className="text-gray-300">PIB: ${gameStats.globalGDP}T</span>
-              </div>
+                <div className="flex items-center gap-1">
+                  <Users className="w-3 h-3 text-blue-400" />
+                  <span className="text-gray-300">
+                    Territorios: {gameStats.countriesControlled}/{totalCountries}
+                  </span>
+                </div>
 
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-400" />
-                <span className="text-gray-300">
-                  Territorios: {gameStats.countriesControlled}/{totalCountries}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-blue-400" />
-                <span className="text-gray-300">Población: {gameStats.globalPopulation}B</span>
-              </div>
-
-              <Badge variant={gameStats.globalStability >= 70 ? "default" : "destructive"}>
-                Estabilidad: {gameStats.globalStability}%
-              </Badge>
-            </div>
-
-            {/* Segunda fila de estadísticas avanzadas */}
-            <div className="flex items-center gap-3 text-sm flex-wrap">
-              {/* Indicador de Caos */}
-              <div className="flex items-center gap-2 bg-slate-700/50 px-2 py-1 rounded-lg border border-gray-600/30">
-                <AlertTriangle className="w-4 h-4 text-orange-400" />
-                <span className="text-gray-300 text-sm">Caos:</span>
-                <span className={`font-semibold ${getChaosColor(gameStats.chaosLevel)}`}>
-                  {gameStats.chaosLevel}%
-                </span>
+                <Badge variant={gameStats.globalStability >= 70 ? "default" : "destructive"} className="text-xs">
+                  Estabilidad: {gameStats.globalStability}%
+                </Badge>
               </div>
 
-              {/* Contador de eventos */}
-              <div className="flex items-center gap-2 bg-slate-700/50 px-2 py-1 rounded-lg border border-gray-600/30">
-                <Shield className="w-4 h-4 text-blue-400" />
-                <span className="text-gray-300 text-sm">Eventos:</span>
-                <span className="text-blue-400 font-semibold">{gameStats.eventsThisSession}</span>
-                {gameStats.negativeEventsBlocked > 0 && (
-                  <span className="text-green-400 text-xs">({gameStats.negativeEventsBlocked} bloq.)</span>
+              {/* Estadísticas avanzadas a la derecha */}
+              <div className="flex items-center gap-2 text-xs">
+                {/* Indicador de Caos */}
+                <div className="flex items-center gap-1 bg-slate-700/50 px-2 py-1 rounded border border-gray-600/30">
+                  <AlertTriangle className="w-3 h-3 text-orange-400" />
+                  <span className="text-gray-300">Caos:</span>
+                  <span className={`font-semibold ${getChaosColor(gameStats.chaosLevel)}`}>
+                    {gameStats.chaosLevel}%
+                  </span>
+                </div>
+
+                {/* Contador de eventos */}
+                <div className="flex items-center gap-1 bg-slate-700/50 px-2 py-1 rounded border border-gray-600/30">
+                  <Shield className="w-3 h-3 text-blue-400" />
+                  <span className="text-gray-300">Eventos:</span>
+                  <span className="text-blue-400 font-semibold">{gameStats.eventsThisSession}</span>
+                  {gameStats.negativeEventsBlocked > 0 && (
+                    <span className="text-green-400">({gameStats.negativeEventsBlocked} bloq.)</span>
+                  )}
+                </div>
+
+                {/* Botones de acción */}
+                {playerCountry && onShowDiplomacy && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onShowDiplomacy}
+                    className="border-red-600 hover:border-red-500 bg-transparent h-7 px-2"
+                  >
+                    <MessageCircle className="w-3 h-3 mr-1" />
+                    <span className="text-xs">Diplomacia</span>
+                  </Button>
                 )}
-              </div>
 
-              {/* Botones de acción */}
-              <div className="flex items-center gap-2 ml-auto">
+                {playerCountry && onShowTrade && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onShowTrade}
+                    className="border-green-600 hover:border-green-500 bg-transparent h-7 px-2"
+                  >
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    <span className="text-xs">Comercio</span>
+                  </Button>
+                )}
+
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={onShowEventHistory}
-                  className="border-purple-600 hover:border-purple-500 relative bg-transparent"
+                  className="border-purple-600 hover:border-purple-500 relative bg-transparent h-7 px-2"
                 >
-                  <Bell className="w-4 h-4 mr-1" />
-                  Eventos
+                  <Bell className="w-3 h-3 mr-1" />
+                  <span className="text-xs">Eventos</span>
                   {events.length > 0 && (
                     <Badge
                       variant="destructive"
-                      className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs animate-pulse"
+                      className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs animate-pulse"
                     >
-                      {events.length > 99 ? "99+" : events.length}
+                      {events.length > 9 ? "9+" : events.length}
                     </Badge>
                   )}
                 </Button>
@@ -190,12 +217,29 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
                   variant="outline"
                   size="sm"
                   onClick={() => setShowHistory(!showHistory)}
-                  className="border-gray-600 hover:border-gray-500"
+                  className="border-gray-600 hover:border-gray-500 h-7 px-2"
                 >
-                  <History className="w-4 h-4 mr-1" />
-                  Historial
-                  {showHistory ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+                  <History className="w-3 h-3 mr-1" />
+                  <span className="text-xs">Historial</span>
+                  {showHistory ? <ChevronUp className="w-3 h-3 ml-1" /> : <ChevronDown className="w-3 h-3 ml-1" />}
                 </Button>
+              </div>
+            </div>
+
+            {/* Tercera fila: Dominación Mundial - Movida aquí */}
+            <div className="flex items-center justify-center">
+              <div className="flex items-center gap-3 bg-purple-900/40 px-4 py-1 rounded-lg border border-purple-500/40">
+                <Target className="w-4 h-4 text-purple-400" />
+                <span className="text-purple-300 text-sm font-semibold">Dominación Mundial</span>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-purple-600 to-purple-400 transition-all duration-500"
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                  </div>
+                  <span className="text-purple-200 text-xs font-bold">{progressPercentage}%</span>
+                </div>
               </div>
             </div>
           </div>

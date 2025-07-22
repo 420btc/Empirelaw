@@ -14,6 +14,180 @@ function applyStabilityChange(country: Country, delta: number): Country {
 //------------------------------------------------------------
 // Sistema de Control de Caos Global
 //------------------------------------------------------------
+//------------------------------------------------------------
+// Sistema de Generación Dinámica de PIB
+//------------------------------------------------------------
+export function calculateGDPGrowth(country: Country, countries: Country[], playerCountryId: string): number {
+  let growthRate = 0
+
+  // Factor 1: Estabilidad (más estabilidad = más crecimiento)
+  const stabilityFactor = (country.stability / 100) * 0.03 // 0-3% base
+  growthRate += stabilityFactor
+
+  // Factor 2: Recursos naturales (más recursos = más crecimiento)
+  const resourceCount = country.economy.resources.length
+  const resourceFactor = Math.min(0.02, resourceCount * 0.003) // Máximo 2%
+  growthRate += resourceFactor
+
+  // Factor 3: Nivel de deuda (menos deuda = más crecimiento)
+  const debtPenalty = Math.max(0, (country.economy.debt - 60) / 100 * 0.02) // Penalización si deuda > 60%
+  growthRate -= debtPenalty
+
+  // Factor 4: Relaciones diplomáticas (buenas relaciones = comercio = crecimiento)
+  const avgDiplomaticRelation = country.diplomaticRelations 
+    ? Object.values(country.diplomaticRelations).reduce((sum, rel) => sum + rel, 0) / Object.values(country.diplomaticRelations).length
+    : 0
+  const diplomaticFactor = Math.max(-0.01, Math.min(0.015, avgDiplomaticRelation / 100 * 0.015))
+  growthRate += diplomaticFactor
+
+  // Factor 5: Bonificación por superpotencia
+  if (country.powerLevel === "superpower") growthRate += 0.005
+  else if (country.powerLevel === "major") growthRate += 0.003
+
+  // Factor 6: Penalización por países conquistados (costo de mantenimiento)
+  if (country.id === playerCountryId) {
+    const conqueredTerritories = countries.filter(c => c.ownedBy === playerCountryId).length
+    const maintenancePenalty = conqueredTerritories * 0.002 // 0.2% por territorio
+    growthRate -= maintenancePenalty
+  }
+
+  // Factor 7: Bonificación/penalización por territorio conquistado
+  if (country.ownedBy === playerCountryId && country.id !== playerCountryId) {
+    growthRate *= 0.34 // Solo 34% del crecimiento normal (66% reducción)
+  }
+
+  // Limitar crecimiento entre -2% y +5%
+  growthRate = Math.max(-0.02, Math.min(0.05, growthRate))
+
+  console.log(`📈 ${country.name} PIB growth: ${(growthRate * 100).toFixed(2)}% (Estab: ${(stabilityFactor * 100).toFixed(1)}%, Rec: ${(resourceFactor * 100).toFixed(1)}%, Deuda: -${(debtPenalty * 100).toFixed(1)}%, Dipl: ${(diplomaticFactor * 100).toFixed(1)}%)`)
+
+  return growthRate
+}
+
+export function applyGDPGrowth(countries: Country[], playerCountryId: string): Country[] {
+  return countries.map(country => {
+    const growthRate = calculateGDPGrowth(country, countries, playerCountryId)
+    const gdpIncrease = Math.round(country.economy.gdp * growthRate)
+    
+    // Aplicar ingresos de territorios conquistados al jugador
+    let playerBonus = 0
+    if (country.ownedBy === playerCountryId && country.id !== playerCountryId) {
+      playerBonus = gdpIncrease // El jugador recibe el 100% de lo que genera el territorio
+    }
+
+    return {
+      ...country,
+      economy: {
+        ...country.economy,
+        gdp: Math.max(100, country.economy.gdp + gdpIncrease), // Mínimo 100B PIB
+      },
+      // Metadata para tracking
+      lastGDPGrowth: gdpIncrease,
+      playerBonus: playerBonus,
+    }
+  })
+}
+
+//------------------------------------------------------------
+// Sistema de Ayuda Mutua Inteligente
+//------------------------------------------------------------
+export function provideMutualAidToCriticalCountries(countries: Country[], playerCountryId: string): {
+  updatedCountries: Country[]
+  aidEvents: GameEvent[]
+} {
+  const aidEvents: GameEvent[] = []
+  let updatedCountries = [...countries]
+
+  // Encontrar países en crisis crítica (estabilidad <= 25, no conquistados, no soberanos)
+  const criticalCountries = countries.filter(c => 
+    c.stability <= 25 && 
+    !c.ownedBy && 
+    !c.isSovereign && 
+    c.id !== playerCountryId
+  )
+
+  criticalCountries.forEach(criticalCountry => {
+    // Encontrar países vecinos estables que puedan ayudar
+    const potentialHelpers = countries.filter(helper => {
+      // Debe ser vecino o del mismo bloque
+      const isNeighbor = criticalCountry.neighbors?.includes(helper.id) || helper.neighbors?.includes(criticalCountry.id)
+      const sameBlock = helper.geopoliticalBlock === criticalCountry.geopoliticalBlock
+      
+      // Debe estar estable y tener capacidad económica
+      const isStable = helper.stability >= 60
+      const hasCapacity = helper.economy.gdp >= 1000
+      const notInDebt = helper.economy.debt < 120
+      
+      // No debe ser el jugador ni estar conquistado por el jugador
+      const notPlayerControlled = helper.id !== playerCountryId && helper.ownedBy !== playerCountryId
+      
+      return (isNeighbor || sameBlock) && isStable && hasCapacity && notInDebt && notPlayerControlled
+    })
+
+    if (potentialHelpers.length > 0) {
+      // Seleccionar el mejor ayudante (más PIB y mejor estabilidad)
+      const bestHelper = potentialHelpers.reduce((best, current) => {
+        const bestScore = best.economy.gdp * (best.stability / 100)
+        const currentScore = current.economy.gdp * (current.stability / 100)
+        return currentScore > bestScore ? current : best
+      })
+
+      // Calcular ayuda proporcionada
+      const aidAmount = Math.min(
+        Math.round(bestHelper.economy.gdp * 0.05), // Máximo 5% del PIB del ayudante
+        Math.round(criticalCountry.economy.gdp * 0.3)  // Máximo 30% del PIB del receptor
+      )
+      
+      const stabilityBoost = Math.min(15, Math.max(5, Math.round(aidAmount / 100)))
+
+      // Aplicar ayuda
+      updatedCountries = updatedCountries.map(c => {
+        if (c.id === criticalCountry.id) {
+          return {
+            ...c,
+            stability: Math.min(85, c.stability + stabilityBoost),
+            economy: {
+              ...c.economy,
+              gdp: c.economy.gdp + aidAmount,
+              debt: Math.max(0, c.economy.debt - 5), // Pequeña reducción de deuda
+            }
+          }
+        } else if (c.id === bestHelper.id) {
+          return {
+            ...c,
+            economy: {
+              ...c.economy,
+              gdp: c.economy.gdp - Math.round(aidAmount * 0.7), // El ayudante pierde menos de lo que da
+            }
+          }
+        }
+        return c
+      })
+
+      // Crear evento de ayuda mutua
+      const aidEvent: GameEvent = {
+        id: `mutual_aid_${Date.now()}_${criticalCountry.id}`,
+        type: "success",
+        title: "🤝 Ayuda Mutua Internacional",
+        description: `${bestHelper.name} ha proporcionado ayuda crítica a ${criticalCountry.name} para prevenir su colapso`,
+        effects: [
+          `${bestHelper.name} dona $${aidAmount}B`,
+          `${criticalCountry.name} recibe +${stabilityBoost}% estabilidad`,
+          "Cooperación internacional fortalecida",
+          "Dificultad aumentada para conquistas fáciles"
+        ],
+        timestamp: Date.now(),
+      }
+
+      aidEvents.push(aidEvent)
+
+      console.log(`🤝 Ayuda mutua: ${bestHelper.name} → ${criticalCountry.name} ($${aidAmount}B, +${stabilityBoost}% estabilidad)`)
+    }
+  })
+
+  return { updatedCountries, aidEvents }
+}
+
 export function calculateChaosLevel(countries: Country[], recentEvents: GameEvent[]): number {
   // Factor 1: Estabilidad global promedio (invertida)
   const avgStability = countries.reduce((sum, c) => sum + c.stability, 0) / countries.length
@@ -973,6 +1147,67 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
             `PIB aumentado en $${economicReturn}B`,
             `Estabilidad mejorada en ${stabilityBoost}%`,
             `Deuda reducida en ${debtReduction}%`,
+          ],
+          timestamp: Date.now(),
+        },
+      }
+    }
+
+    case "debt_emission": {
+      // Solo Estados Unidos e Israel pueden emitir deuda internacional
+      if (source.id !== "usa" && source.id !== "israel") {
+        return {
+          success: false,
+          updatedCountries: countries,
+          event: {
+            id: `failed_${Date.now()}`,
+            type: "error",
+            title: "❌ Emisión de Deuda No Autorizada",
+            description: `${source.name} no tiene el privilegio de emitir deuda internacional`,
+            effects: [
+              "Solo Estados Unidos e Israel pueden emitir deuda internacional",
+              "Privilegio reservado a países con monedas de reserva",
+            ],
+            timestamp: Date.now(),
+          },
+        }
+      }
+
+      // Calcular cantidad de deuda a emitir
+      const debtAmount = source.id === "usa" 
+        ? Math.round(source.economy.gdp * 0.3) // 30% del PIB para USA
+        : Math.round(source.economy.gdp * 0.2)  // 20% del PIB para Israel
+      
+      const debtIncrease = source.id === "usa" ? 15 : 20 // USA tiene mejor rating crediticio
+
+      updated = updated.map((c) =>
+        c.id === source.id
+          ? {
+              ...c,
+              economy: {
+                ...c.economy,
+                gdp: c.economy.gdp + debtAmount,
+                debt: Math.min(300, c.economy.debt + debtIncrease),
+              },
+            }
+          : c,
+      )
+
+      return {
+        success: true,
+        updatedCountries: updated,
+        event: {
+          id: `debt_emission_${Date.now()}`,
+          type: "success",
+          title: "💰 Emisión de Deuda Internacional Exitosa",
+          description: `${source.name} ha emitido deuda internacional con éxito`,
+          effects: [
+            `PIB aumentado en $${debtAmount}B`,
+            `Deuda nacional aumentada en ${debtIncrease}%`,
+            `Liquidez internacional mejorada`,
+            source.id === "usa" 
+              ? "Privilegio del dólar como moneda de reserva"
+              : "Respaldo de aliados internacionales",
           ],
           timestamp: Date.now(),
         },

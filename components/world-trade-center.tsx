@@ -175,10 +175,59 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
 
     setActiveOffers((prev) => [...prev, newOffer])
 
-    // Simular respuesta de IA después de un delay
+    // IA inteligente para respuesta de comercio
     setTimeout(
       () => {
-        const success = Math.random() > 0.4 // 60% de aceptación
+        const partnerCountry = countries.find(c => c.id === selectedPartner)
+        if (!partnerCountry) return
+
+        // Calcular si la oferta es atractiva para el país objetivo
+        const marketPrice = resourcePrice.currentPrice
+        const offerPrice = newOffer.pricePerUnit
+        const priceRatio = offerPrice / marketPrice
+
+        let acceptanceProbability = 0.5 // Base 50%
+
+        // Factor 1: Precio atractivo (mejor precio = más probabilidad)
+        if (priceRatio <= 0.8) acceptanceProbability += 0.3 // 30% bonus si es 20% más barato
+        else if (priceRatio <= 0.9) acceptanceProbability += 0.2 // 20% bonus si es 10% más barato
+        else if (priceRatio >= 1.2) acceptanceProbability -= 0.3 // -30% si es 20% más caro
+        else if (priceRatio >= 1.1) acceptanceProbability -= 0.2 // -20% si es 10% más caro
+
+        // Factor 2: Capacidad económica del país (más PIB = más probable comprar)
+        const economicFactor = Math.min(0.2, partnerCountry.economy.gdp / 10000) // Máximo 20% bonus
+        acceptanceProbability += economicFactor
+
+        // Factor 3: Nivel de deuda (más deuda = menos probable comprar)
+        if (partnerCountry.economy.debt > 100) acceptanceProbability -= 0.2
+        else if (partnerCountry.economy.debt > 150) acceptanceProbability -= 0.4
+
+        // Factor 4: Estabilidad del país (más estable = más comercio)
+        const stabilityFactor = (partnerCountry.stability - 50) / 100 * 0.2 // -20% a +20%
+        acceptanceProbability += stabilityFactor
+
+        // Factor 5: Relaciones diplomáticas
+        const diplomaticRelation = partnerCountry.diplomaticRelations?.[playerCountry.id] || 0
+        const diplomaticFactor = diplomaticRelation / 100 * 0.25 // -25% a +25%
+        acceptanceProbability += diplomaticFactor
+
+        // Factor 6: Necesidad del recurso (si no lo tiene = más probable)
+        const hasResource = partnerCountry.economy.resources.includes(selectedResource)
+        if (!hasResource) acceptanceProbability += 0.15
+
+        // Limitar entre 5% y 95%
+        acceptanceProbability = Math.max(0.05, Math.min(0.95, acceptanceProbability))
+
+        const success = Math.random() < acceptanceProbability
+
+        console.log(`🤖 IA Comercial - ${partnerCountry.name}:`, {
+          offerPrice: offerPrice.toFixed(2),
+          marketPrice: marketPrice.toFixed(2),
+          priceRatio: priceRatio.toFixed(2),
+          acceptanceProbability: (acceptanceProbability * 100).toFixed(1) + '%',
+          result: success ? 'ACEPTADO' : 'RECHAZADO'
+        })
+
         setActiveOffers((prev) =>
           prev.map((offer) =>
             offer.id === newOffer.id ? { ...offer, status: success ? "accepted" : "rejected" } : offer,
@@ -200,8 +249,8 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
           setTradeHistory((prev) => [...prev, historyEntry])
         }
       },
-      3000 + Math.random() * 5000,
-    ) // 3-8 segundos
+      6000, // Exactamente 6 segundos como solicitaste
+    )
 
     // Limpiar formulario
     setSelectedResource("")

@@ -39,6 +39,9 @@ export interface Country {
     timestamp: number
     severity: number // 1-10
   }
+  // Nuevo: Sistema económico dinámico
+  lastGDPGrowth?: number // Último crecimiento del PIB
+  playerBonus?: number // Bonus que genera para el jugador (si es territorio conquistado)
 }
 
 export interface GameEvent {
