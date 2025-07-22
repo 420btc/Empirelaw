@@ -81,7 +81,7 @@ export function useGameState() {
     eventProcessingRef.current = true
     const now = Date.now()
     const timeSinceLastEvent = now - lastEventTimeRef.current
-    const minInterval = 1000 // 1 evento por segundo para mejor espaciado
+    const minInterval = 10000 // 1 evento cada 10 segundos (6 eventos por minuto)
 
     const processNextEvent = () => {
       if (eventQueueRef.current.length === 0) {

@@ -18,16 +18,18 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
   useEffect(() => {
     // Mostrar solo los 3 eventos más recientes como notificaciones flotantes
     const recentEvents = events.slice(-3)
+    const newEvents: GameEvent[] = []
 
-    // Agregar nuevos eventos con animación
+    // Identificar eventos nuevos
     recentEvents.forEach((event) => {
       if (!visibleEvents.find((e) => e.id === event.id)) {
+        newEvents.push(event)
         setVisibleEvents((prev) => [...prev.slice(-2), event]) // Mantener máximo 3
       }
     })
 
-    // Auto-dismiss después de 8 segundos (ajustado para mayor frecuencia de eventos)
-    const timeouts = recentEvents.map((event) => {
+    // Auto-dismiss después de 8 segundos para dar tiempo a leer con el nuevo intervalo
+    const timeouts = newEvents.map((event) => {
       return setTimeout(() => {
         handleDismiss(event.id)
       }, 8000)
@@ -36,7 +38,7 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
     return () => {
       timeouts.forEach((timeout) => clearTimeout(timeout))
     }
-  }, [events])
+  }, [events, visibleEvents])
 
   const handleDismiss = (eventId: string) => {
     // Iniciar animación de salida
