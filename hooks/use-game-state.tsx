@@ -40,6 +40,11 @@ export function useGameState() {
   const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastPauseTimeRef = useRef<number>(0)
   const isEventsPausedRef = useRef<boolean>(false)
+  
+  // Sistema de cola de eventos para escalonamiento
+  const eventQueueRef = useRef<GameEvent[]>([])
+  const eventProcessingRef = useRef<boolean>(false)
+  const lastEventTimeRef = useRef<number>(0)
 
   // Sistema de progresión y logros
   const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS)
@@ -60,6 +65,54 @@ export function useGameState() {
   const [conquerorCountry, setConquerorCountry] = useState<string>('')
   const [eventStreak, setEventStreak] = useState({ type: 'neutral', count: 0 }) // 'positive', 'negative', 'neutral'
   const streakRef = useRef({ type: 'neutral', count: 0 })
+
+  // Función para añadir eventos a la cola con escalonamiento
+  const addEventToQueue = useCallback((event: GameEvent) => {
+    eventQueueRef.current.push(event)
+    processEventQueue()
+  }, [])
+
+  // Función para procesar la cola de eventos con límite de 3 por segundo
+  const processEventQueue = useCallback(() => {
+    if (eventProcessingRef.current || eventQueueRef.current.length === 0) {
+      return
+    }
+
+    eventProcessingRef.current = true
+    const now = Date.now()
+    const timeSinceLastEvent = now - lastEventTimeRef.current
+    const minInterval = 1000 // 1 evento por segundo para mejor espaciado
+
+    const processNextEvent = () => {
+      if (eventQueueRef.current.length === 0) {
+        eventProcessingRef.current = false
+        return
+      }
+
+      const event = eventQueueRef.current.shift()!
+      
+      // Añadir el evento a la lista de eventos y notificaciones
+      setGameEvents((prev) => [...prev, event])
+      setVisibleNotifications((prev) => [...prev.slice(-2), event])
+      
+      lastEventTimeRef.current = Date.now()
+      
+      // Si hay más eventos en la cola, programar el siguiente
+      if (eventQueueRef.current.length > 0) {
+        setTimeout(processNextEvent, minInterval)
+      } else {
+        eventProcessingRef.current = false
+      }
+    }
+
+    // Si ha pasado suficiente tiempo desde el último evento, procesar inmediatamente
+    if (timeSinceLastEvent >= minInterval) {
+      processNextEvent()
+    } else {
+      // Esperar el tiempo restante antes de procesar
+      setTimeout(processNextEvent, minInterval - timeSinceLastEvent)
+    }
+  }, [])
 
   // Calculate global stats including chaos level
   useEffect(() => {
@@ -137,8 +190,7 @@ export function useGameState() {
           timestamp: Date.now(),
         }
         
-        setGameEvents((prev) => [...prev, pauseEvent])
-        setVisibleNotifications((prev) => [...prev.slice(-2), pauseEvent])
+        addEventToQueue(pauseEvent)
         
         // Reanudar eventos después de 1 minuto
         setTimeout(() => {
@@ -158,8 +210,7 @@ export function useGameState() {
             timestamp: Date.now(),
           }
           
-          setGameEvents((prev) => [...prev, resumeEvent])
-          setVisibleNotifications((prev) => [...prev.slice(-2), resumeEvent])
+          addEventToQueue(resumeEvent)
         }, 60000) // 1 minuto de pausa
         
       }, randomDelay)
@@ -188,8 +239,7 @@ export function useGameState() {
       )
       if (aiEvent) {
         setCountries(updatedCountries)
-        setGameEvents((prev) => [...prev, aiEvent])
-        setVisibleNotifications((prev) => [...prev.slice(-2), aiEvent])
+        addEventToQueue(aiEvent)
         inactivityTicksRef.current = 0 // Solo una vez por colapso
         return // Saltar generación normal este ciclo
       }
@@ -234,8 +284,7 @@ export function useGameState() {
               timestamp: Date.now(),
             }
             
-            setGameEvents((prev) => [...prev, gameOverEvent])
-            setVisibleNotifications((prev) => [...prev.slice(-2), gameOverEvent])
+            addEventToQueue(gameOverEvent)
             return // No generar más eventos
           }
         }
@@ -249,8 +298,7 @@ export function useGameState() {
     if (aidEvents.length > 0) {
       console.log(`🤝 ${aidEvents.length} eventos de ayuda mutua generados`)
       aidEvents.forEach(event => {
-        setGameEvents((prev) => [...prev, event])
-        setVisibleNotifications((prev) => [...prev.slice(-2), event])
+        addEventToQueue(event)
       })
     }
 
@@ -267,8 +315,7 @@ export function useGameState() {
     if (rebellionEvents.length > 0) {
       console.log(`🔥 ${rebellionEvents.length} eventos de rebelión generados`)
       rebellionEvents.forEach(event => {
-        setGameEvents((prev) => [...prev, event])
-        setVisibleNotifications((prev) => [...prev.slice(-2), event])
+        addEventToQueue(event)
       })
     }
     
@@ -276,8 +323,7 @@ export function useGameState() {
     if (maintenanceEvents.length > 0) {
       console.log(`💰 ${maintenanceEvents.length} eventos de mantenimiento generados`)
       maintenanceEvents.forEach(event => {
-        setGameEvents((prev) => [...prev, event])
-        setVisibleNotifications((prev) => [...prev.slice(-2), event])
+        addEventToQueue(event)
       })
     }
 
@@ -286,8 +332,7 @@ export function useGameState() {
         setCountries(updatedCountries)
 
         conquestEvents.forEach((event) => {
-          setGameEvents((prev) => [...prev, event])
-          setVisibleNotifications((prev) => [...prev.slice(-2), event])
+          addEventToQueue(event)
 
           const conquestHistoryEntry: ActionHistory = {
             id: event.id,
@@ -314,8 +359,7 @@ export function useGameState() {
       gameStats.globalStability
     )
     if (aiResult.aiEvents.length > 0) {
-      setGameEvents((prev) => [...prev, ...aiResult.aiEvents])
-      setVisibleNotifications((prev) => [...prev.slice(-2), ...aiResult.aiEvents])
+      aiResult.aiEvents.forEach((event: GameEvent) => addEventToQueue(event))
       setCountries(aiResult.updatedCountries)
     }
 
@@ -337,8 +381,7 @@ export function useGameState() {
       if (mainEvent) {
         console.log("📢 Evento principal generado:", mainEvent.title)
 
-        setGameEvents((prev) => [...prev, mainEvent])
-        setVisibleNotifications((prev) => [...prev.slice(-2), mainEvent])
+        addEventToQueue(mainEvent)
 
         // Rastrear eventos bloqueados por caos
         if (mainEvent.title.includes("bloqueando eventos negativos")) {
@@ -392,8 +435,7 @@ export function useGameState() {
 
         contagionEvents.forEach((contagionEvent) => {
           console.log("🌊 Evento de contagio generado:", contagionEvent.title)
-          setGameEvents((prev) => [...prev, contagionEvent])
-          setVisibleNotifications((prev) => [...prev.slice(-2), contagionEvent])
+          addEventToQueue(contagionEvent)
         })
 
         // Aplicar efectos del evento principal
@@ -923,8 +965,7 @@ export function useGameState() {
 
         if (result.event) {
           console.log("📢 Evento generado por acción:", result.event.title)
-          setGameEvents((prev) => [...prev, result.event!])
-          setVisibleNotifications((prev) => [...prev.slice(-2), result.event!])
+          addEventToQueue(result.event)
         }
 
         // 🏆 VERIFICAR LOGROS - Feedback instantáneo
@@ -972,8 +1013,7 @@ export function useGameState() {
       } else {
         console.log("❌ Acción falló")
         if (result.event) {
-          setGameEvents((prev) => [...prev, result.event!])
-          setVisibleNotifications((prev) => [...prev.slice(-2), result.event!])
+          addEventToQueue(result.event)
         }
       }
     },
