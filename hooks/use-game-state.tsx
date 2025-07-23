@@ -1252,17 +1252,23 @@ export function useGameState() {
   // Filtrar eventos de actualización económica automática de las notificaciones visibles y eventos
   useEffect(() => {
     const filterEconomicEvents = (events: GameEvent[]) => 
-      events.filter((event) => 
-        !event.title.includes("Actualización Económica Global") &&
-        !event.description.includes("PIB mundial se ha actualizado") &&
-        !event.description.includes("PIB actualizado para todos los países") &&
-        !event.effects?.some(effect => 
-          effect.includes("PIB actualizado para todos los países") ||
-          effect.includes("Crecimiento basado en estabilidad y recursos") ||
-          effect.includes("Territorios conquistados generando ingresos") ||
-          effect.includes("Relaciones diplomáticas afectando comercio")
-        )
-      )
+      events.filter((event) => {
+        // NO filtrar eventos de acciones del jugador (success, warning, error)
+        if (event.type === 'success' || event.type === 'warning' || event.type === 'error') {
+          return true
+        }
+        
+        // Filtrar solo eventos automáticos del sistema económico
+        return !event.title.includes("Actualización Económica Global") &&
+               !event.description.includes("PIB mundial se ha actualizado") &&
+               !event.description.includes("PIB actualizado para todos los países") &&
+               !event.effects?.some(effect => 
+                 effect.includes("PIB actualizado para todos los países") ||
+                 effect.includes("Crecimiento basado en estabilidad y recursos") ||
+                 effect.includes("Territorios conquistados generando ingresos") ||
+                 effect.includes("Relaciones diplomáticas afectando comercio")
+               )
+      })
 
     setVisibleNotifications((prev) => filterEconomicEvents(prev))
     setGameEvents((prev) => filterEconomicEvents(prev))
