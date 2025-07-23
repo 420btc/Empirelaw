@@ -38,6 +38,7 @@ export function useGameState() {
 
   // Referencias para controlar el sistema de eventos
   const eventIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const secondaryEventIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastPauseTimeRef = useRef<number>(0)
   const isEventsPausedRef = useRef<boolean>(false)
@@ -82,7 +83,7 @@ export function useGameState() {
     eventProcessingRef.current = true
     const now = Date.now()
     const timeSinceLastEvent = now - lastEventTimeRef.current
-    const minInterval = 30000 // 1 evento cada 30 segundos (2 eventos por minuto)
+    const minInterval = 10000 // 1 evento cada 10 segundos (6 eventos por minuto)
 
     const processNextEvent = () => {
       if (eventQueueRef.current.length === 0) {
@@ -143,24 +144,10 @@ export function useGameState() {
 
   // Función para determinar el intervalo de eventos basado en la estabilidad y fase del juego
   const getEventInterval = useCallback(() => {
-    // Para los primeros 20 eventos, usar intervalo más rápido para asegurar actividad inicial
-    if (gameEvents.length < 20) {
-      console.log(`🚀 Fase inicial del juego (${gameEvents.length}/20 eventos): eventos cada 20s`)
-      return 20000 // 20 segundos para los primeros 20 eventos
-    }
-    
-    // Verificar si hay zonas desestabilizadas (estabilidad < 30)
-    const destabilizedCountries = countries.filter(country => country.stability < 15)
-    const hasDestabilizedZones = destabilizedCountries.length > 0
-    
-    if (hasDestabilizedZones) {
-      console.log(`🚨 Zonas desestabilizadas detectadas (${destabilizedCountries.length} países): eventos cada 25s`)
-      return 25000 // 25 segundos
-    } else {
-      console.log("✅ Situación estable: eventos cada 30s")
-      return 30000 // 30 segundos
-    }
-  }, [countries, gameEvents.length])
+    // Sistema acelerado: eventos principales cada 15 segundos
+    console.log("🎯 Sistema unificado: eventos principales cada 15s")
+    return 15000 // 15 segundos fijo
+  }, [])
 
   // Función para manejar pausas aleatorias
   const scheduleRandomPause = useCallback(() => {
@@ -597,58 +584,60 @@ export function useGameState() {
     scheduleRandomPause()
   }, [playerCountry, countries, gameEvents, scheduleRandomPause])
 
+  // Función para generar eventos militares menores
+
+  
+
+
+
+
   // Sistema de eventos inteligente con intervalos dinámicos
   useEffect(() => {
     if (!playerCountry) return
 
-    console.log(`🎲 Sistema de eventos inteligente iniciado para: ${playerCountry}`)
+    console.log(`🎯 Sistema de eventos unificado iniciado para: ${playerCountry}`)
 
     const startEventSystem = () => {
-      // Limpiar interval anterior si existe
+      // Limpiar intervalos anteriores si existen
       if (eventIntervalRef.current) {
         clearInterval(eventIntervalRef.current)
       }
+      if (secondaryEventIntervalRef.current) {
+        clearInterval(secondaryEventIntervalRef.current)
+      }
 
       const interval = getEventInterval()
-      console.log(`⏰ Configurando intervalo de eventos: ${interval/1000}s`)
+      console.log(`⏰ Configurando intervalo principal de eventos: ${interval/1000}s`)
+      console.log(`⏰ Configurando intervalo secundario de eventos: 30s`)
 
+      // Intervalo principal cada 15 segundos
       eventIntervalRef.current = setInterval(generateEvent, interval)
+      
+      // Intervalo secundario cada 30 segundos para eventos adicionales
+      secondaryEventIntervalRef.current = setInterval(() => {
+        if (!isEventsPausedRef.current) {
+          console.log("🎯 Generando evento secundario...")
+          generateEvent()
+        }
+      }, 30000) // 30 segundos
     }
 
     // Iniciar el sistema
     startEventSystem()
 
-    // Reconfigurar el intervalo cuando cambien los países o el número de eventos
-    const checkInterval = setInterval(() => {
-      const newInterval = getEventInterval()
-      
-      // Determinar el intervalo actual basado en la lógica
-      let currentInterval = 12000 // default
-      if (gameEvents.length < 20) {
-        currentInterval = 5000
-      } else {
-        const destabilizedCountries = countries.filter(country => country.stability < 15)
-        if (destabilizedCountries.length > 0) {
-          currentInterval = 8000
-        }
-      }
 
-      // Solo reconfigurar si el intervalo ha cambiado
-      if (newInterval !== currentInterval) {
-        console.log(`🔄 Reconfigurando sistema de eventos: ${currentInterval/1000}s → ${newInterval/1000}s`)
-        startEventSystem()
-      }
-    }, 3000) // Verificar cada 3 segundos para detectar cambios más rápido
 
     return () => {
       console.log("🛑 Sistema de eventos detenido")
       if (eventIntervalRef.current) {
         clearInterval(eventIntervalRef.current)
       }
+      if (secondaryEventIntervalRef.current) {
+        clearInterval(secondaryEventIntervalRef.current)
+      }
       if (pauseTimeoutRef.current) {
         clearTimeout(pauseTimeoutRef.current)
       }
-      clearInterval(checkInterval)
     }
   }, [playerCountry, generateEvent, getEventInterval, gameEvents.length])
 

@@ -2828,6 +2828,620 @@ export const initialCountries: Country[] = [
       legal: 6,
     },
   },
+
+  // Nuevos países añadidos
+  {
+    id: "libya",
+    name: "Libia",
+    president: "Mohamed al-Menfi", // Presidente del Consejo Presidencial
+    ideology: "Democracia",
+    economy: {
+      gdp: 25, // Estimado por conflictos
+      debt: 155, // Alta deuda por guerra
+      resources: ["petróleo", "gas natural", "hierro", "sal"],
+      resourceProduction: {
+        petróleo: 60,
+        "gas natural": 40,
+        hierro: 15,
+        sal: 10,
+      },
+      resourceReserves: {
+        petróleo: 900,
+        "gas natural": 600,
+        hierro: 225,
+        sal: 150,
+      },
+    },
+    population: 7000000,
+    stability: 25, // Muy baja por conflictos
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 20,
+    powerLevel: "minor",
+    geopoliticalBlock: "middle_east",
+    alliances: ["egypt", "tunisia"],
+    neighbors: ["egypt", "sudan", "chad", "niger", "algeria", "tunisia"],
+    diplomaticRelations: {
+      egypt: 60,
+      tunisia: 55,
+      turkey: 50,
+      italy: 45,
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 3,
+      legal: 4,
+    },
+  },
+
+  {
+    id: "chad",
+    name: "Chad",
+    president: "Mahamat Déby", // Presidente real 2025
+    ideology: "Autoritarismo",
+    economy: {
+      gdp: 11, // PIB muy bajo
+      debt: 50,
+      resources: ["petróleo", "algodón", "ganado", "goma arábiga"],
+      resourceProduction: {
+        petróleo: 25,
+        algodón: 15,
+        ganado: 20,
+        "goma arábiga": 10,
+      },
+      resourceReserves: {
+        petróleo: 375,
+        algodón: 225,
+        ganado: 300,
+        "goma arábiga": 150,
+      },
+    },
+    population: 17700000,
+    stability: 35, // Baja por conflictos
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 15,
+    powerLevel: "minor",
+    geopoliticalBlock: "africa",
+    alliances: ["cameroon", "niger"],
+    neighbors: ["libya", "sudan", "central_african_republic", "cameroon", "nigeria", "niger"],
+    diplomaticRelations: {
+      cameroon: 50,
+      niger: 45,
+      france: 60, // Ex-colonia
+    },
+    conspiracyInfluence: {
+      geoengineering: 1,
+      masonic: 2,
+      legal: 3,
+    },
+  },
+
+  {
+    id: "tunisia",
+    name: "Túnez",
+    president: "Kaïs Saied", // Presidente real 2025
+    ideology: "Autoritarismo",
+    economy: {
+      gdp: 47, // Estimado
+      debt: 90, // Alta deuda
+      resources: ["fosfatos", "petróleo", "turismo", "oliva"],
+      resourceProduction: {
+        fosfatos: 30,
+        petróleo: 20,
+        turismo: 40,
+        oliva: 25,
+      },
+      resourceReserves: {
+        fosfatos: 450,
+        petróleo: 300,
+        turismo: 600,
+        oliva: 375,
+      },
+    },
+    population: 12000000,
+    stability: 45, // Media-baja por crisis política
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 20,
+    powerLevel: "minor",
+    geopoliticalBlock: "middle_east",
+    alliances: ["algeria", "libya"],
+    neighbors: ["algeria", "libya"],
+    diplomaticRelations: {
+      algeria: 65,
+      libya: 55,
+      france: 50,
+      italy: 60,
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 4,
+      legal: 8,
+    },
+  },
+
+  {
+    id: "mali",
+    name: "Malí",
+    president: "Assimi Goita", // Presidente interino (junta militar)
+    ideology: "Autoritarismo",
+    economy: {
+      gdp: 19, // PIB bajo
+      debt: 40,
+      resources: ["oro", "algodón", "ganado", "sal"],
+      resourceProduction: {
+        oro: 35,
+        algodón: 25,
+        ganado: 30,
+        sal: 15,
+      },
+      resourceReserves: {
+        oro: 525,
+        algodón: 375,
+        ganado: 450,
+        sal: 225,
+      },
+    },
+    population: 22000000,
+    stability: 25, // Muy baja por conflictos
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 20,
+    powerLevel: "minor",
+    geopoliticalBlock: "africa",
+    alliances: ["niger", "burkina_faso"],
+    neighbors: ["algeria", "niger", "burkina_faso", "ivory_coast", "guinea", "senegal", "mauritania"],
+    diplomaticRelations: {
+      niger: 70,
+      burkina_faso: 65,
+      france: -50, // Tensiones post-golpe
+      russia: 65,
+    },
+    conspiracyInfluence: {
+      geoengineering: 1,
+      masonic: 2,
+      legal: 3,
+    },
+  },
+
+  {
+    id: "sudan",
+    name: "Sudán",
+    president: "Abdel Fattah Abdelrahman Burhan", // Líder del Consejo Militar
+    ideology: "Autoritarismo",
+    economy: {
+      gdp: 35, // Estimado por conflictos
+      debt: 200, // Deuda externa muy alta
+      resources: ["petróleo", "oro", "algodón", "ganado"],
+      resourceProduction: {
+        petróleo: 30,
+        oro: 25,
+        algodón: 20,
+        ganado: 35,
+      },
+      resourceReserves: {
+        petróleo: 450,
+        oro: 375,
+        algodón: 300,
+        ganado: 525,
+      },
+    },
+    population: 47000000,
+    stability: 20, // Muy baja por guerra civil
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 25,
+    powerLevel: "minor",
+    geopoliticalBlock: "middle_east",
+    alliances: ["egypt", "saudi_arabia"],
+    neighbors: ["egypt", "libya", "chad", "central_african_republic", "south_sudan", "ethiopia", "eritrea"],
+    diplomaticRelations: {
+      egypt: 60,
+      saudi_arabia: 55,
+      ethiopia: 40,
+      usa: 30,
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 3,
+      legal: 5,
+    },
+  },
+
+  {
+    id: "gabon",
+    name: "Gabón",
+    president: "Brice Oligui Nguema", // Presidente de transición
+    ideology: "Autoritarismo",
+    economy: {
+      gdp: 20, // Estimado
+      debt: 65,
+      resources: ["petróleo", "manganeso", "madera", "uranio"],
+      resourceProduction: {
+        petróleo: 40,
+        manganeso: 30,
+        madera: 25,
+        uranio: 15,
+      },
+      resourceReserves: {
+        petróleo: 600,
+        manganeso: 450,
+        madera: 375,
+        uranio: 225,
+      },
+    },
+    population: 2400000,
+    stability: 40, // Media-baja por golpe
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 12,
+    powerLevel: "minor",
+    geopoliticalBlock: "africa",
+    alliances: ["cameroon", "congo"],
+    neighbors: ["cameroon", "equatorial_guinea", "congo"],
+    diplomaticRelations: {
+      cameroon: 55,
+      congo: 50,
+      france: 45, // Ex-colonia
+    },
+    conspiracyInfluence: {
+      geoengineering: 1,
+      masonic: 3,
+      legal: 5,
+    },
+  },
+
+  {
+    id: "mauritania",
+    name: "Mauritania",
+    president: "Mohamed Ould Ghazouani", // Presidente real 2025
+    ideology: "Autoritarismo",
+    economy: {
+      gdp: 8, // PIB muy bajo
+      debt: 75,
+      resources: ["hierro", "oro", "cobre", "pescado"],
+      resourceProduction: {
+        hierro: 25,
+        oro: 15,
+        cobre: 10,
+        pescado: 30,
+      },
+      resourceReserves: {
+        hierro: 375,
+        oro: 225,
+        cobre: 150,
+        pescado: 450,
+      },
+    },
+    population: 4900000,
+    stability: 50,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 10,
+    powerLevel: "minor",
+    geopoliticalBlock: "africa",
+    alliances: ["morocco", "senegal"],
+    neighbors: ["morocco", "algeria", "mali", "senegal"],
+    diplomaticRelations: {
+      morocco: 60,
+      senegal: 55,
+      algeria: 50,
+    },
+    conspiracyInfluence: {
+      geoengineering: 1,
+      masonic: 2,
+      legal: 4,
+    },
+  },
+
+  {
+    id: "uzbekistan",
+    name: "Uzbekistán",
+    president: "Shavkat Mirziyoyev", // Presidente real 2025
+    ideology: "Autoritarismo",
+    economy: {
+      gdp: 80, // Estimado
+      debt: 35,
+      resources: ["gas natural", "oro", "algodón", "uranio"],
+      resourceProduction: {
+        "gas natural": 50,
+        oro: 35,
+        algodón: 40,
+        uranio: 25,
+      },
+      resourceReserves: {
+        "gas natural": 750,
+        oro: 525,
+        algodón: 600,
+        uranio: 375,
+      },
+    },
+    population: 35000000,
+    stability: 65,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 25,
+    powerLevel: "minor",
+    geopoliticalBlock: "neutral",
+    alliances: ["kazakhstan", "kyrgyzstan"],
+    neighbors: ["kazakhstan", "kyrgyzstan", "tajikistan", "afghanistan", "turkmenistan"],
+    diplomaticRelations: {
+      kazakhstan: 70,
+      kyrgyzstan: 65,
+      russia: 60,
+      china: 65,
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 3,
+      legal: 6,
+    },
+  },
+
+  {
+    id: "tajikistan",
+    name: "Tayikistán",
+    president: "Emomali Rahmon", // Presidente de larga data
+    ideology: "Autoritarismo",
+    economy: {
+      gdp: 9, // PIB muy bajo
+      debt: 50,
+      resources: ["aluminio", "algodón", "energía hidroeléctrica", "oro"],
+      resourceProduction: {
+        aluminio: 20,
+        algodón: 15,
+        "energía hidroeléctrica": 30,
+        oro: 10,
+      },
+      resourceReserves: {
+        aluminio: 300,
+        algodón: 225,
+        "energía hidroeléctrica": 450,
+        oro: 150,
+      },
+    },
+    population: 10000000,
+    stability: 55,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 15,
+    powerLevel: "minor",
+    geopoliticalBlock: "neutral",
+    alliances: ["uzbekistan", "kyrgyzstan"],
+    neighbors: ["uzbekistan", "kyrgyzstan", "china", "afghanistan"],
+    diplomaticRelations: {
+      uzbekistan: 60,
+      kyrgyzstan: 55,
+      russia: 70,
+      china: 65,
+    },
+    conspiracyInfluence: {
+      geoengineering: 1,
+      masonic: 2,
+      legal: 4,
+    },
+  },
+
+  {
+    id: "kyrgyzstan",
+    name: "Kirguistán",
+    president: "Sadyr Japarov", // Presidente actual
+    ideology: "Autoritarismo",
+    economy: {
+      gdp: 9, // PIB muy bajo
+      debt: 60,
+      resources: ["oro", "energía hidroeléctrica", "algodón", "antimonio"],
+      resourceProduction: {
+        oro: 25,
+        "energía hidroeléctrica": 20,
+        algodón: 15,
+        antimonio: 10,
+      },
+      resourceReserves: {
+        oro: 375,
+        "energía hidroeléctrica": 300,
+        algodón: 225,
+        antimonio: 150,
+      },
+    },
+    population: 7000000,
+    stability: 50, // Media por inestabilidad política
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 12,
+    powerLevel: "minor",
+    geopoliticalBlock: "neutral",
+    alliances: ["uzbekistan", "tajikistan"],
+    neighbors: ["uzbekistan", "tajikistan", "china", "kazakhstan"],
+    diplomaticRelations: {
+      uzbekistan: 65,
+      tajikistan: 55,
+      russia: 65,
+      china: 60,
+    },
+    conspiracyInfluence: {
+      geoengineering: 1,
+      masonic: 2,
+      legal: 3,
+    },
+  },
+
+  {
+    id: "moldova",
+    name: "Moldavia",
+    president: "Maia Sandu", // Presidenta real 2025
+    ideology: "Democracia",
+    economy: {
+      gdp: 14, // PIB bajo
+      debt: 35,
+      resources: ["vino", "agricultura", "textiles", "maquinaria"],
+      resourceProduction: {
+        vino: 30,
+        agricultura: 25,
+        textiles: 15,
+        maquinaria: 10,
+      },
+      resourceReserves: {
+        vino: 450,
+        agricultura: 375,
+        textiles: 225,
+        maquinaria: 150,
+      },
+    },
+    population: 2600000,
+    stability: 55, // Media por tensiones con Transnistria
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 8,
+    powerLevel: "minor",
+    geopoliticalBlock: "eu",
+    alliances: ["romania", "ukraine"],
+    neighbors: ["romania", "ukraine"],
+    diplomaticRelations: {
+      romania: 80,
+      ukraine: 75,
+      russia: -30, // Tensiones por Transnistria
+      eu: 70,
+    },
+    conspiracyInfluence: {
+      geoengineering: 1,
+      masonic: 3,
+      legal: 8,
+    },
+  },
+
+  {
+    id: "estonia",
+    name: "Estonia",
+    president: "Alar Karis", // Presidente real 2025
+    ideology: "Democracia",
+    economy: {
+      gdp: 38, // Estimado
+      debt: 20, // Baja deuda
+      resources: ["tecnología", "madera", "turismo", "energía renovable"],
+      resourceProduction: {
+        tecnología: 40,
+        madera: 25,
+        turismo: 20,
+        "energía renovable": 15,
+      },
+      resourceReserves: {
+        tecnología: 600,
+        madera: 375,
+        turismo: 300,
+        "energía renovable": 225,
+      },
+    },
+    population: 1300000,
+    stability: 85, // Alta estabilidad
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 15,
+    powerLevel: "minor",
+    geopoliticalBlock: "eu",
+    alliances: ["latvia", "lithuania", "finland"],
+    neighbors: ["latvia", "russia"],
+    diplomaticRelations: {
+      latvia: 90,
+      lithuania: 85,
+      finland: 80,
+      russia: -60, // Tensiones históricas
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 8,
+      legal: 15,
+    },
+  },
+
+  {
+    id: "latvia",
+    name: "Letonia",
+    president: "Edgars Rinkēvičs", // Presidente actual 2025
+    ideology: "Democracia",
+    economy: {
+      gdp: 40, // Estimado
+      debt: 45,
+      resources: ["madera", "agricultura", "tecnología", "turismo"],
+      resourceProduction: {
+        madera: 30,
+        agricultura: 25,
+        tecnología: 20,
+        turismo: 15,
+      },
+      resourceReserves: {
+        madera: 450,
+        agricultura: 375,
+        tecnología: 300,
+        turismo: 225,
+      },
+    },
+    population: 1900000,
+    stability: 80,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 18,
+    powerLevel: "minor",
+    geopoliticalBlock: "eu",
+    alliances: ["estonia", "lithuania", "poland"],
+    neighbors: ["estonia", "lithuania", "russia", "belarus"],
+    diplomaticRelations: {
+      estonia: 90,
+      lithuania: 85,
+      poland: 75,
+      russia: -65, // Tensiones históricas
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 8,
+      legal: 12,
+    },
+  },
+
+  {
+    id: "lithuania",
+    name: "Lituania",
+    president: "Gitanas Nausėda", // Presidente real 2025
+    ideology: "Democracia",
+    economy: {
+      gdp: 70, // Estimado
+      debt: 40,
+      resources: ["agricultura", "tecnología", "madera", "turismo"],
+      resourceProduction: {
+        agricultura: 35,
+        tecnología: 30,
+        madera: 25,
+        turismo: 20,
+      },
+      resourceReserves: {
+        agricultura: 525,
+        tecnología: 450,
+        madera: 375,
+        turismo: 300,
+      },
+    },
+    population: 2800000,
+    stability: 80,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 20,
+    powerLevel: "minor",
+    geopoliticalBlock: "eu",
+    alliances: ["estonia", "latvia", "poland"],
+    neighbors: ["latvia", "poland", "belarus", "russia"],
+    diplomaticRelations: {
+      estonia: 85,
+      latvia: 85,
+      poland: 80,
+      russia: -70, // Tensiones por Kaliningrado
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 10,
+      legal: 15,
+    },
+  },
 ]
 
 // Definición de bloques geopolíticos
@@ -2844,7 +3458,7 @@ export const geopoliticalBlocks = {
   eu: {
     id: "eu",
     name: "Unión Europea",
-    members: ["germany", "france", "italy", "spain", "portugal", "netherlands", "sweden", "norway", "greece", "bulgaria", "romania", "croatia"],
+    members: ["germany", "france", "italy", "spain", "portugal", "netherlands", "sweden", "norway", "greece", "bulgaria", "romania", "croatia", "poland", "austria", "moldova", "estonia", "latvia", "lithuania"],
     leader: "germany",
     mutualDefense: true,
     economicCooperation: true,
@@ -2862,7 +3476,7 @@ export const geopoliticalBlocks = {
   africa: {
     id: "africa",
     name: "Unión Africana",
-    members: ["nigeria", "south_africa", "ghana", "kenya", "morocco", "ethiopia", "algeria", "niger"],
+    members: ["nigeria", "south_africa", "ghana", "kenya", "morocco", "ethiopia", "algeria", "niger", "libya", "chad", "tunisia", "mali", "sudan", "gabon", "mauritania"],
     leader: "south_africa",
     mutualDefense: false,
     economicCooperation: true,
@@ -2889,7 +3503,7 @@ export const geopoliticalBlocks = {
   neutral: {
     id: "neutral",
     name: "Países Neutrales",
-    members: ["iceland", "liechtenstein", "switzerland", "greenland", "indonesia", "philippines", "afghanistan"],
+    members: ["iceland", "liechtenstein", "switzerland", "greenland", "indonesia", "philippines", "afghanistan", "uzbekistan", "tajikistan", "kyrgyzstan"],
     leader: undefined,
     mutualDefense: false,
     economicCooperation: false,

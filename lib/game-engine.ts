@@ -726,14 +726,14 @@ export function generateRandomEvent(
     return { mainEvent: stabilizingEvent, contagionEvents: [] }
   }
 
-  // PROBABILIDAD AUMENTADA: 60% de que ocurra un evento (aumentado significativamente)
-  if (Math.random() > 0.6) {
+  // PROBABILIDAD AUMENTADA: 95% de que ocurra un evento (aumentado significativamente)
+  if (Math.random() > 0.95) {
     return { mainEvent: null, contagionEvents: [] }
   }
 
   // 🛡️ SISTEMA DE PROTECCIÓN TEMPORAL: Evitar eventos consecutivos en el mismo país
   const currentTime = Date.now()
-  const protectionPeriod = 5 * 60 * 1000 // 5 minutos de protección
+  const protectionPeriod = 2 * 60 * 1000 // 2 minutos de protección
   
   // Obtener países que han tenido eventos recientes (excluyendo ayudas mutuas)
   const recentlyAffectedCountries = recentEvents

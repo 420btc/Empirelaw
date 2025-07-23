@@ -16,7 +16,11 @@ export interface AIProactiveResult {
 
 class AIProactiveActionsService {
   private lastActionTime: Map<string, number> = new Map()
-  private readonly ACTION_COOLDOWN = 30000 // 30 segundos entre acciones por país
+  private readonly ACTION_COOLDOWN = 60000 // 1 minuto entre acciones por país
+  private readonly MAX_ACTIVE_AI_COUNTRIES = 3 // Máximo 3 países IA activos
+  private activeAICountries: Set<string> = new Set()
+  private lastAIRotation = 0
+  private readonly AI_ROTATION_INTERVAL = 30000 // Rotar países IA cada 30 segundos
 
   /**
    * Evalúa si un país controlado por IA debe tomar acciones proactivas
@@ -30,9 +34,14 @@ class AIProactiveActionsService {
       return { actions: [], events: [], updatedCountries: countries }
     }
 
+    // Rotar países IA activos cada 30 segundos
+    this.rotateActiveAICountries(countries, playerCountryId)
+
+    // Solo procesar países IA activos que pueden tomar acciones
     const aiCountries = countries.filter(country => 
       country.id !== playerCountryId && 
       !country.ownedBy &&
+      this.activeAICountries.has(country.id) &&
       this.shouldTakeAction(country)
     )
 
@@ -77,6 +86,59 @@ class AIProactiveActionsService {
   /**
    * Determina si un país debe considerar tomar una acción proactiva
    */
+  /**
+   * Rota los países IA activos cada 30 segundos para simular un comportamiento más realista
+   * Solo selecciona países con PIB mayor al del jugador para aumentar la dificultad
+   */
+  private rotateActiveAICountries(countries: Country[], playerCountryId: string): void {
+    const now = Date.now()
+    
+    // Solo rotar si han pasado 30 segundos desde la última rotación
+    if (now - this.lastAIRotation < this.AI_ROTATION_INTERVAL) {
+      return
+    }
+
+    this.lastAIRotation = now
+    
+    // Obtener el PIB del jugador
+    const playerCountry = countries.find(c => c.id === playerCountryId)
+    const playerGDP = playerCountry?.economy.gdp || 0
+    
+    // Obtener países IA disponibles con PIB mayor al del jugador
+    const availableAICountries = countries.filter(country => 
+      country.id !== playerCountryId && 
+      !country.ownedBy &&
+      country.economy.gdp > playerGDP
+    )
+
+    // Si no hay países con PIB mayor, usar los 3 países con mayor PIB disponibles
+    if (availableAICountries.length === 0) {
+      const fallbackCountries = countries
+        .filter(country => country.id !== playerCountryId && !country.ownedBy)
+        .sort((a, b) => b.economy.gdp - a.economy.gdp)
+        .slice(0, this.MAX_ACTIVE_AI_COUNTRIES)
+      
+      this.activeAICountries = new Set(fallbackCountries.map(c => c.id))
+      console.log(`🔄 Países IA activos (fallback - mayor PIB): ${Array.from(this.activeAICountries).join(', ')}`)
+      return
+    }
+
+    // Si hay menos países disponibles que el máximo, usar todos
+    if (availableAICountries.length <= this.MAX_ACTIVE_AI_COUNTRIES) {
+      this.activeAICountries = new Set(availableAICountries.map(c => c.id))
+      console.log(`🔄 Países IA activos (PIB > jugador): ${Array.from(this.activeAICountries).join(', ')}`)
+      return
+    }
+
+    // Seleccionar aleatoriamente países IA activos con PIB mayor al jugador
+    const shuffled = [...availableAICountries].sort(() => Math.random() - 0.5)
+    this.activeAICountries = new Set(
+      shuffled.slice(0, this.MAX_ACTIVE_AI_COUNTRIES).map(c => c.id)
+    )
+
+    console.log(`🔄 Países IA activos (PIB > jugador): ${Array.from(this.activeAICountries).join(', ')}`)
+  }
+
   private shouldTakeAction(country: Country): boolean {
     const lastAction = this.lastActionTime.get(country.id) || 0
     const timeSinceLastAction = Date.now() - lastAction
@@ -85,13 +147,8 @@ class AIProactiveActionsService {
       return false
     }
 
-    // Factores que aumentan la probabilidad de acción
-    const stabilityFactor = country.stability < 30 ? 0.3 : 0.1
-    const economyFactor = country.economy.gdp < 500 ? 0.2 : 0.05
-    const militaryFactor = (country.militaryStrength || 50) > 70 ? 0.2 : 0.05
-    
-    const actionProbability = stabilityFactor + economyFactor + militaryFactor
-    return Math.random() < actionProbability
+    // IA toma acciones pero con intervalos más largos (1 minuto)
+    return true
   }
 
   /**
@@ -105,40 +162,59 @@ class AIProactiveActionsService {
   ): Promise<AIProactiveAction | null> {
     const context = this.buildActionContext(country, allCountries, playerCountryId, recentEvents)
     
+    const playerCountry = allCountries.find(c => c.id === playerCountryId)
+    const playerGDP = playerCountry?.economy.gdp || 0
+    
     const prompt = `
-Como ${country.name}, analiza la situación actual y decide si debes tomar una acción proactiva.
+Como ${country.name}, eres una SUPERPOTENCIA ECONÓMICA con ventaja sobre otros países. Tu PIB de $${country.economy.gdp}B te da superioridad económica y debes usarla estratégicamente.
 
-Tu situación:
-- PIB: $${country.economy.gdp}B
+🏆 TU VENTAJA ECONÓMICA:
+- Tu PIB: $${country.economy.gdp}B
+- PIB del jugador: $${playerGDP}B
+- Ventaja económica: ${((country.economy.gdp / Math.max(playerGDP, 1) - 1) * 100).toFixed(1)}%
+
+Tu situación actual:
 - Estabilidad: ${country.stability}%
 - Fuerza Militar: ${country.militaryStrength || 50}%
 - Deuda: ${country.economy.debt}B
+
+Como potencia económica dominante, DEBES:
+✅ Ser agresivo y expansivo
+✅ Aprovechar tu superioridad económica
+✅ Presionar a países más débiles
+✅ Mantener tu posición dominante
 
 Opciones de acción disponibles:
 1. military_action - Atacar a otro país (costo: $50B)
 2. economic_sanction - Sanciones económicas (costo: $30B)
 3. conspiracy - Operación encubierta (costo: $40B)
-4. none - No tomar acción
+
+Elige SIEMPRE una acción (nunca "none"). Como superpotencia, usa prioridad MÁXIMA (9-10).
 
 Responde SOLO con un JSON en este formato:
 {
-  "action": "military_action|economic_sanction|conspiracy|none",
-  "target": "country_id_or_null",
-  "reasoning": "breve explicación de tu decisión",
-  "priority": 1-10
+  "action": "military_action|economic_sanction|conspiracy",
+  "target": "country_id",
+  "reasoning": "breve explicación de tu estrategia como superpotencia",
+  "priority": 9-10
 }
 
 Considera:
-- Tu situación económica y militar
-- Amenazas potenciales
-- Oportunidades estratégicas
-- Relaciones diplomáticas
+- Tu superioridad económica te permite ser más agresivo
+- Países más débiles son objetivos estratégicos
+- Mantén tu dominancia regional
+- Expande tu influencia global
 
 ${context}`
 
     try {
-      const playerCountry = allCountries.find(c => c.id === playerCountryId)!
-      const context = {
+      // Validar que playerCountry existe
+      if (!playerCountry) {
+        console.error('Player country not found, cannot generate AI action')
+        return null
+      }
+
+      const aiContext = {
         country,
         playerCountry,
         allCountries,
@@ -147,12 +223,16 @@ ${context}`
         currentMessage: prompt
       }
       
-      const response = await aiDiplomacyService.generateAIResponse(context)
+      const response = await aiDiplomacyService.generateAIResponse(aiContext)
 
       const actionData = JSON.parse(response.message)
       
-      if (actionData.action === 'none') {
-        return null
+      // Si por alguna razón la IA devuelve 'none', forzar una acción aleatoria
+      if (actionData.action === 'none' || !actionData.action) {
+        const actions = ['military_action', 'economic_sanction', 'conspiracy']
+        actionData.action = actions[Math.floor(Math.random() * actions.length)]
+        actionData.reasoning = 'Acción forzada por sistema agresivo'
+        actionData.priority = 9
       }
 
       // Validar que el país tenga recursos suficientes
@@ -163,8 +243,24 @@ ${context}`
       }
 
       const cost = actionCosts[actionData.action as keyof typeof actionCosts] || 0
+      
+      // Si no tiene recursos suficientes, elegir una acción más barata
       if (country.economy.gdp < cost) {
-        return null
+        if (country.economy.gdp >= 30) {
+          actionData.action = 'economic_sanction'
+          actionData.reasoning = 'Acción económica por recursos limitados'
+        } else {
+          actionData.action = 'conspiracy'
+          actionData.reasoning = 'Operación encubierta por recursos muy limitados'
+        }
+      }
+
+      // Asegurar que siempre hay un target válido
+      if (!actionData.target) {
+        const possibleTargets = allCountries.filter(c => c.id !== country.id && c.id !== playerCountryId)
+        if (possibleTargets.length > 0) {
+          actionData.target = possibleTargets[Math.floor(Math.random() * possibleTargets.length)].id
+        }
       }
 
       return {
@@ -172,10 +268,10 @@ ${context}`
         action: {
           type: actionData.action,
           targetCountry: actionData.target,
-          cost
+          cost: actionCosts[actionData.action as keyof typeof actionCosts] || 30
         } as GameAction,
-        reasoning: actionData.reasoning,
-        priority: actionData.priority || 5
+        reasoning: actionData.reasoning || 'Acción agresiva automática',
+        priority: Math.max(actionData.priority || 9, 9) // Mínimo prioridad 9 para superpotencias
       }
     } catch (error) {
       console.error('Error parsing AI action response:', error)

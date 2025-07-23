@@ -98,6 +98,21 @@ export function WorldMap({
     greece: [22, 39],
     algeria: [3, 28],
     niger: [8, 16],
+    // Países añadidos recientemente
+    libya: [17, 25],
+    chad: [19, 15],
+    tunisia: [9, 34],
+    mali: [-4, 17],
+    sudan: [30, 12],
+    gabon: [11, -1],
+    mauritania: [-10, 20],
+    uzbekistan: [64, 41],
+    tajikistan: [71, 39],
+    kyrgyzstan: [75, 41],
+    moldova: [29, 47],
+    estonia: [26, 59],
+    latvia: [25, 57],
+    lithuania: [24, 56],
     syria: [38, 35],
     bulgaria: [25, 43],
     romania: [25, 46],
@@ -347,6 +362,21 @@ export function WorldMap({
       "600": "paraguay", // Paraguay
       "192": "cuba", // Cuba
       "496": "mongolia", // Mongolia
+      // PAÍSES AÑADIDOS RECIENTEMENTE - SEGUNDA TANDA
+      "434": "libya", // Libia
+      "148": "chad", // Chad
+      "788": "tunisia", // Túnez
+      "466": "mali", // Malí
+      "729": "sudan", // Sudán
+      "266": "gabon", // Gabón
+      "478": "mauritania", // Mauritania
+      "860": "uzbekistan", // Uzbekistán
+      "762": "tajikistan", // Tayikistán
+      "417": "kyrgyzstan", // Kirguistán
+      "498": "moldova", // Moldavia
+      "233": "estonia", // Estonia
+      "428": "latvia", // Letonia
+      "440": "lithuania", // Lituania
     }
 
     return countryMapping[geoId] || null
