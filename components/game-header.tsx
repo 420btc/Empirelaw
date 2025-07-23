@@ -23,6 +23,7 @@ import {
   Star,
   Zap,
   Settings,
+  Clock,
 } from "lucide-react"
 
 interface GameHeaderProps {
@@ -56,9 +57,11 @@ interface GameHeaderProps {
     type: string
     count: number
   }
+  gameTime?: number
+  isClockAnimating?: boolean
 }
 
-export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade, onShowAchievements, onShowAISettings, playerLevel, gameProgression, unseenAchievementsCount = 0, eventStreak }: GameHeaderProps) {
+export function GameHeader({ playerCountry, gameStats, actionHistory, events, onShowEventHistory, onShowDiplomacy, onShowTrade, onShowAchievements, onShowAISettings, playerLevel, gameProgression, unseenAchievementsCount = 0, eventStreak, gameTime = 0, isClockAnimating = false }: GameHeaderProps) {
   const [showHistory, setShowHistory] = useState(false)
 
   const getActionIcon = (actionType: string) => {
@@ -104,6 +107,17 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
     return new Date(timestamp).toLocaleTimeString()
   }
 
+  const formatGameTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`
+  }
+
   const recentActions = actionHistory.slice(-15).reverse()
 
   // Calcular progreso hacia la dominación mundial
@@ -118,14 +132,40 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
           <div className="flex flex-col gap-2">
             {/* Primera fila: Título y país del jugador */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Globe className="w-6 h-6 text-cyan-400" />
-                <div className="flex flex-col">
-                  <h1 className="text-xl font-bold text-white tracking-tight">
-                    <span className="mr-1">Geo Law</span>
-                    <span>Empire</span>
-                  </h1>
-                  <span className="text-xs text-cyan-400 font-medium -mt-1">2025</span>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-6 h-6 text-cyan-400" />
+                  <div className="flex flex-col">
+                    <h1 className="text-xl font-bold text-white tracking-tight">
+                      <span className="mr-1">Geo Law</span>
+                      <span>Empire</span>
+                    </h1>
+                    <span className="text-xs text-cyan-400 font-medium -mt-1">2025</span>
+                  </div>
+                </div>
+                
+                {/* Reloj de tiempo de juego */}
+                <div className={`flex items-center gap-2 bg-slate-800/70 px-3 py-2 rounded-lg border transition-all duration-500 ${
+                  isClockAnimating 
+                    ? 'border-yellow-400 bg-yellow-400/10 shadow-lg shadow-yellow-400/20 scale-105' 
+                    : 'border-slate-600/50'
+                }`}>
+                  <Clock className={`w-4 h-4 transition-all duration-500 ${
+                    isClockAnimating 
+                      ? 'text-yellow-400 animate-pulse' 
+                      : 'text-slate-400'
+                  }`} />
+                  <div className="flex flex-col">
+                    <span className={`text-sm font-mono font-bold transition-colors duration-500 ${
+                      isClockAnimating ? 'text-yellow-400' : 'text-white'
+                    }`}>
+                      {formatGameTime(gameTime)}
+                    </span>
+                    <span className="text-xs text-slate-400">Tiempo de Juego</span>
+                  </div>
+                  {isClockAnimating && (
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-ping" />
+                  )}
                 </div>
               </div>
 

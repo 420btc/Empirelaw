@@ -18,6 +18,7 @@ export function useGameState() {
     inactivityTicksRef.current = 0
     lastActionTimeRef.current = Date.now()
   }, [])
+
   const [countries, setCountries] = useState<Country[]>(initialCountries)
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
   const [playerCountry, setPlayerCountry] = useState<string | null>(null)
@@ -47,6 +48,12 @@ export function useGameState() {
   const eventQueueRef = useRef<GameEvent[]>([])
   const eventProcessingRef = useRef<boolean>(false)
   const lastEventTimeRef = useRef<number>(0)
+  const gameEventsRef = useRef<GameEvent[]>([])
+
+  // Sincronizar gameEventsRef con gameEvents
+  useEffect(() => {
+    gameEventsRef.current = gameEvents
+  }, [gameEvents])
 
   // Sistema de progresión y logros
   const [achievements, setAchievements] = useState<Achievement[]>(ACHIEVEMENTS)
@@ -68,10 +75,16 @@ export function useGameState() {
   const [eventStreak, setEventStreak] = useState({ type: 'neutral', count: 0 }) // 'positive', 'negative', 'neutral'
   const streakRef = useRef({ type: 'neutral', count: 0 })
 
-  // Función para añadir eventos a la cola con escalonamiento
-  const addEventToQueue = useCallback((event: GameEvent) => {
-    eventQueueRef.current.push(event)
-    processEventQueue()
+  // Estado del reloj de tiempo de juego
+  const [gameTime, setGameTime] = useState(0) // Tiempo en segundos
+  const [isClockAnimating, setIsClockAnimating] = useState(false)
+  const gameStartTimeRef = useRef<number>(Date.now())
+  const gameTimeIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Función para activar animación del reloj cuando ocurre un evento
+  const triggerClockAnimation = useCallback(() => {
+    setIsClockAnimating(true)
+    setTimeout(() => setIsClockAnimating(false), 2000) // Animación dura 2 segundos
   }, [])
 
   // Función para procesar la cola de eventos con límite de 3 por segundo
@@ -116,6 +129,13 @@ export function useGameState() {
     }
   }, [])
 
+  // Función para añadir eventos a la cola con escalonamiento
+  const addEventToQueue = useCallback((event: GameEvent) => {
+    eventQueueRef.current.push(event)
+    triggerClockAnimation() // Activar animación del reloj
+    processEventQueue()
+  }, [triggerClockAnimation, processEventQueue])
+
   // Calculate global stats including chaos level
   useEffect(() => {
     const totalGDP = countries.reduce((sum, country) => sum + country.economy.gdp, 0)
@@ -136,18 +156,52 @@ export function useGameState() {
       globalStability: Math.round(avgStability),
       globalDebt: Math.round(avgDebt),
       chaosLevel: chaosLevel,
-      eventsThisSession: gameEvents.length,
-      negativeEventsBlocked: gameEvents.filter((e) => e.title.includes("bloqueando eventos negativos")).length,
+      eventsThisSession: gameEventsRef.current.length,
+      negativeEventsBlocked: gameEventsRef.current.filter((e) => e.title.includes("bloqueando eventos negativos")).length,
       countriesControlled,
     })
   }, [countries, playerCountry, gameEvents])
 
-  // Función para determinar el intervalo de eventos basado en la estabilidad y fase del juego
+  // useEffect para el reloj de tiempo de juego - solo inicia cuando hay un jugador
+  useEffect(() => {
+    if (playerCountry) {
+      // Inicializar el tiempo de inicio cuando el jugador selecciona un país
+      gameStartTimeRef.current = Date.now()
+      
+      gameTimeIntervalRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - gameStartTimeRef.current) / 1000)
+        setGameTime(elapsed)
+      }, 1000)
+    } else {
+      // Limpiar el intervalo si no hay jugador
+      if (gameTimeIntervalRef.current) {
+        clearInterval(gameTimeIntervalRef.current)
+        gameTimeIntervalRef.current = null
+      }
+      setGameTime(0)
+    }
+
+    return () => {
+      if (gameTimeIntervalRef.current) {
+        clearInterval(gameTimeIntervalRef.current)
+      }
+    }
+  }, [playerCountry])
+
+  // Función para determinar el intervalo de eventos basado en el tiempo de juego
   const getEventInterval = useCallback(() => {
-    // Sistema acelerado: eventos principales cada 15 segundos
-    console.log("🎯 Sistema unificado: eventos principales cada 15s")
-    return 15000 // 15 segundos fijo
-  }, [])
+    // Intervalos dinámicos basados en el tiempo de juego
+    if (gameTime < 300) { // Primeros 5 minutos: eventos cada 30 segundos
+      console.log("🎯 Fase inicial: eventos cada 30s")
+      return 30000
+    } else if (gameTime < 900) { // 5-15 minutos: eventos cada 20 segundos
+      console.log("🎯 Fase media: eventos cada 20s")
+      return 20000
+    } else { // Después de 15 minutos: eventos cada 15 segundos
+      console.log("🎯 Fase avanzada: eventos cada 15s")
+      return 15000
+    }
+  }, [gameTime])
 
   // Función para manejar pausas aleatorias
   const scheduleRandomPause = useCallback(() => {
@@ -207,17 +261,15 @@ export function useGameState() {
 
   // Función principal para generar eventos
   const generateEvent = useCallback(async () => {
-    // No generar eventos si están pausados
-    if (isEventsPausedRef.current) {
-      console.log("⏸️ Eventos pausados, saltando generación")
-      return
-    }
+    console.log("🎯 generateEvent ejecutándose... (SISTEMA DETERMINÍSTICO)")
+    
+    // Sistema determinístico - sin pausas
 
-    // --- Lógica de inactividad para IA rival ---
+    // --- Lógica de inactividad para IA rival (MÁS AGRESIVA) ---
     inactivityTicksRef.current += 1
     // Si el jugador ejecuta una acción, inactivityTicksRef se resetea vía registerPlayerAction
-    // Si pasan 3 ciclos de eventos y la estabilidad global es baja, activar IA rival
-    if (inactivityTicksRef.current >= 3 && gameStats.globalStability < 20 && playerCountry) {
+    // Si pasan 2 ciclos de eventos y la estabilidad global es baja, activar IA rival
+    if (inactivityTicksRef.current >= 2 && gameStats.globalStability < 30 && playerCountry) {
       const { checkGlobalCollapseAndTriggerAI } = require("@/lib/game-engine")
       const { updatedCountries, aiEvent } = checkGlobalCollapseAndTriggerAI(
         countries,
@@ -233,21 +285,21 @@ export function useGameState() {
       }
     }
 
-    // --- Verificar invasión del jugador ---
+    // --- Verificar invasión del jugador (MÁS AGRESIVA) ---
     if (playerCountry && !isGameOver) {
       const playerCountryData = countries.find(c => c.id === playerCountry)
-      if (playerCountryData && playerCountryData.stability < 15) {
-        // Buscar países que puedan invadir al jugador
+      if (playerCountryData && playerCountryData.stability < 25) { // Umbral más alto
+        // Buscar países que puedan invadir al jugador (criterios más flexibles)
         const potentialInvaders = countries.filter(c => 
           c.id !== playerCountry && 
           !c.ownedBy && 
-          c.stability > 50 && 
-          c.economy.gdp > 800
+          c.stability > 40 && // Umbral más bajo 
+          c.economy.gdp > 600 // GDP más bajo para más invasores
         )
         
         if (potentialInvaders.length > 0) {
-          // Probabilidad de invasión basada en la estabilidad del jugador
-          const invasionChance = Math.max(0.1, (15 - playerCountryData.stability) / 100)
+          // Probabilidad de invasión MÁS AGRESIVA basada en la estabilidad del jugador
+          const invasionChance = Math.max(0.3, (30 - playerCountryData.stability) / 50) // Mucho más probable
           
           if (Math.random() < invasionChance) {
             // Seleccionar el invasor más fuerte
@@ -580,9 +632,9 @@ export function useGameState() {
         console.log("❌ No se generó ningún evento")
       }
 
-    // Programar la próxima pausa aleatoria si es necesario
-    scheduleRandomPause()
-  }, [playerCountry, countries, gameEvents, scheduleRandomPause])
+    // Sistema determinístico - sin pausas aleatorias
+    console.log("✅ Evento generado exitosamente")
+  }, [playerCountry, countries])
 
   // Función para generar eventos militares menores
 
@@ -591,55 +643,32 @@ export function useGameState() {
 
 
 
-  // Sistema de eventos inteligente con intervalos dinámicos
+  // Sistema de eventos determinístico basado en tiempo exacto
+  const lastSecondaryEventTimeRef = useRef<number>(0)
+  
   useEffect(() => {
-    if (!playerCountry) return
+    if (!playerCountry || gameTime === 0) return
 
-    console.log(`🎯 Sistema de eventos unificado iniciado para: ${playerCountry}`)
+    console.log(`🎯 Verificando eventos en segundo ${gameTime}`)
 
-    const startEventSystem = () => {
-      // Limpiar intervalos anteriores si existen
-      if (eventIntervalRef.current) {
-        clearInterval(eventIntervalRef.current)
-      }
-      if (secondaryEventIntervalRef.current) {
-        clearInterval(secondaryEventIntervalRef.current)
-      }
-
-      const interval = getEventInterval()
-      console.log(`⏰ Configurando intervalo principal de eventos: ${interval/1000}s`)
-      console.log(`⏰ Configurando intervalo secundario de eventos: 30s`)
-
-      // Intervalo principal cada 15 segundos
-      eventIntervalRef.current = setInterval(generateEvent, interval)
-      
-      // Intervalo secundario cada 30 segundos para eventos adicionales
-      secondaryEventIntervalRef.current = setInterval(() => {
-        if (!isEventsPausedRef.current) {
-          console.log("🎯 Generando evento secundario...")
-          generateEvent()
-        }
-      }, 30000) // 30 segundos
+    // Evento principal cada 10 segundos exactos (MÁS FRECUENTE)
+    const shouldGenerateEvent = gameTime % 10 === 0 && gameTime !== lastEventTimeRef.current
+    
+    if (shouldGenerateEvent) {
+      console.log(`🎯 GENERANDO EVENTO PRINCIPAL en segundo ${gameTime}`)
+      lastEventTimeRef.current = gameTime
+      generateEvent()
     }
 
-    // Iniciar el sistema
-    startEventSystem()
-
-
-
-    return () => {
-      console.log("🛑 Sistema de eventos detenido")
-      if (eventIntervalRef.current) {
-        clearInterval(eventIntervalRef.current)
-      }
-      if (secondaryEventIntervalRef.current) {
-        clearInterval(secondaryEventIntervalRef.current)
-      }
-      if (pauseTimeoutRef.current) {
-        clearTimeout(pauseTimeoutRef.current)
-      }
+    // Evento secundario cada 20 segundos (offset de 5 segundos)
+    const shouldGenerateSecondaryEvent = (gameTime - 5) % 20 === 0 && gameTime > 5 && gameTime !== lastSecondaryEventTimeRef.current
+    
+    if (shouldGenerateSecondaryEvent) {
+      console.log(`🎯 GENERANDO EVENTO SECUNDARIO en segundo ${gameTime}`)
+      lastSecondaryEventTimeRef.current = gameTime
+      generateEvent()
     }
-  }, [playerCountry, generateEvent, getEventInterval, gameEvents.length])
+  }, [gameTime, playerCountry, generateEvent])
 
   // Sistema de mejora automática de territorios conquistados
   useEffect(() => {
@@ -1258,9 +1287,20 @@ export function useGameState() {
     if (eventIntervalRef.current) {
       clearInterval(eventIntervalRef.current)
     }
+    if (secondaryEventIntervalRef.current) {
+      clearInterval(secondaryEventIntervalRef.current)
+    }
     if (pauseTimeoutRef.current) {
       clearTimeout(pauseTimeoutRef.current)
     }
+    if (gameTimeIntervalRef.current) {
+      clearInterval(gameTimeIntervalRef.current)
+    }
+    
+    // Reiniciar reloj de tiempo de juego
+    setGameTime(0)
+    setIsClockAnimating(false)
+    gameStartTimeRef.current = Date.now()
     
     isEventsPausedRef.current = false
     lastPauseTimeRef.current = 0
@@ -1297,5 +1337,8 @@ export function useGameState() {
     conquerorCountry,
     eventStreak,
     restartGame,
+    // Reloj de tiempo de juego
+    gameTime,
+    isClockAnimating,
   }
 }

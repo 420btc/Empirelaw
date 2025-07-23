@@ -49,6 +49,9 @@ export default function GeopoliticsGame() {
     conquerorCountry,
     eventStreak,
     restartGame,
+    // Reloj de tiempo de juego
+    gameTime,
+    isClockAnimating,
   } = useGameState()
 
   const [showCountrySelection, setShowCountrySelection] = useState(true)
@@ -189,6 +192,8 @@ export default function GeopoliticsGame() {
           gameProgression={gameProgression}
           unseenAchievementsCount={achievements.filter(a => a.unlocked && !a.seen).length}
           eventStreak={eventStreak}
+          gameTime={gameTime}
+          isClockAnimating={isClockAnimating}
         />
 
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
