@@ -82,6 +82,15 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
     localStorage.setItem("selectedTradingResource", selectedTradingResource)
   }, [selectedTradingResource])
 
+  const [resourcePrices, setResourcePrices] = useState<ResourcePrice[]>([])
+
+  // Auto-seleccionar el primer recurso disponible si no hay ninguno seleccionado
+  useEffect(() => {
+    if (!selectedTradingResource && resourcePrices.length > 0) {
+      setSelectedTradingResource(resourcePrices[0].resource)
+    }
+  }, [selectedTradingResource, resourcePrices])
+
   // Función para manejar nuevas órdenes de mercado
   const handleMarketOrder = (order: MarketOrder) => {
     setMarketOrders(prev => [...prev, order])
@@ -100,7 +109,6 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
     
     setTradeHistory(prev => [...prev, newTrade])
   }
-  const [resourcePrices, setResourcePrices] = useState<ResourcePrice[]>([])
   const [selectedResource, setSelectedResource] = useState<string>("")
   const [offerQuantity, setOfferQuantity] = useState<number>(0)
   const [requestQuantity, setRequestQuantity] = useState<number>(0)
@@ -449,6 +457,21 @@ export function WorldTradeCenter({ playerCountry, countries, onClose, onTradeExe
                     resource={selectedTradingResource}
                     currentPrice={resourcePrices.find(p => p.resource === selectedTradingResource)?.currentPrice || 100}
                     onOrderPlaced={handleMarketOrder}
+                    playerCountry={{
+                      resources: playerCountry.economy.resourceReserves,
+                      treasury: playerCountry.economy.gdp
+                    }}
+                    availableSupply={(() => {
+                      // Calcular suministro disponible basado en otros países
+                      const totalSupply = countries
+                        .filter(c => c.id !== playerCountry.id)
+                        .reduce((sum, country) => {
+                          return sum + (country.economy.resourceReserves[selectedTradingResource] || 0)
+                        }, 0)
+                      return Math.floor(totalSupply * 0.1) // Solo 10% está disponible para comercio
+                    })()}
+                    onResourceChange={setSelectedTradingResource}
+                    availableResources={resourcePrices.map(p => p.resource)}
                   />
                 ) : (
                   <Card className="bg-slate-800/50 h-full flex items-center justify-center">

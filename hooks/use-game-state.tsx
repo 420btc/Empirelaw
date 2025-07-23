@@ -82,7 +82,7 @@ export function useGameState() {
     eventProcessingRef.current = true
     const now = Date.now()
     const timeSinceLastEvent = now - lastEventTimeRef.current
-    const minInterval = 10000 // 1 evento cada 10 segundos (6 eventos por minuto)
+    const minInterval = 30000 // 1 evento cada 30 segundos (2 eventos por minuto)
 
     const processNextEvent = () => {
       if (eventQueueRef.current.length === 0) {
@@ -94,7 +94,7 @@ export function useGameState() {
       
       // Añadir el evento a la lista de eventos y notificaciones
       setGameEvents((prev) => [...prev, event])
-      setVisibleNotifications((prev) => [...prev.slice(-2), event])
+      setVisibleNotifications((prev) => [event, ...prev.slice(0, 2)]) // Eventos más recientes arriba, máximo 3
       
       lastEventTimeRef.current = Date.now()
       
@@ -145,8 +145,8 @@ export function useGameState() {
   const getEventInterval = useCallback(() => {
     // Para los primeros 20 eventos, usar intervalo más rápido para asegurar actividad inicial
     if (gameEvents.length < 20) {
-      console.log(`🚀 Fase inicial del juego (${gameEvents.length}/20 eventos): eventos cada 5s`)
-      return 5000 // 5 segundos para los primeros 20 eventos
+      console.log(`🚀 Fase inicial del juego (${gameEvents.length}/20 eventos): eventos cada 20s`)
+      return 20000 // 20 segundos para los primeros 20 eventos
     }
     
     // Verificar si hay zonas desestabilizadas (estabilidad < 30)
@@ -154,11 +154,11 @@ export function useGameState() {
     const hasDestabilizedZones = destabilizedCountries.length > 0
     
     if (hasDestabilizedZones) {
-      console.log(`🚨 Zonas desestabilizadas detectadas (${destabilizedCountries.length} países): eventos cada 8s`)
-      return 8000 // 8 segundos
+      console.log(`🚨 Zonas desestabilizadas detectadas (${destabilizedCountries.length} países): eventos cada 25s`)
+      return 25000 // 25 segundos
     } else {
-      console.log("✅ Situación estable: eventos cada 12s")
-      return 12000 // 12 segundos
+      console.log("✅ Situación estable: eventos cada 30s")
+      return 30000 // 30 segundos
     }
   }, [countries, gameEvents.length])
 
@@ -872,7 +872,7 @@ export function useGameState() {
 
             // Agregar evento a la lista
             setGameEvents(prevEvents => [...prevEvents, retaliationEvent])
-            setVisibleNotifications(prevNotifications => [...prevNotifications, retaliationEvent])
+            setVisibleNotifications(prevNotifications => [retaliationEvent, ...prevNotifications.slice(0, 2)]) // Eventos más recientes arriba, máximo 3
 
             // Agregar a historial de acciones
             const retaliationHistory: ActionHistory = {

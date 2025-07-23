@@ -104,6 +104,16 @@ export function WorldMap({
     croatia: [15, 45],
     yemen: [48, 15],
     afghanistan: [67, 33],
+    // PAÍSES AÑADIDOS RECIENTEMENTE
+    kazakhstan: [66, 48],
+    ukraine: [31, 49],
+    poland: [19, 52],
+    austria: [14, 47],
+    congo_drc: [21, -4],
+    bolivia: [-64, -16],
+    paraguay: [-58, -23],
+    cuba: [-77, 21],
+    mongolia: [103, 46],
   }
 
   // Efecto de parpadeo para el país seleccionado
@@ -327,6 +337,16 @@ export function WorldMap({
       "191": "croatia", // Croacia
       "887": "yemen", // Yemen
       "004": "afghanistan", // Afganistán
+      // PAÍSES AÑADIDOS RECIENTEMENTE
+      "398": "kazakhstan", // Kazajistán
+      "804": "ukraine", // Ucrania
+      "616": "poland", // Polonia
+      "040": "austria", // Austria
+      "180": "congo_drc", // República Democrática del Congo
+      "068": "bolivia", // Bolivia
+      "600": "paraguay", // Paraguay
+      "192": "cuba", // Cuba
+      "496": "mongolia", // Mongolia
     }
 
     return countryMapping[geoId] || null

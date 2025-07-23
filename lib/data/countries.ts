@@ -2404,6 +2404,430 @@ export const initialCountries: Country[] = [
       legal: 5,
     },
   },
+  // Kazajistán
+  {
+    id: "kazakhstan",
+    name: "Kazajistán",
+    president: "Kassym-Jomart Tokayev", // Presidente real 2025
+    ideology: "Autoritarismo",
+    economy: {
+      gdp: 263, // $262.642 billion USD 2023
+      debt: 25, // 25% del PIB - baja deuda
+      resources: ["petróleo", "gas natural", "uranio", "oro", "cobre"],
+      resourceProduction: {
+        petróleo: 85,
+        "gas natural": 60,
+        uranio: 40,
+        oro: 35,
+        cobre: 30,
+      },
+      resourceReserves: {
+        petróleo: 1275,
+        "gas natural": 900,
+        uranio: 600,
+        oro: 525,
+        cobre: 450,
+      },
+    },
+    population: 20330000,
+    stability: 65,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 40,
+    powerLevel: "regional",
+    geopoliticalBlock: "brics",
+    alliances: ["russia", "china"],
+    neighbors: ["russia", "china", "uzbekistan", "kyrgyzstan"],
+    diplomaticRelations: {
+      russia: 80,
+      china: 75,
+      uzbekistan: 60,
+      kyrgyzstan: 55,
+      usa: 40,
+    },
+    conspiracyInfluence: {
+      geoengineering: 8,
+      masonic: 5,
+      legal: 12,
+    },
+  },
+  // Ucrania
+  {
+    id: "ukraine",
+    name: "Ucrania",
+    president: "Volodymyr Zelensky", // Presidente real 2025
+    ideology: "Democracia",
+    economy: {
+      gdp: 179, // $178.757 billion USD 2023
+      debt: 90, // 90% del PIB - alta por guerra
+      resources: ["trigo", "maíz", "hierro", "carbón", "gas natural"],
+      resourceProduction: {
+        trigo: 70,
+        maíz: 60,
+        hierro: 40,
+        carbón: 35,
+        "gas natural": 25,
+      },
+      resourceReserves: {
+        trigo: 1050,
+        maíz: 900,
+        hierro: 600,
+        carbón: 525,
+        "gas natural": 375,
+      },
+    },
+    population: 37733000, // Reducida por guerra y refugiados
+    stability: 40, // Baja por guerra
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 60, // Alta por apoyo occidental
+    powerLevel: "regional",
+    geopoliticalBlock: "eu",
+    alliances: ["poland", "romania", "usa", "uk"],
+    neighbors: ["poland", "romania", "belarus", "russia", "moldova"],
+    diplomaticRelations: {
+      poland: 90,
+      romania: 85,
+      usa: 95,
+      uk: 90,
+      russia: -95, // Guerra
+      belarus: -70,
+    },
+    conspiracyInfluence: {
+      geoengineering: 5,
+      masonic: 8,
+      legal: 15,
+    },
+  },
+  // Polonia
+  {
+    id: "poland",
+    name: "Polonia",
+    president: "Andrzej Duda", // Presidente real 2025
+    ideology: "Democracia",
+    economy: {
+      gdp: 809, // $809.201 billion USD 2023
+      debt: 55, // 55% del PIB
+      resources: ["carbón", "cobre", "plata", "agricultura", "madera"],
+      resourceProduction: {
+        carbón: 90,
+        cobre: 50,
+        plata: 40,
+        agricultura: 80,
+        madera: 60,
+      },
+      resourceReserves: {
+        carbón: 1350,
+        cobre: 750,
+        plata: 600,
+        agricultura: 1200,
+        madera: 900,
+      },
+    },
+    population: 38763000,
+    stability: 75,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 50,
+    powerLevel: "regional",
+    geopoliticalBlock: "eu",
+    alliances: ["ukraine", "romania", "usa", "germany"],
+    neighbors: ["germany", "ukraine", "belarus", "lithuania", "slovakia", "czech_republic"],
+    diplomaticRelations: {
+      ukraine: 90,
+      romania: 75,
+      usa: 85,
+      germany: 70,
+      russia: -60, // Tensiones por Ucrania
+    },
+    conspiracyInfluence: {
+      geoengineering: 6,
+      masonic: 12,
+      legal: 18,
+    },
+  },
+  // Austria
+  {
+    id: "austria",
+    name: "Austria",
+    president: "Alexander Van der Bellen", // Presidente real 2025
+    ideology: "Democracia",
+    economy: {
+      gdp: 512, // $511.685 billion USD 2023
+      debt: 80, // 80% del PIB
+      resources: ["turismo", "hierro", "madera", "agricultura", "tecnología"],
+      resourceProduction: {
+        turismo: 120,
+        hierro: 45,
+        madera: 70,
+        agricultura: 60,
+        tecnología: 50,
+      },
+      resourceReserves: {
+        turismo: 1800,
+        hierro: 675,
+        madera: 1050,
+        agricultura: 900,
+        tecnología: 750,
+      },
+    },
+    population: 9130000,
+    stability: 80,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 25,
+    powerLevel: "minor",
+    geopoliticalBlock: "eu",
+    alliances: ["germany", "switzerland"],
+    neighbors: ["germany", "switzerland", "italy", "slovenia", "hungary", "slovakia", "czech_republic"],
+    diplomaticRelations: {
+      germany: 85,
+      switzerland: 80,
+      italy: 75,
+      ukraine: 70, // Apoyo humanitario
+      russia: 30, // Neutralidad pero tensiones
+    },
+    conspiracyInfluence: {
+      geoengineering: 4,
+      masonic: 15,
+      legal: 20,
+    },
+  },
+  // República del Congo
+  {
+    id: "congo_drc",
+    name: "República Democrática del Congo",
+    president: "Félix Tshisekedi", // Presidente real 2025
+    ideology: "Democracia",
+    economy: {
+      gdp: 65, // Estimado por conflictos
+      debt: 25, // 25% del PIB - baja por aislamiento
+      resources: ["cobalto", "cobre", "diamantes", "oro", "coltán"],
+      resourceProduction: {
+        cobalto: 80, // Mayor productor mundial
+        cobre: 60,
+        diamantes: 45,
+        oro: 35,
+        coltán: 70,
+      },
+      resourceReserves: {
+        cobalto: 1200, // Enormes reservas
+        cobre: 900,
+        diamantes: 675,
+        oro: 525,
+        coltán: 1050,
+      },
+    },
+    population: 102000000,
+    stability: 35, // Baja por conflictos
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 25,
+    powerLevel: "regional",
+    geopoliticalBlock: "africa",
+    alliances: ["south_africa", "angola"],
+    neighbors: ["angola", "zambia", "tanzania", "uganda", "central_african_republic", "cameroon"],
+    diplomaticRelations: {
+      south_africa: 60,
+      angola: 55,
+      china: 70, // Inversión en minería
+      usa: 45,
+      france: 40,
+    },
+    conspiracyInfluence: {
+      geoengineering: 3,
+      masonic: 4,
+      legal: 8,
+    },
+  },
+  // Bolivia
+  {
+    id: "bolivia",
+    name: "Bolivia",
+    president: "Luis Arce", // Presidente real 2025
+    ideology: "Socialismo",
+    economy: {
+      gdp: 45, // Estimado por crisis económica
+      debt: 80, // 80% del PIB - alta deuda
+      resources: ["litio", "gas natural", "plata", "zinc", "estaño"],
+      resourceProduction: {
+        litio: 60, // Grandes reservas
+        "gas natural": 40,
+        plata: 35,
+        zinc: 30,
+        estaño: 25,
+      },
+      resourceReserves: {
+        litio: 900, // Mayores reservas mundiales
+        "gas natural": 600,
+        plata: 525,
+        zinc: 450,
+        estaño: 375,
+      },
+    },
+    population: 12000000,
+    stability: 50, // Media por tensiones políticas
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 20,
+    powerLevel: "minor",
+    geopoliticalBlock: "latin_america",
+    alliances: ["argentina", "venezuela"],
+    neighbors: ["brazil", "peru", "chile", "argentina", "paraguay"],
+    diplomaticRelations: {
+      argentina: 70,
+      venezuela: 65,
+      brazil: 60,
+      chile: 45,
+      usa: 30, // Tensiones por ideología
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 3,
+      legal: 8,
+    },
+  },
+  // Paraguay
+  {
+    id: "paraguay",
+    name: "Paraguay",
+    president: "Santiago Peña", // Presidente real 2025
+    ideology: "Democracia",
+    economy: {
+      gdp: 42, // Estimado
+      debt: 35, // 35% del PIB - deuda moderada
+      resources: ["soja", "carne", "algodón", "madera", "energía hidroeléctrica"],
+      resourceProduction: {
+        soja: 70,
+        carne: 50,
+        algodón: 40,
+        madera: 35,
+        "energía hidroeléctrica": 80,
+      },
+      resourceReserves: {
+        soja: 1050,
+        carne: 750,
+        algodón: 600,
+        madera: 525,
+        "energía hidroeléctrica": 1200,
+      },
+    },
+    population: 7400000,
+    stability: 65,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 15,
+    powerLevel: "minor",
+    geopoliticalBlock: "latin_america",
+    alliances: ["brazil", "argentina"],
+    neighbors: ["brazil", "argentina", "bolivia"],
+    diplomaticRelations: {
+      brazil: 80,
+      argentina: 75,
+      bolivia: 60,
+      usa: 65,
+      china: 55,
+    },
+    conspiracyInfluence: {
+      geoengineering: 1,
+      masonic: 4,
+      legal: 10,
+    },
+  },
+  // Cuba
+  {
+    id: "cuba",
+    name: "Cuba",
+    president: "Miguel Díaz-Canel", // Presidente real 2025
+    ideology: "Socialismo",
+    economy: {
+      gdp: 107, // $107.351 billion USD 2020 (último dato disponible)
+      debt: 40, // 40% del PIB - controlada por estado
+      resources: ["azúcar", "tabaco", "níquel", "turismo", "medicinas"],
+      resourceProduction: {
+        azúcar: 60,
+        tabaco: 45,
+        níquel: 35,
+        turismo: 50,
+        medicinas: 40,
+      },
+      resourceReserves: {
+        azúcar: 900,
+        tabaco: 675,
+        níquel: 525,
+        turismo: 750,
+        medicinas: 600,
+      },
+    },
+    population: 11300000,
+    stability: 60, // Estable pero con tensiones económicas
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 30,
+    powerLevel: "minor",
+    geopoliticalBlock: "latin_america",
+    alliances: ["venezuela", "nicaragua"],
+    neighbors: ["usa"], // Proximidad geográfica
+    diplomaticRelations: {
+      venezuela: 85,
+      nicaragua: 80,
+      russia: 70,
+      china: 65,
+      usa: -70, // Embargo
+    },
+    conspiracyInfluence: {
+      geoengineering: 3,
+      masonic: 2,
+      legal: 5,
+    },
+  },
+  // Mongolia
+  {
+    id: "mongolia",
+    name: "Mongolia",
+    president: "Ukhnaa Khurelsukh", // Presidente real 2025
+    ideology: "Democracia",
+    economy: {
+      gdp: 18, // Estimado
+      debt: 70, // 70% del PIB - alta dependencia externa
+      resources: ["cobre", "oro", "carbón", "carne", "lana"],
+      resourceProduction: {
+        cobre: 50,
+        oro: 30,
+        carbón: 40,
+        carne: 35,
+        lana: 25,
+      },
+      resourceReserves: {
+        cobre: 750,
+        oro: 450,
+        carbón: 600,
+        carne: 525,
+        lana: 375,
+      },
+    },
+    population: 3400000,
+    stability: 70,
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 10,
+    powerLevel: "minor",
+    geopoliticalBlock: "neutral",
+    alliances: ["kazakhstan"],
+    neighbors: ["china", "russia", "kazakhstan"],
+    diplomaticRelations: {
+      china: 75, // Principal socio comercial
+      russia: 70,
+      kazakhstan: 65,
+      usa: 50,
+      japan: 60,
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 3,
+      legal: 6,
+    },
+  },
 ]
 
 // Definición de bloques geopolíticos
