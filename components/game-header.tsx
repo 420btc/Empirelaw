@@ -127,12 +127,12 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
 
   return (
     <div className="space-y-2">
-      <Card className="bg-slate-800/50 border-cyan-500/30">
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-2">
+      <Card className="bg-slate-800/50 border-cyan-500/30 min-h-[160px] max-h-[160px]">
+        <CardContent className="p-4 h-full">
+          <div className="flex flex-col gap-2 h-full justify-between">
             {/* Primera fila: Título y país del jugador */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between min-h-[52px] max-h-[52px] overflow-hidden">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <Globe className="w-6 h-6 text-cyan-400" />
                   <div className="flex flex-col">
@@ -170,7 +170,7 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
               </div>
 
               {playerCountry && (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <Crown className="w-4 h-4 text-yellow-400" />
                     <span className="text-white font-semibold">{playerCountry.name}</span>
@@ -234,8 +234,8 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
             </div>
 
             {/* Segunda fila: Estadísticas principales en línea horizontal */}
-            <div className="flex items-center justify-between gap-4 text-sm">
-              <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between gap-4 text-sm min-h-[32px] max-h-[32px] overflow-hidden">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3 text-gray-400" />
                   <span className="text-gray-300">Año {gameStats.currentYear}</span>
@@ -269,7 +269,7 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
               </div>
 
               {/* Estadísticas avanzadas a la derecha */}
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-2 text-xs flex-shrink-0">
                 {/* Indicador de Caos */}
                 <div className="flex items-center gap-1 bg-slate-700/50 px-2 py-1 rounded border border-gray-600/30">
                   <AlertTriangle className="w-3 h-3 text-orange-400" />
@@ -379,7 +379,7 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
             </div>
 
             {/* Tercera fila: Dominación Mundial - Movida aquí */}
-            <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center min-h-[32px] max-h-[32px] overflow-hidden">
               <div className="flex items-center gap-3 bg-purple-900/40 px-4 py-1 rounded-lg border border-purple-500/40">
                 <Target className="w-4 h-4 text-purple-400" />
                 <span className="text-purple-300 text-sm font-semibold">Dominación Mundial</span>

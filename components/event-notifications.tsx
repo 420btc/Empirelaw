@@ -16,35 +16,55 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
   const [animatingOut, setAnimatingOut] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    // Mostrar solo los 3 eventos más recientes como notificaciones flotantes
+    // Obtener los eventos más recientes
     const recentEvents = events.slice(-3)
-    const newEvents: GameEvent[] = []
+    
+    // Identificar eventos completamente nuevos que no están en visibleEvents
+    const newEvents = recentEvents.filter(event => 
+      !visibleEvents.find(visible => visible.id === event.id)
+    )
 
-    // Identificar eventos nuevos
-    recentEvents.forEach((event) => {
-      if (!visibleEvents.find((e) => e.id === event.id)) {
-        newEvents.push(event)
-        setVisibleEvents((prev) => [...prev.slice(-2), event]) // Mantener máximo 3
-      }
-    })
-
-    // Auto-dismiss después de 8 segundos para dar tiempo a leer con el nuevo intervalo
-    const timeouts = newEvents.map((event) => {
-      return setTimeout(() => {
-        handleDismiss(event.id)
-      }, 8000)
-    })
-
-    return () => {
-      timeouts.forEach((timeout) => clearTimeout(timeout))
+    if (newEvents.length > 0) {
+      // Para cada evento nuevo, agregarlo arriba y remover el más antiguo si excede 3
+      newEvents.forEach(newEvent => {
+        setVisibleEvents(prev => {
+          const updated = [newEvent, ...prev] // Nuevo evento arriba
+          
+          // Si tenemos más de 3, remover el más antiguo (último en el array)
+          if (updated.length > 3) {
+            const oldestEvent = updated[updated.length - 1]
+            // Animar salida del más antiguo
+            setAnimatingOut(animOut => new Set([...animOut, oldestEvent.id]))
+            
+            // Remover después de la animación
+            setTimeout(() => {
+              setVisibleEvents(current => current.filter(e => e.id !== oldestEvent.id))
+              setAnimatingOut(animOut => {
+                const newSet = new Set(animOut)
+                newSet.delete(oldestEvent.id)
+                return newSet
+              })
+            }, 500)
+            
+            return updated.slice(0, 3) // Mantener solo los 3 más recientes
+          }
+          
+          return updated
+        })
+        
+        // Auto-dismiss después de 8 segundos
+        setTimeout(() => {
+          handleDismiss(newEvent.id)
+        }, 8000)
+      })
     }
-  }, [events, visibleEvents])
+  }, [events])
 
   const handleDismiss = (eventId: string) => {
     // Iniciar animación de salida
     setAnimatingOut((prev) => new Set([...prev, eventId]))
 
-    // Remover después de la animación
+    // Remover después de la animación de deslizamiento
     setTimeout(() => {
       setVisibleEvents((prev) => prev.filter((e) => e.id !== eventId))
       setAnimatingOut((prev) => {
@@ -53,7 +73,7 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
         return newSet
       })
       onDismiss(eventId)
-    }, 300)
+    }, 500) // Aumentado para dar tiempo a la animación de deslizamiento
   }
 
   const getEventIcon = (type: string) => {
@@ -110,10 +130,11 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
 }
 
 return (
-    <div className="fixed bottom-4 left-4 space-y-3 z-50 max-w-sm">
+    <div className="fixed bottom-4 left-4 space-y-3 z-50 max-w-sm flex flex-col-reverse">
       {visibleEvents.map((event, index) => {
         const Icon = getEventIcon(event.type)
         const isAnimatingOut = animatingOut.has(event.id)
+        const isNewest = index === 0
 
         return (
           <Card
@@ -121,16 +142,18 @@ return (
             className={`
               ${getEventColor(event.type)} 
               border shadow-lg backdrop-blur-sm
-              transform transition-all duration-300 ease-out
+              transform transition-all duration-500 ease-in-out
               ${
                 isAnimatingOut
-                  ? "-translate-x-full opacity-0 scale-95"
-                  : "translate-x-0 opacity-100 scale-100 animate-in slide-in-from-left"
+                  ? "-translate-x-[120%] opacity-0 scale-90 rotate-[-2deg]"
+                  : isNewest
+                  ? "translate-x-0 opacity-100 scale-100 animate-in slide-in-from-left"
+                  : "translate-x-0 opacity-100 scale-100"
               }
               hover:scale-105 hover:shadow-xl
             `}
             style={{
-              animationDelay: `${index * 100}ms`,
+              animationDelay: isNewest ? "0ms" : `${index * 50}ms`,
               animationDuration: "400ms",
             }}
           >
@@ -180,10 +203,12 @@ return (
               {/* Barra de progreso para auto-dismiss */}
               <div className="mt-3 h-1 bg-gray-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-current opacity-70 rounded-full animate-shrink-width"
+                  className={`h-full bg-current opacity-70 rounded-full ${
+                    isAnimatingOut ? '' : 'animate-countdown-shrink'
+                  }`}
                   style={{
-                    animationDuration: "15000ms",
-                    animationTimingFunction: "linear",
+                    width: isAnimatingOut ? '0%' : '100%',
+                    transformOrigin: 'left'
                   }}
                 />
               </div>

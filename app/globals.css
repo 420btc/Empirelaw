@@ -101,8 +101,22 @@
   }
 }
 
+@keyframes countdown-shrink {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
 .animate-shrink-width {
   animation: shrink-width 15s linear forwards;
+}
+
+.animate-countdown-shrink {
+  animation: countdown-shrink 8s linear forwards;
+  transform-origin: left;
 }
 
 /* Utilidades adicionales */
