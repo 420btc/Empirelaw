@@ -36,13 +36,14 @@ export function useGameState() {
     eventsThisSession: 0,
     negativeEventsBlocked: 0,
   })
+  
+  // Estado persistente para países controlados por IA
+  const [persistentAICountries, setPersistentAICountries] = useState<string[]>([])
 
   // Referencias para controlar el sistema de eventos
   const eventIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const secondaryEventIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastPauseTimeRef = useRef<number>(0)
-  const isEventsPausedRef = useRef<boolean>(false)
+  // Referencias de pausas eliminadas
   
   // Sistema de cola de eventos para escalonamiento
   const eventQueueRef = useRef<GameEvent[]>([])
@@ -96,7 +97,7 @@ export function useGameState() {
     eventProcessingRef.current = true
     const now = Date.now()
     const timeSinceLastEvent = now - lastEventTimeRef.current
-    const minInterval = 10000 // 1 evento cada 10 segundos (6 eventos por minuto)
+    const minInterval = 15000 // 1 evento cada 15 segundos (4 eventos por minuto)
 
     const processNextEvent = () => {
       if (eventQueueRef.current.length === 0) {
@@ -106,11 +107,19 @@ export function useGameState() {
 
       const event = eventQueueRef.current.shift()!
       
-      // Añadir el evento a la lista de eventos y notificaciones
-      setGameEvents((prev) => [...prev, event])
-      setVisibleNotifications((prev) => [event, ...prev.slice(0, 2)]) // Eventos más recientes arriba, máximo 3
+      // Asegurar timestamp único y añadir hash único
+      const uniqueTimestamp = Date.now() + Math.floor(Math.random() * 1000)
+      const eventWithUniqueId = {
+        ...event,
+        timestamp: uniqueTimestamp,
+        id: `${event.id}_${uniqueTimestamp}_${Math.random().toString(36).substr(2, 9)}`
+      }
       
-      lastEventTimeRef.current = Date.now()
+      // Añadir el evento a la lista de eventos y notificaciones
+      setGameEvents((prev) => [...prev, eventWithUniqueId])
+      setVisibleNotifications((prev) => [eventWithUniqueId, ...prev.slice(0, 2)]) // Eventos más recientes arriba, máximo 3 (1 nuevo + 2 anteriores)
+      
+      lastEventTimeRef.current = uniqueTimestamp
       
       // Si hay más eventos en la cola, programar el siguiente
       if (eventQueueRef.current.length > 0) {
@@ -203,61 +212,7 @@ export function useGameState() {
     }
   }, [gameTime])
 
-  // Función para manejar pausas aleatorias
-  const scheduleRandomPause = useCallback(() => {
-    const now = Date.now()
-    const timeSinceLastPause = now - lastPauseTimeRef.current
-    
-    // Verificar si han pasado 15 minutos desde la última pausa
-    if (timeSinceLastPause >= 15 * 60 * 1000) { // 15 minutos
-      // Programar una pausa aleatoria en los próximos 2 minutos
-      const randomDelay = Math.random() * 2 * 60 * 1000 // 0-2 minutos
-      
-      pauseTimeoutRef.current = setTimeout(() => {
-        console.log("⏸️ Iniciando pausa aleatoria de eventos (1 minuto)")
-        isEventsPausedRef.current = true
-        lastPauseTimeRef.current = Date.now()
-        
-        // Crear evento de notificación sobre la pausa
-        const pauseEvent: GameEvent = {
-          id: `pause_${Date.now()}`,
-          type: "info",
-          title: "⏸️ Período de Calma Mundial",
-          description: "El mundo experimenta un período de relativa calma. Los eventos se han pausado temporalmente.",
-          effects: [
-            "Pausa temporal de eventos mundiales",
-            "Duración: 1 minuto",
-            "Oportunidad para planificar estrategias"
-          ],
-          timestamp: Date.now(),
-        }
-        
-        addEventToQueue(pauseEvent)
-        
-        // Reanudar eventos después de 1 minuto
-        setTimeout(() => {
-          console.log("▶️ Reanudando eventos después de la pausa")
-          isEventsPausedRef.current = false
-          
-          const resumeEvent: GameEvent = {
-            id: `resume_${Date.now()}`,
-            type: "warning",
-            title: "▶️ Fin del Período de Calma",
-            description: "La calma mundial ha terminado. Los eventos se reanudan con normalidad.",
-            effects: [
-              "Reanudación de eventos mundiales",
-              "La actividad geopolítica se normaliza",
-              "Manténganse alerta"
-            ],
-            timestamp: Date.now(),
-          }
-          
-          addEventToQueue(resumeEvent)
-        }, 60000) // 1 minuto de pausa
-        
-      }, randomDelay)
-    }
-  }, [])
+  // Sistema de pausas eliminado por solicitud del usuario
 
   // Función principal para generar eventos
   const generateEvent = useCallback(async () => {
@@ -636,6 +591,66 @@ export function useGameState() {
     console.log("✅ Evento generado exitosamente")
   }, [playerCountry, countries])
 
+  // Función para generar acciones de IA cada minuto
+  const generateAIAction = useCallback(async () => {
+    console.log("🤖 generateAIAction ejecutándose... (ACCIÓN IA CADA MINUTO)")
+    
+    if (!playerCountry) return
+
+    try {
+      // Ejecutar acciones proactivas de IA específicamente dirigidas al jugador
+      const proactiveResult = await aiProactiveActionsService.evaluateProactiveActions(
+        countries,
+        playerCountry,
+        gameEvents
+      )
+      
+      if (proactiveResult.events.length > 0) {
+        console.log(`🤖 ${proactiveResult.events.length} acciones de IA dirigidas al jugador generadas`)
+        
+        // Marcar eventos como de IA para distinguirlos
+        const aiEvents = proactiveResult.events.map(event => ({
+          ...event,
+          title: `🤖 ${event.title}`,
+          description: `[ACCIÓN IA] ${event.description}`,
+          isAIAction: true
+        }))
+        
+        aiEvents.forEach(event => addEventToQueue(event))
+        setCountries(proactiveResult.updatedCountries)
+        
+        // Agregar acciones al historial con marca de IA
+        proactiveResult.actions.forEach(action => {
+          const sourceCountry = countries.find(c => c.id === action.countryId)
+          const targetCountry = countries.find(c => c.id === action.action.targetCountry)
+          
+          const historyEntry: ActionHistory = {
+            id: `ai_minute_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            type: action.action.type,
+            actionName: `🤖 ${action.action.type === 'military_action' ? 'Ataque Militar' : 
+                              action.action.type === 'economic_sanction' ? 'Sanción Económica' : 
+                              'Operación Encubierta'} (IA)`,
+            sourceCountry: action.countryId,
+            sourceCountryName: sourceCountry?.name || 'País IA',
+            targetCountry: action.action.targetCountry || playerCountry,
+            targetCountryName: targetCountry?.name || 'Tu País',
+            cost: action.action.cost,
+            success: true,
+            timestamp: Date.now(),
+            result: `🤖 Acción IA cada minuto: ${action.reasoning}`,
+            severity: 7
+          }
+          
+          setActionHistory(prev => [...prev, historyEntry])
+        })
+      } else {
+        console.log("🤖 No se generaron acciones de IA este minuto")
+      }
+    } catch (error) {
+      console.error('Error ejecutando acciones de IA cada minuto:', error)
+    }
+  }, [playerCountry, countries, gameEvents, addEventToQueue])
+
   // Función para generar eventos militares menores
 
   
@@ -645,6 +660,7 @@ export function useGameState() {
 
   // Sistema de eventos determinístico basado en tiempo exacto
   const lastSecondaryEventTimeRef = useRef<number>(0)
+  const lastAIActionTimeRef = useRef<number>(0)
   
   useEffect(() => {
     if (!playerCountry || gameTime === 0) return
@@ -668,7 +684,16 @@ export function useGameState() {
       lastSecondaryEventTimeRef.current = gameTime
       generateEvent()
     }
-  }, [gameTime, playerCountry, generateEvent])
+
+    // Acción de IA cada 60 segundos exactos (1 minuto)
+    const shouldGenerateAIAction = gameTime % 60 === 0 && gameTime > 0 && gameTime !== lastAIActionTimeRef.current
+    
+    if (shouldGenerateAIAction) {
+      console.log(`🤖 GENERANDO ACCIÓN DE IA en segundo ${gameTime}`)
+      lastAIActionTimeRef.current = gameTime
+      generateAIAction()
+    }
+  }, [gameTime, playerCountry, generateEvent, generateAIAction])
 
   // Sistema de mejora automática de territorios conquistados
   useEffect(() => {
@@ -722,7 +747,7 @@ export function useGameState() {
         }
         return country
       }))
-    }, 45000) // Cada 45 segundos
+    }, 90000) // Cada 90 segundos
 
     return () => {
       console.log("🛑 Sistema de mejora de territorios detenido")
@@ -959,7 +984,7 @@ export function useGameState() {
       })
 
       // Nota: Eliminamos la notificación automática del PIB para reducir spam de eventos
-    }, 30000) // Cada 30 segundos
+    }, 60000) // Cada 60 segundos
 
     return () => {
       console.log("🛑 Sistema de crecimiento económico detenido")
@@ -1245,6 +1270,54 @@ export function useGameState() {
 
   const ownedTerritories = countries.filter((country) => country.ownedBy === playerCountry)
 
+  // Función para obtener países controlados por la IA (máximo 3, progresivo)
+  const getAICountries = useCallback(() => {
+    if (!playerCountry) return []
+    
+    // Determinar cuántos países puede controlar la IA basado en el tiempo de juego
+    const gameMinutes = Math.floor(gameTime / 60)
+    let maxAICountries = 1 // Empezar con 1 país
+    if (gameMinutes >= 5) maxAICountries = 2 // Después de 5 minutos, 2 países
+    if (gameMinutes >= 10) maxAICountries = 3 // Después de 10 minutos, 3 países máximo
+    
+    // Filtrar países persistentes que aún existen y son válidos
+    const validPersistentCountries = persistentAICountries.filter(countryId => {
+      const country = countries.find(c => c.id === countryId)
+      return country && country.id !== playerCountry && !country.ownedBy
+    })
+    
+    // Si necesitamos más países, agregar nuevos
+    if (validPersistentCountries.length < maxAICountries) {
+      const availableCountries = countries.filter(country => 
+        country.id !== playerCountry && 
+        !country.ownedBy &&
+        !validPersistentCountries.includes(country.id) &&
+        country.economy.gdp > 800 && // PIB más alto para ser más selectivo
+        country.stability > 50 // Estabilidad más alta
+      )
+      
+      const neededCountries = maxAICountries - validPersistentCountries.length
+      const newCountries = availableCountries
+        .sort((a, b) => (b.economy.gdp + b.stability) - (a.economy.gdp + a.stability))
+        .slice(0, neededCountries)
+        .map(c => c.id)
+      
+      const updatedPersistentCountries = [...validPersistentCountries, ...newCountries]
+      setPersistentAICountries(updatedPersistentCountries)
+      
+      return countries.filter(c => updatedPersistentCountries.includes(c.id))
+    }
+    
+    // Actualizar el estado persistente si cambió
+    if (validPersistentCountries.length !== persistentAICountries.length) {
+      setPersistentAICountries(validPersistentCountries)
+    }
+    
+    return countries.filter(c => validPersistentCountries.includes(c.id))
+  }, [countries, playerCountry, gameTime, persistentAICountries])
+
+  const aiCountries = getAICountries()
+
   // Función para marcar eventos como vistos
   const markEventsAsSeen = useCallback(() => {
     setGameEvents(prevEvents => 
@@ -1290,9 +1363,7 @@ export function useGameState() {
     if (secondaryEventIntervalRef.current) {
       clearInterval(secondaryEventIntervalRef.current)
     }
-    if (pauseTimeoutRef.current) {
-      clearTimeout(pauseTimeoutRef.current)
-    }
+    // Limpieza de pausas eliminada
     if (gameTimeIntervalRef.current) {
       clearInterval(gameTimeIntervalRef.current)
     }
@@ -1302,8 +1373,7 @@ export function useGameState() {
     setIsClockAnimating(false)
     gameStartTimeRef.current = Date.now()
     
-    isEventsPausedRef.current = false
-    lastPauseTimeRef.current = 0
+    // Reset de pausas eliminado
   }, [])
 
   return {
@@ -1313,6 +1383,7 @@ export function useGameState() {
     gameEvents, // Cronología completa
     visibleNotifications, // Solo notificaciones
     ownedTerritories, // Territorios conquistados
+    aiCountries, // Países controlados por IA
     selectCountry,
     setPlayerCountry,
     executeAction,

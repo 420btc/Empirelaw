@@ -16,11 +16,11 @@ export interface AIProactiveResult {
 
 class AIProactiveActionsService {
   private lastActionTime: Map<string, number> = new Map()
-  private readonly ACTION_COOLDOWN = 60000 // 1 minuto entre acciones por país
+  private readonly ACTION_COOLDOWN = 120000 // 2 minutos entre acciones por país
   private readonly MAX_ACTIVE_AI_COUNTRIES = 3 // Máximo 3 países IA activos
   private activeAICountries: Set<string> = new Set()
   private lastAIRotation = 0
-  private readonly AI_ROTATION_INTERVAL = 30000 // Rotar países IA cada 30 segundos
+  private readonly AI_ROTATION_INTERVAL = 60000 // Rotar países IA cada 60 segundos
 
   /**
    * Evalúa si un país controlado por IA debe tomar acciones proactivas
@@ -31,10 +31,14 @@ class AIProactiveActionsService {
     gameEvents: GameEvent[]
   ): Promise<AIProactiveResult> {
     if (!aiDiplomacyService.isAIEnabled()) {
+      console.log('🤖 IA no está habilitada. Para ver eventos de IA:')
+      console.log('   1. Haz clic en "IA Config" en la barra superior')
+      console.log('   2. Ingresa tu API key de OpenAI')
+      console.log('   3. Activa la opción "Habilitar IA"')
       return { actions: [], events: [], updatedCountries: countries }
     }
 
-    // Rotar países IA activos cada 30 segundos
+    // Rotar países IA activos cada 60 segundos
     this.rotateActiveAICountries(countries, playerCountryId)
 
     // Solo procesar países IA activos que pueden tomar acciones
@@ -44,6 +48,9 @@ class AIProactiveActionsService {
       this.activeAICountries.has(country.id) &&
       this.shouldTakeAction(country)
     )
+    
+    console.log(`🤖 Países IA activos: ${Array.from(this.activeAICountries).join(', ')}`)
+    console.log(`🤖 Países IA que pueden actuar: ${aiCountries.map(c => c.name).join(', ')}`)
 
     const actions: AIProactiveAction[] = []
     const events: GameEvent[] = []
@@ -80,6 +87,8 @@ class AIProactiveActionsService {
       }
     }
 
+    console.log(`🤖 Resultado: ${actions.length} acciones generadas, ${events.length} eventos creados`)
+    
     return { actions, events, updatedCountries }
   }
 

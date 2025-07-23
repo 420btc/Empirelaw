@@ -27,6 +27,7 @@ export default function GeopoliticsGame() {
     gameEvents, // Cronología completa
     visibleNotifications, // Solo notificaciones
     ownedTerritories, // Territorios conquistados
+    aiCountries, // Países controlados por IA
     selectCountry,
     setPlayerCountry,
     executeAction,
@@ -215,6 +216,7 @@ export default function GeopoliticsGame() {
               selectedCountry={selectedCountry}
               playerCountry={playerCountry}
               hoveredCountry={hoveredCountry?.id || null}
+              aiCountries={aiCountries} // Países controlados por IA
               onCountryClick={handleMapCountryClick}
               onCountryHover={handleMapCountryHover}
               onMapClick={handleMapClick} // Nueva prop

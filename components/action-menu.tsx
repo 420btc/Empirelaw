@@ -145,8 +145,8 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
       return false
     }
 
-    // Verificar cooldown de 3 horas
-    const cooldownTime = 3 * 60 * 60 * 1000 // 3 horas en milisegundos
+    // Verificar cooldown de 6 horas
+    const cooldownTime = 6 * 60 * 60 * 1000 // 6 horas en milisegundos
     const currentTime = Date.now()
     const lastEmission = playerCountry.lastDebtEmission || 0
     const timeRemaining = cooldownTime - (currentTime - lastEmission)
@@ -169,7 +169,7 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
       return "No disponible"
     }
 
-    const cooldownTime = 3 * 60 * 60 * 1000 // 3 horas en milisegundos
+    const cooldownTime = 6 * 60 * 60 * 1000 // 6 horas en milisegundos
     const currentTime = Date.now()
     const lastEmission = playerCountry.lastDebtEmission || 0
     const timeRemaining = cooldownTime - (currentTime - lastEmission)

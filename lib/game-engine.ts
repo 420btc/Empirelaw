@@ -128,7 +128,7 @@ export function checkTerritorialRebellions(countries: Country[], playerCountryId
   
   conqueredTerritories.forEach(territory => {
     // Calcular probabilidad de rebelión basada en estabilidad y tiempo
-    const baseRebellionChance = territory.stability < 40 ? 0.15 : 0.05
+    const baseRebellionChance = territory.stability < 40 ? 0.05 : 0.02
     const stabilityFactor = Math.max(0, (50 - territory.stability) / 100) // Más probable con baja estabilidad
     const rebellionChance = Math.min(0.25, baseRebellionChance + stabilityFactor)
     
@@ -3411,8 +3411,8 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
 
-      // Verificar cooldown de 3 horas (10,800,000 ms)
-      const cooldownTime = 3 * 60 * 60 * 1000 // 3 horas en milisegundos
+      // Verificar cooldown de 6 horas (21,600,000 ms)
+      const cooldownTime = 6 * 60 * 60 * 1000 // 6 horas en milisegundos
       const currentTime = Date.now()
       const lastEmission = source.lastDebtEmission || 0
       const timeRemaining = cooldownTime - (currentTime - lastEmission)
@@ -3431,7 +3431,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
             description: `${source.name} debe esperar antes de poder emitir deuda internacional nuevamente`,
             effects: [
               `Tiempo restante: ${hoursRemaining}h ${minutesRemaining}m`,
-              "La emisión de deuda internacional tiene un cooldown de 3 horas",
+              "La emisión de deuda internacional tiene un cooldown de 6 horas",
               "Los mercados internacionales necesitan tiempo para absorber nueva deuda",
               "Intenta otras estrategias económicas mientras tanto",
             ],

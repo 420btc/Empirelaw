@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -30,6 +30,16 @@ export function EventHistoryPanel({ events, onClose }: EventHistoryPanelProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterType, setFilterType] = useState<string>("all")
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest")
+  const [currentTime, setCurrentTime] = useState(Date.now())
+
+  // Actualizar el tiempo cada segundo para mostrar el tiempo transcurrido correctamente
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now())
+    }, 1000)
+    
+    return () => clearInterval(interval)
+  }, [])
 
   const getEventIcon = (type: string) => {
     switch (type) {
@@ -71,8 +81,7 @@ export function EventHistoryPanel({ events, onClose }: EventHistoryPanelProps) {
   }
 
   const formatTimeAgo = (timestamp: number) => {
-    const now = Date.now()
-    const diff = now - timestamp
+    const diff = currentTime - timestamp
     const seconds = Math.floor(diff / 1000)
     const minutes = Math.floor(seconds / 60)
     const hours = Math.floor(minutes / 60)
@@ -81,7 +90,7 @@ export function EventHistoryPanel({ events, onClose }: EventHistoryPanelProps) {
     if (days > 0) return `hace ${days} día${days > 1 ? "s" : ""}`
     if (hours > 0) return `hace ${hours} hora${hours > 1 ? "s" : ""}`
     if (minutes > 0) return `hace ${minutes} minuto${minutes > 1 ? "s" : ""}`
-    return `hace ${seconds} segundo${seconds > 1 ? "s" : ""}`
+    return `hace ${Math.max(0, seconds)} segundo${Math.max(0, seconds) !== 1 ? "s" : ""}`
   }
 
   const formatDateTime = (timestamp: number) => {

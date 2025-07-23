@@ -38,7 +38,7 @@ export function GameOverModal({ isOpen, conquerorCountry, playerCountry, onResta
               </div>
               
               <p className="text-sm text-gray-300 mb-3">
-                La estabilidad de <span className="font-bold text-red-400">{playerCountry}</span> cayó por debajo del 15%, 
+                La estabilidad de <span className="font-bold text-red-400">{playerCountry}</span> cayó por debajo del 5%, 
                 lo que permitió que <span className="font-bold text-yellow-400">{conquerorCountry}</span> invadiera 
                 y conquistara tu territorio.
               </p>
@@ -58,7 +58,7 @@ export function GameOverModal({ isOpen, conquerorCountry, playerCountry, onResta
             
             <div className="bg-yellow-900/30 p-3 rounded-lg border border-yellow-600">
               <p className="text-yellow-300 text-sm font-medium">
-                💡 Consejo: Mantén la estabilidad por encima del 15% para evitar invasiones
+                💡 Consejo: Mantén la estabilidad por encima del 5% para evitar invasiones
               </p>
             </div>
           </DialogDescription>

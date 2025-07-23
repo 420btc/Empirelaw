@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import type { GameEvent } from "@/lib/types"
-import { X, AlertTriangle, Info, CheckCircle, XCircle, Clock } from "lucide-react"
+import { X, AlertTriangle, Info, CheckCircle, XCircle, Clock, Bot } from "lucide-react"
 
 interface EventNotificationsProps {
   events: GameEvent[]
@@ -14,10 +14,23 @@ interface EventNotificationsProps {
 export function EventNotifications({ events, onDismiss }: EventNotificationsProps) {
   const [visibleEvents, setVisibleEvents] = useState<GameEvent[]>([])
   const [animatingOut, setAnimatingOut] = useState<Set<string>>(new Set())
+  const [currentTime, setCurrentTime] = useState(Date.now())
+
+  // Actualizar el tiempo cada segundo para mostrar el tiempo transcurrido correctamente
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(Date.now())
+    }, 1000)
+    
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
-    // Obtener los eventos más recientes
-    const recentEvents = events.slice(-3)
+    // Filtrar eventos que no sean muy antiguos (máximo 5 minutos)
+    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000)
+    const recentEvents = events
+      .filter(event => event.timestamp > fiveMinutesAgo)
+      .slice(-3)
     
     // Identificar eventos completamente nuevos que no están en visibleEvents
     const newEvents = recentEvents.filter(event => 
@@ -25,38 +38,23 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
     )
 
     if (newEvents.length > 0) {
-      // Para cada evento nuevo, agregarlo arriba y remover el más antiguo si excede 3
-      newEvents.forEach(newEvent => {
-        setVisibleEvents(prev => {
-          const updated = [newEvent, ...prev] // Nuevo evento arriba
-          
-          // Si tenemos más de 3, remover el más antiguo (último en el array)
-          if (updated.length > 3) {
-            const oldestEvent = updated[updated.length - 1]
-            // Animar salida del más antiguo
-            setAnimatingOut(animOut => new Set([...animOut, oldestEvent.id]))
-            
-            // Remover después de la animación
-            setTimeout(() => {
-              setVisibleEvents(current => current.filter(e => e.id !== oldestEvent.id))
-              setAnimatingOut(animOut => {
-                const newSet = new Set(animOut)
-                newSet.delete(oldestEvent.id)
-                return newSet
-              })
-            }, 500)
-            
-            return updated.slice(0, 3) // Mantener solo los 3 más recientes
-          }
-          
-          return updated
-        })
-        
-        // Auto-dismiss después de 8 segundos
-        setTimeout(() => {
-          handleDismiss(newEvent.id)
-        }, 8000)
+      console.log(`📢 Agregando ${newEvents.length} eventos nuevos:`, newEvents.map(e => e.title))
+      
+      // Actualizar todos los eventos visibles de una vez
+      setVisibleEvents(prev => {
+        // Combinar eventos nuevos con los existentes, manteniendo orden cronológico
+        const combined = [...newEvents, ...prev]
+        const limited = combined.slice(0, 3) // Mantener solo los 3 más recientes
+        console.log(`📢 Eventos visibles actualizados: ${limited.length} eventos`)
+        return limited
       })
+      
+      // Auto-dismiss para cada evento nuevo después de 8 segundos
+          newEvents.forEach(newEvent => {
+            setTimeout(() => {
+              handleDismiss(newEvent.id)
+            }, 8000)
+          })
     }
   }, [events])
 
@@ -76,7 +74,10 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
     }, 500) // Aumentado para dar tiempo a la animación de deslizamiento
   }
 
-  const getEventIcon = (type: string) => {
+  const getEventIcon = (type: string, isAIEvent?: boolean) => {
+    if (isAIEvent) {
+      return Bot
+    }
     switch (type) {
       case "success":
         return CheckCircle
@@ -89,7 +90,10 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
     }
   }
 
-  const getEventColor = (type: string) => {
+  const getEventColor = (type: string, isAIEvent?: boolean) => {
+    if (isAIEvent) {
+      return "border-violet-500/70 bg-violet-900/60 shadow-violet-500/30 ring-2 ring-violet-400/20"
+    }
     switch (type) {
       case "success":
         return "border-green-500/70 bg-green-900/60 shadow-green-500/30"
@@ -103,18 +107,19 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
   }
 
   const getTimeAgo = (timestamp: number) => {
-    const now = Date.now()
-    const diff = now - timestamp
+    const diff = currentTime - timestamp
     const seconds = Math.floor(diff / 1000)
     const minutes = Math.floor(seconds / 60)
     const hours = Math.floor(minutes / 60)
 
     if (hours > 0) return `${hours}h`
     if (minutes > 0) return `${minutes}m`
-    return `${seconds}s`
+    return `${Math.max(0, seconds)}s` // Evitar números negativos
   }
 
   if (visibleEvents.length === 0) return null
+
+  console.log(`📢 Renderizando ${visibleEvents.length} notificaciones:`, visibleEvents.map(e => e.title))
 
   const getTypeLabel = (type: string) => {
   switch (type) {
@@ -130,17 +135,18 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
 }
 
 return (
-    <div className="fixed bottom-4 left-4 space-y-3 z-50 max-w-sm flex flex-col-reverse">
+    <div className="fixed bottom-4 left-4 space-y-3 z-50 max-w-sm flex flex-col">
       {visibleEvents.map((event, index) => {
-        const Icon = getEventIcon(event.type)
+        const isAIEvent = event.title?.includes('🤖') || event.description?.includes('[ACCIÓN IA]')
+        const Icon = getEventIcon(event.type, isAIEvent)
         const isAnimatingOut = animatingOut.has(event.id)
-        const isNewest = index === 0
+        const isNewest = index === 0 && !animatingOut.has(event.id)
 
         return (
           <Card
             key={event.id}
             className={`
-              ${getEventColor(event.type)} 
+              ${getEventColor(event.type, isAIEvent)} 
               border shadow-lg backdrop-blur-sm
               transform transition-all duration-500 ease-in-out
               ${

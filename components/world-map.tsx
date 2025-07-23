@@ -23,6 +23,7 @@ interface WorldMapProps {
   selectedCountry: string | null
   playerCountry: string | null
   hoveredCountry: string | null
+  aiCountries?: Country[] // Nueva prop para países IA
   onCountryClick: (countryId: string) => void
   onCountryHover: (countryId: string | null) => void
   onMapClick: () => void // Nueva prop para deseleccionar
@@ -34,6 +35,7 @@ export function WorldMap({
   selectedCountry,
   playerCountry,
   hoveredCountry,
+  aiCountries = [],
   onCountryClick,
   onCountryHover,
   onMapClick,
@@ -234,13 +236,16 @@ export function WorldMap({
     // Prioridad 4: Territorios conquistados por el jugador (púrpura más oscuro)
     if (country.ownedBy === playerCountry) return "#7c3aed"
 
-    // Prioridad 5: Estados soberanos (blanco)
+    // Los países de IA mantienen su color original según su estado
+    // (se identificarán con etiquetas "IA" en lugar de color especial)
+
+    // Prioridad 6: Estados soberanos (blanco)
     if (country.isSovereign) return "#ffffff"
 
-    // Prioridad 6: Países colapsados (rojo intenso)
+    // Prioridad 7: Países colapsados (rojo intenso)
     if (country.stability <= 0) return "#dc2626" // Rojo intenso para países colapsados
 
-    // Prioridad 7: Color basado en estabilidad (escala realista)
+    // Prioridad 8: Color basado en estabilidad (escala realista)
     if (country.stability >= 85) return "#16a34a" // Verde fuerte - Muy estable
     if (country.stability >= 70) return "#4ade80" // Verde lima - Estable
     if (country.stability >= 50) return "#eab308" // Amarillo - Moderada
@@ -388,6 +393,20 @@ export function WorldMap({
     }
 
     return countryMapping[geoId] || null
+  }
+
+  // Función para calcular el centroide de un polígono
+  const getCentroid = (coordinates: number[][]): [number, number] => {
+    let x = 0
+    let y = 0
+    const length = coordinates.length
+    
+    coordinates.forEach(coord => {
+      x += coord[0]
+      y += coord[1]
+    })
+    
+    return [x / length, y / length]
   }
 
   // Configuración de proyección (debe coincidir con la del mapa)
@@ -587,6 +606,62 @@ export function WorldMap({
             )
           })}
           
+          {/* Etiquetas "IA" para países controlados por IA */}
+          <Geographies geography={geoUrl}>
+            {({ geographies }) => {
+              return aiCountries.map((aiCountry) => {
+                // Encontrar la geografía correspondiente al país de IA
+                const geography = geographies.find(geo => {
+                  const countryId = getCountryData(geo.id)
+                  return countryId === aiCountry.id
+                })
+                
+                if (!geography) return null
+                
+                // Calcular el centroide de la geometría del país
+                const centroid = geography.geometry.type === 'Polygon' 
+                  ? getCentroid(geography.geometry.coordinates[0])
+                  : geography.geometry.type === 'MultiPolygon'
+                  ? getCentroid(geography.geometry.coordinates[0][0])
+                  : null
+                
+                if (!centroid) return null
+                
+                const pixels = projection(centroid)
+                if (!pixels) return null
+                const [x, y] = pixels
+                
+                return (
+                  <g key={`ai-label-${aiCountry.id}`}>
+                    {/* Fondo semi-transparente para la etiqueta */}
+                    <rect
+                      x={x - 12}
+                      y={y - 8}
+                      width="24"
+                      height="16"
+                      fill="rgba(139, 92, 246, 0.9)"
+                      stroke="#8b5cf6"
+                      strokeWidth="1"
+                      rx="3"
+                      ry="3"
+                    />
+                    {/* Texto "IA" */}
+                    <text
+                      x={x}
+                      y={y + 3}
+                      textAnchor="middle"
+                      fontSize="10"
+                      fontWeight="bold"
+                      fill="white"
+                      style={{ pointerEvents: 'none' }}
+                    >
+                      IA
+                    </text>
+                  </g>
+                )
+              })
+            }}
+          </Geographies>
 
         </ComposableMap>
       </div>
@@ -607,6 +682,10 @@ export function WorldMap({
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-purple-700 rounded"></div>
               <span className="text-white">Conquistados</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="px-1 py-0.5 bg-violet-500 text-white text-xs font-bold rounded border border-violet-400">IA</div>
+              <span className="text-white">🤖 IA Activa</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-white rounded"></div>
