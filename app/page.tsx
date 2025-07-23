@@ -53,6 +53,8 @@ export default function GeopoliticsGame() {
     // Reloj de tiempo de juego
     gameTime,
     isClockAnimating,
+    // Evento reciente para animaciones del mapa
+    recentEvent,
   } = useGameState()
 
   const [showCountrySelection, setShowCountrySelection] = useState(true)
@@ -220,7 +222,7 @@ export default function GeopoliticsGame() {
               onCountryClick={handleMapCountryClick}
               onCountryHover={handleMapCountryHover}
               onMapClick={handleMapClick} // Nueva prop
-              recentAction={recentAction} // Nueva prop para animaciones
+              recentAction={recentEvent} // Eventos para animaciones del mapa
             />
 
             {hoveredCountry && (

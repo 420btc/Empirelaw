@@ -7,6 +7,22 @@ function clamp(num: number, min: number, max: number) {
   return Math.max(min, Math.min(max, num))
 }
 
+// Función para verificar si dos países son vecinos
+function areCountriesNeighbors(countryId1: string, countryId2: string, countries?: Country[]): boolean {
+  if (!countries) {
+    // Si no se proporcionan países, usar una lógica básica
+    return false
+  }
+  
+  const country1 = countries.find(c => c.id === countryId1)
+  const country2 = countries.find(c => c.id === countryId2)
+  
+  if (!country1 || !country2) return false
+  
+  // Verificar si country1 tiene a country2 como vecino o viceversa
+  return (country1.neighbors?.includes(countryId2) || country2.neighbors?.includes(countryId1)) || false
+}
+
 function applyStabilityChange(country: Country, delta: number): Country {
   return { ...country, stability: clamp(country.stability + delta, 0, 100) }
 }
@@ -683,6 +699,9 @@ export function checkForCollapses(
         ...country,
         ownedBy: playerCountryId,
         stability: 30, // Restaurar algo de estabilidad tras la conquista
+        // Limpiar cualquier estado de IA previo
+        isAIControlled: false,
+        aiLastAction: undefined,
       }
     }
     return country
@@ -694,6 +713,571 @@ export function checkForCollapses(
 //------------------------------------------------------------
 // Sistema de eventos aleatorios inteligente con control de caos
 //------------------------------------------------------------
+// Función específica para generar eventos de conspiración
+export function generateConspiracyEvent(
+  countries: Country[],
+  playerCountryId: string,
+  chaosLevel: number,
+  recentEvents: GameEvent[] = [],
+): { mainEvent: GameEvent | null; contagionEvents: GameEvent[] } {
+  console.log("🕵️ Generando evento de conspiración específico...")
+
+  // Lista específica de eventos de conspiración
+  const conspiracyEvents = [
+    "illuminati_manipulation",
+    "masonic_lodge_exposed",
+    "weather_manipulation_exposed",
+    "deep_state_purge",
+    "mind_control_experiment",
+    "shadow_government_revealed",
+    "alien_technology_leak",
+    "pharmaceutical_conspiracy",
+    "financial_elite_exposed",
+    "media_brainwashing_exposed",
+    "population_control_agenda",
+    "reptilian_elite_exposed",
+    "chemtrails_program_exposed",
+    "mk_ultra_revival",
+    "flat_earth_government_cover",
+    "new_world_order_agenda",
+  ]
+
+  // Protección temporal para países recientemente afectados
+  const currentTime = Date.now()
+  const protectionPeriod = 2 * 60 * 1000 // 2 minutos de protección
+  
+  const recentlyAffectedCountries = recentEvents
+    .filter(event => {
+      const timeDiff = currentTime - event.timestamp
+      const isRecent = timeDiff < protectionPeriod
+      return isRecent && event.targetedCountry
+    })
+    .map(event => event.targetedCountry)
+    .filter((id): id is string => !!id)
+
+  // Seleccionar país objetivo (evitando países con protección temporal)
+  const eligibleCountries = countries.filter(c => 
+    c.id !== playerCountryId && 
+    !recentlyAffectedCountries.includes(c.id)
+  )
+
+  if (eligibleCountries.length === 0) {
+    console.log("🛡️ Todos los países tienen protección temporal para conspiración")
+    return { mainEvent: null, contagionEvents: [] }
+  }
+
+  // 🎯 LÓGICA ESPECIAL: Si el jugador es China, 60% de probabilidad de ser afectado
+  // Si China no es el jugador, 30% de probabilidad de ser afectada (más que otros países)
+  const chinaCountry = countries.find(c => c.id === "china")
+  const isPlayerChina = playerCountryId === "china"
+  
+  let affectedCountry: Country
+  
+  if (isPlayerChina && Math.random() < 0.6) {
+    // Si el jugador es China, 60% de probabilidad de ser afectado por conspiración
+    affectedCountry = chinaCountry!
+    console.log("🎯 Evento de conspiración dirigido específicamente a China (jugador)")
+  } else if (!isPlayerChina && chinaCountry && eligibleCountries.includes(chinaCountry) && Math.random() < 0.3) {
+    // Si China no es el jugador, 30% de probabilidad de ser afectada
+    affectedCountry = chinaCountry
+    console.log("🎯 Evento de conspiración dirigido específicamente a China (IA)")
+  } else {
+    // Selección normal para otros países
+    affectedCountry = eligibleCountries[Math.floor(Math.random() * eligibleCountries.length)]
+  }
+  const eventType = conspiracyEvents[Math.floor(Math.random() * conspiracyEvents.length)]
+
+  console.log(`🕵️ Evento de conspiración: ${eventType} en ${affectedCountry.name}`)
+
+  const makeId = () => `${eventType}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+  // Generar el evento usando la misma lógica que generateRandomEvent
+  const eventGenerators: Record<string, () => GameEvent> = {
+    illuminati_manipulation: () => ({
+      id: makeId(),
+      type: "error",
+      title: "👁️ Manipulación Illuminati Detectada",
+      description: `Evidencia de manipulación secreta por sociedades ocultas ha sido descubierta en ${affectedCountry.name}`,
+      effects: [
+        "Estructuras de poder ocultas expuestas",
+        "Desconfianza masiva en instituciones",
+        "Protestas anti-establishment generalizadas",
+        "Investigaciones gubernamentales iniciadas",
+        "Redes de conspiración desmanteladas",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -40,
+          economyChange: -1200,
+          debtChange: 15,
+          resourceEffects: {
+            servicios: -50,
+            turismo: -60,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    masonic_lodge_exposed: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "🏛️ Logia Masónica Expuesta",
+      description: `Una poderosa logia masónica que controlaba sectores clave de ${affectedCountry.name} ha sido expuesta públicamente`,
+      effects: [
+        "Redes de influencia masónica reveladas",
+        "Escándalo de corrupción institucional",
+        "Renuncias masivas en el gobierno",
+        "Reformas de transparencia exigidas",
+        "Pérdida de confianza en élites",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -35,
+          economyChange: -800,
+          debtChange: 12,
+          resourceEffects: {
+            "servicios financieros": -70,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    weather_manipulation_exposed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🌪️ Manipulación Climática Descubierta",
+      description: `Evidencia de manipulación climática artificial ha sido descubierta afectando a ${affectedCountry.name}`,
+      effects: [
+        "Tecnología de geoingeniería expuesta",
+        "Protestas ambientales masivas",
+        "Demandas internacionales por daños",
+        "Crisis de soberanía atmosférica",
+        "Investigación de crímenes climáticos",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -45,
+          economyChange: -1500,
+          populationChange: -1000000,
+          debtChange: 20,
+          resourceEffects: {
+            agricultura: -80,
+            turismo: -70,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    deep_state_purge: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "🕴️ Purga del Estado Profundo",
+      description: `Una purga masiva del "estado profundo" está ocurriendo en ${affectedCountry.name}, desestabilizando instituciones`,
+      effects: [
+        "Funcionarios clave removidos masivamente",
+        "Servicios de inteligencia reestructurados",
+        "Continuidad gubernamental amenazada",
+        "Facciones políticas en guerra",
+        "Crisis de gobernabilidad institucional",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -50,
+          economyChange: -1000,
+          debtChange: 18,
+          resourceEffects: {
+            servicios: -60,
+            tecnología: -40,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    mind_control_experiment: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🧠 Experimento de Control Mental Expuesto",
+      description: `Experimentos secretos de control mental han sido descubiertos en ${affectedCountry.name}, causando pánico masivo`,
+      effects: [
+        "Experimentos psicológicos ilegales revelados",
+        "Víctimas de experimentos demandando justicia",
+        "Crisis de confianza en ciencia gubernamental",
+        "Protestas por derechos humanos",
+        "Investigaciones internacionales iniciadas",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -55,
+          economyChange: -1800,
+          populationChange: -500000,
+          debtChange: 25,
+          resourceEffects: {
+            tecnología: -90,
+            servicios: -70,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    shadow_government_revealed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "👤 Gobierno en las Sombras Revelado",
+      description: `Un gobierno paralelo que operaba en secreto en ${affectedCountry.name} ha sido completamente expuesto`,
+      effects: [
+        "Estructuras de poder paralelas desmanteladas",
+        "Documentos clasificados filtrados masivamente",
+        "Crisis constitucional sin precedentes",
+        "Llamados a refundación del estado",
+        "Intervención internacional considerada",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -60,
+          economyChange: -2000,
+          debtChange: 30,
+          resourceEffects: {
+            "servicios financieros": -80,
+            servicios: -75,
+            tecnología: -50,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    alien_technology_leak: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "👽 Filtración de Tecnología Alienígena",
+      description: `Documentos sobre tecnología extraterrestre en posesión del gobierno de ${affectedCountry.name} han sido filtrados`,
+      effects: [
+        "Evidencia de contacto extraterrestre confirmada",
+        "Tecnología avanzada mantenida en secreto",
+        "Demandas de transparencia total",
+        "Pánico y fascinación pública simultánea",
+        "Reevaluación de la historia humana",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -30,
+          economyChange: -500,
+          debtChange: 10,
+          resourceEffects: {
+            tecnología: 100,
+            servicios: -40,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    pharmaceutical_conspiracy: () => ({
+      id: makeId(),
+      type: "error",
+      title: "💊 Conspiración Farmacéutica Masiva",
+      description: `Una conspiración masiva de la industria farmacéutica para suprimir curas ha sido expuesta en ${affectedCountry.name}`,
+      effects: [
+        "Supresión de curas médicas revelada",
+        "Demandas colectivas multimillonarias",
+        "Crisis de confianza en sistema de salud",
+        "Reformas médicas urgentes requeridas",
+        "Investigación de crímenes contra humanidad",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -45,
+          economyChange: -1600,
+          populationChange: -800000,
+          debtChange: 22,
+          resourceEffects: {
+            servicios: -65,
+            tecnología: -30,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    financial_elite_exposed: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "💰 Élite Financiera Global Expuesta",
+      description: `Las manipulaciones secretas de la élite financiera global han sido expuestas, afectando gravemente a ${affectedCountry.name}`,
+      effects: [
+        "Manipulación de mercados globales revelada",
+        "Esquemas de evasión fiscal expuestos",
+        "Crisis de legitimidad del sistema financiero",
+        "Protestas anti-Wall Street masivas",
+        "Reformas financieras radicales exigidas",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -40,
+          economyChange: -2200,
+          debtChange: 35,
+          resourceEffects: {
+            "servicios financieros": -90,
+            oro: -50,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    media_brainwashing_exposed: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "📺 Lavado de Cerebro Mediático Expuesto",
+      description: `Técnicas de lavado de cerebro masivo a través de medios de comunicación han sido reveladas en ${affectedCountry.name}`,
+      effects: [
+        "Manipulación psicológica masiva revelada",
+        "Boicots a medios tradicionales",
+        "Crisis de credibilidad informativa",
+        "Surgimiento de medios alternativos",
+        "Demandas por daños psicológicos colectivos",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -35,
+          economyChange: -900,
+          debtChange: 15,
+          resourceEffects: {
+            servicios: -55,
+            turismo: -45,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    population_control_agenda: () => ({
+      id: makeId(),
+      type: "error",
+      title: "👥 Agenda de Control Poblacional Revelada",
+      description: `Una agenda secreta de control poblacional ha sido descubierta operando en ${affectedCountry.name}`,
+      effects: [
+        "Programas de reducción poblacional expuestos",
+        "Esterilización masiva encubierta revelada",
+        "Crisis de derechos reproductivos",
+        "Protestas por genocidio demográfico",
+        "Tribunal internacional de derechos humanos convocado",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -65,
+          economyChange: -1400,
+          populationChange: -2000000,
+          debtChange: 40,
+          resourceEffects: {
+            servicios: -80,
+            agricultura: -60,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    reptilian_elite_exposed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🦎 Élite Reptiliana Expuesta",
+      description: `Evidencia de una élite reptiliana controlando ${affectedCountry.name} ha sido filtrada al público`,
+      effects: [
+        "Documentos sobre seres reptilianos revelados",
+        "Pánico masivo y teorías conspirativas",
+        "Crisis de identidad de la humanidad",
+        "Protestas exigiendo transparencia total",
+        "Investigación xenobiológica iniciada",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -70,
+          economyChange: -2500,
+          populationChange: -1500000,
+          debtChange: 45,
+          resourceEffects: {
+            servicios: -85,
+            turismo: -90,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    chemtrails_program_exposed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "✈️ Programa de Chemtrails Revelado",
+      description: `Un programa secreto de fumigación química desde aviones ha sido expuesto en ${affectedCountry.name}`,
+      effects: [
+        "Evidencia de fumigación química aérea",
+        "Crisis de salud pública masiva",
+        "Demandas por envenenamiento poblacional",
+        "Prohibición de vuelos comerciales",
+        "Investigación de crímenes contra humanidad",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -50,
+          economyChange: -1800,
+          populationChange: -1200000,
+          debtChange: 35,
+          resourceEffects: {
+            agricultura: -70,
+            servicios: -60,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    mk_ultra_revival: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🧪 Programa MK-Ultra Revivido",
+      description: `Un programa de control mental estilo MK-Ultra ha sido descubierto operando en ${affectedCountry.name}`,
+      effects: [
+        "Experimentos de control mental activos",
+        "Víctimas de lavado de cerebro identificadas",
+        "Crisis de derechos humanos internacional",
+        "Protestas por libertad mental",
+        "Tribunal de crímenes psicológicos convocado",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -65,
+          economyChange: -2200,
+          populationChange: -800000,
+          debtChange: 40,
+          resourceEffects: {
+            tecnología: -95,
+            servicios: -80,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    flat_earth_government_cover: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "🌍 Encubrimiento de Tierra Plana",
+      description: `Evidencia de que ${affectedCountry.name} ha estado encubriendo la verdad sobre la forma de la Tierra`,
+      effects: [
+        "Documentos sobre forma real de la Tierra",
+        "Crisis de confianza en ciencia oficial",
+        "Movimiento terraplanista masivo",
+        "Reevaluación de educación científica",
+        "Protestas contra NASA y agencias espaciales",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -25,
+          economyChange: -600,
+          debtChange: 8,
+          resourceEffects: {
+            tecnología: -40,
+            servicios: -30,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    new_world_order_agenda: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🌐 Agenda del Nuevo Orden Mundial",
+      description: `Planes para un gobierno mundial único han sido descubiertos en ${affectedCountry.name}`,
+      effects: [
+        "Documentos de gobierno mundial revelados",
+        "Crisis de soberanía nacional",
+        "Resistencia patriótica masiva",
+        "Movimientos independentistas activados",
+        "Guerra de información global",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -75,
+          economyChange: -3000,
+          debtChange: 50,
+          resourceEffects: {
+            "servicios financieros": -95,
+            servicios: -85,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+  }
+
+  const generator = eventGenerators[eventType]
+  if (!generator) {
+    console.log(`❌ Generador no encontrado para evento de conspiración: ${eventType}`)
+    return { mainEvent: null, contagionEvents: [] }
+  }
+
+  const mainEvent = generator()
+  console.log(`🕵️ Evento de conspiración generado: ${mainEvent.title}`)
+
+  // Los eventos de conspiración no generan contagio por defecto
+  return { mainEvent, contagionEvents: [] }
+}
+
 export function generateRandomEvent(
   countries: Country[],
   playerCountryId: string,
@@ -808,7 +1392,7 @@ export function generateRandomEvent(
     "karma_rebellion", // Específico para países con alto karma del jugador
     "karma_economic_collapse", // Específico para países atacados económicamente
     "karma_cyber_retaliation", // Respuesta a ciberataques
-    // 11 NUEVOS EVENTOS DE CONSPIRACIÓN
+    // 16 EVENTOS DE CONSPIRACIÓN COMPLETOS
     "illuminati_manipulation",
     "masonic_lodge_exposed",
     "weather_manipulation_exposed",
@@ -820,6 +1404,11 @@ export function generateRandomEvent(
     "financial_elite_exposed",
     "media_brainwashing_exposed",
     "population_control_agenda",
+    "reptilian_elite_exposed",
+    "chemtrails_program_exposed",
+    "mk_ultra_revival",
+    "flat_earth_government_cover",
+    "new_world_order_agenda",
     // NUEVOS EVENTOS DE CONSPIRACIÓN ESPECÍFICOS
     "mossad_operation_exposed",
     "cia_black_ops_revealed",
@@ -897,16 +1486,29 @@ export function generateRandomEvent(
         !c.isSovereign && 
         !recentlyAffectedCountries.includes(c.id) // 🛡️ EXCLUSIÓN DE PROTEGIDOS
       )
+      
+      // 🎯 NUEVA LÓGICA: Incluir superpotencias en países vulnerables con menor probabilidad
       const vulnerableCountries = countries.filter((c) => 
         c.powerLevel !== "superpower" && 
         !c.isSovereign && 
         !recentlyAffectedCountries.includes(c.id) // 🛡️ EXCLUSIÓN DE PROTEGIDOS
+      )
+      
+      // 🎯 SUPERPOTENCIAS VULNERABLES: China, USA, Rusia pueden ser afectadas con 25% de probabilidad
+      const superpowerCountries = countries.filter((c) => 
+        c.powerLevel === "superpower" && 
+        !c.isSovereign && 
+        !recentlyAffectedCountries.includes(c.id)
       )
 
     if (highKarmaCountries.length > 0 && Math.random() < 0.7) {
         // 70% de probabilidad de afectar a países con alto karma (no protegidos)
       affectedCountry = highKarmaCountries[Math.floor(Math.random() * highKarmaCountries.length)]
       console.log(`⚖️ Evento dirigido por karma hacia ${affectedCountry.name} (karma: ${affectedCountry.playerKarma})`)
+      } else if (superpowerCountries.length > 0 && Math.random() < 0.25) {
+        // 🎯 25% de probabilidad de afectar superpotencias (incluyendo China)
+        affectedCountry = superpowerCountries[Math.floor(Math.random() * superpowerCountries.length)]
+        console.log(`💥 Evento dirigido a superpotencia: ${affectedCountry.name}`)
       } else if (vulnerableCountries.length > 0) {
         affectedCountry = vulnerableCountries[Math.floor(Math.random() * vulnerableCountries.length)]
         console.log(`🎯 Evento dirigido a país vulnerable: ${affectedCountry.name}`)
@@ -1577,6 +2179,155 @@ export function generateRandomEvent(
 
     // ========== NUEVOS EVENTOS DE CONSPIRACIÓN ESPECÍFICOS ==========
     
+    // Nuevos eventos de conspiración adicionales
+    reptilian_elite_exposed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🦎 Élite Reptiliana Expuesta",
+      description: `Evidencia de una élite reptiliana controlando ${affectedCountry.name} ha sido filtrada al público`,
+      effects: [
+        "Documentos sobre seres reptilianos revelados",
+        "Pánico masivo y teorías conspirativas",
+        "Crisis de identidad de la humanidad",
+        "Protestas exigiendo transparencia total",
+        "Investigación xenobiológica iniciada",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -70,
+          economyChange: -2500,
+          populationChange: -1500000,
+          debtChange: 45,
+          resourceEffects: {
+            servicios: -85,
+            turismo: -90,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    chemtrails_program_exposed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "✈️ Programa de Chemtrails Revelado",
+      description: `Un programa secreto de fumigación química desde aviones ha sido expuesto en ${affectedCountry.name}`,
+      effects: [
+        "Evidencia de fumigación química aérea",
+        "Crisis de salud pública masiva",
+        "Demandas por envenenamiento poblacional",
+        "Prohibición de vuelos comerciales",
+        "Investigación de crímenes contra humanidad",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -50,
+          economyChange: -1800,
+          populationChange: -1200000,
+          debtChange: 35,
+          resourceEffects: {
+            agricultura: -70,
+            servicios: -60,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    mk_ultra_revival: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🧪 Programa MK-Ultra Revivido",
+      description: `Un programa de control mental estilo MK-Ultra ha sido descubierto operando en ${affectedCountry.name}`,
+      effects: [
+        "Experimentos de control mental activos",
+        "Víctimas de lavado de cerebro identificadas",
+        "Crisis de derechos humanos internacional",
+        "Protestas por libertad mental",
+        "Tribunal de crímenes psicológicos convocado",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -65,
+          economyChange: -2200,
+          populationChange: -800000,
+          debtChange: 40,
+          resourceEffects: {
+            tecnología: -95,
+            servicios: -80,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    flat_earth_government_cover: () => ({
+      id: makeId(),
+      type: "warning",
+      title: "🌍 Encubrimiento de Tierra Plana",
+      description: `Evidencia de que ${affectedCountry.name} ha estado encubriendo la verdad sobre la forma de la Tierra`,
+      effects: [
+        "Documentos sobre forma real de la Tierra",
+        "Crisis de confianza en ciencia oficial",
+        "Movimiento terraplanista masivo",
+        "Reevaluación de educación científica",
+        "Protestas contra NASA y agencias espaciales",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -25,
+          economyChange: -600,
+          debtChange: 8,
+          resourceEffects: {
+            tecnología: -40,
+            servicios: -30,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    new_world_order_agenda: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🌐 Agenda del Nuevo Orden Mundial",
+      description: `Planes para un gobierno mundial único han sido descubiertos en ${affectedCountry.name}`,
+      effects: [
+        "Documentos de gobierno mundial revelados",
+        "Crisis de soberanía nacional",
+        "Resistencia patriótica masiva",
+        "Movimientos independentistas activados",
+        "Guerra de información global",
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -75,
+          economyChange: -3000,
+          debtChange: 50,
+          resourceEffects: {
+            "servicios financieros": -95,
+            servicios: -85,
+          },
+        },
+      },
+      isPlayerTriggered: false,
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
     mossad_operation_exposed: () => ({
       id: makeId(),
       type: "error",
@@ -2704,12 +3455,26 @@ export function runAIActions(
 
     // Lógica de agresividad
     const aggressiveMode = globalStability < 25
+    
+    // Obtener referencia al país del jugador
+    const playerCountry = updatedCountries.find(c => c.id === playerCountryId)
+    
+    // Lógica especial para China: más vulnerable cuando su estabilidad es baja
+    const isChinaVulnerable = playerCountryId === 'china' && playerCountry && playerCountry.stability < 60
+    const canAttackChina = isChinaVulnerable && playerCountry && aiCountry.economy.gdp > playerCountry.economy.gdp * 0.4
+    
+    // También puede atacar al jugador si está débil
+    const canAttackPlayer = aggressiveMode && playerCountry?.stability! < 45
+    
     // Objetivos posibles: países vulnerables (no conquistados, baja estabilidad, no IA, no jugador)
-    const vulnerableTargets = updatedCountries.filter(t =>
+    let vulnerableTargets = updatedCountries.filter(t =>
       !t.ownedBy && t.id !== aiCountry.id && t.id !== playerCountryId && !t.isSovereign && t.stability < (aggressiveMode ? 55 : 35)
     )
-    // También puede atacar al jugador si está débil
-    const canAttackPlayer = aggressiveMode && countries.find(c => c.id === playerCountryId)?.stability! < 45
+    
+    // Si China es vulnerable, añadirla como objetivo prioritario
+    if (isChinaVulnerable && playerCountry) {
+      vulnerableTargets = [playerCountry, ...vulnerableTargets]
+    }
     // PIB mínimo para conquistar: 80% del objetivo
     let actionDone = false
     // --- Coherencia: caos/inestabilidad regional o global ---
@@ -2747,26 +3512,37 @@ export function runAIActions(
         actionDone = true
       }
     }
-    // 2. Ataque al jugador
-    if (!actionDone && canAttackPlayer) {
-      const player = updatedCountries.find(c => c.id === playerCountryId)
-      if (player && aiCountry.economy.gdp > player.economy.gdp * 0.5 && aiCountry.stability > 40) {
-        // Daño mutuo
-        const playerDamage = Math.round(Math.random() * 15 + 10)
+    // 2. Ataque al jugador (incluyendo lógica especial para China)
+    if (!actionDone && (canAttackPlayer || canAttackChina)) {
+      if (playerCountry && aiCountry.economy.gdp > playerCountry.economy.gdp * (canAttackChina ? 0.4 : 0.5) && aiCountry.stability > 40) {
+        // Daño mutuo - China recibe más daño cuando es vulnerable
+        const playerDamage = canAttackChina ? 
+          Math.round(Math.random() * 25 + 15) : // China vulnerable recibe más daño
+          Math.round(Math.random() * 15 + 10)
         const aiDamage = Math.round(Math.random() * 8 + 5)
+        
         updatedCountries = updatedCountries.map(c => {
           if (c.id === playerCountryId) return applyStabilityChange(c, -playerDamage)
           if (c.id === aiCountry.id) return applyStabilityChange(c, -aiDamage)
           return c
         })
+        
+        const attackTitle = canAttackChina ? 
+          `⚔️ ${aiCountry.name} aprovecha la crisis en China` :
+          `⚔️ ${aiCountry.name} ataca a ${playerCountry.name}`
+        const attackDescription = canAttackChina ?
+          `${aiCountry.name} ha aprovechado la inestabilidad política en China para lanzar un ataque devastador. La crisis de liderazgo ha dejado a China vulnerable.` :
+          `${aiCountry.name} ha lanzado un ataque militar contra ${playerCountry.name}. Ambos países sufren daños en estabilidad.`
+        
         aiEvents.push({
           id: `ai_attack_${now}_${aiCountry.id}_${playerCountryId}`,
-          type: "warning",
-          title: `⚔️ ${aiCountry.name} ataca a ${player.name}`,
-          description: `${aiCountry.name} ha lanzado un ataque militar contra ${player.name}. Ambos países sufren daños en estabilidad.`,
+          type: canAttackChina ? "error" : "warning",
+          title: attackTitle,
+          description: attackDescription,
           effects: [
-            `Estabilidad de ${player.name} -${playerDamage}%`,
-            `Estabilidad de ${aiCountry.name} -${aiDamage}%`
+            `Estabilidad de ${playerCountry.name} -${playerDamage}%`,
+            `Estabilidad de ${aiCountry.name} -${aiDamage}%`,
+            ...(canAttackChina ? ["China sufre daños adicionales por su vulnerabilidad"] : [])
           ],
           timestamp: now
         })
@@ -3022,6 +3798,73 @@ export function runAIActions(
 // =====================
 // Utilidad: Evento de colapso global por inactividad
 // =====================
+// =====================
+// Nueva función: Penalizar inactividad específicamente para China
+// =====================
+export function applyInactivityPenalties(
+  countries: Country[],
+  playerCountryId: string,
+  inactivityTicks: number
+): { updatedCountries: Country[], inactivityEvent: GameEvent | null } {
+  let updatedCountries = [...countries]
+  let inactivityEvent: GameEvent | null = null
+
+  // 🎯 PENALIZACIÓN ESPECÍFICA PARA CHINA: Cada tick de inactividad reduce estabilidad
+  if (playerCountryId === "china" && inactivityTicks >= 2) {
+    const chinaIndex = updatedCountries.findIndex(c => c.id === "china")
+    if (chinaIndex !== -1) {
+      const stabilityLoss = Math.min(inactivityTicks * 3, 15) // Máximo 15 de pérdida
+      const economyLoss = Math.min(inactivityTicks * 200, 1000) // Máximo 1000B de pérdida
+      
+      updatedCountries[chinaIndex] = {
+        ...updatedCountries[chinaIndex],
+        stability: Math.max(0, updatedCountries[chinaIndex].stability - stabilityLoss),
+        economy: {
+          ...updatedCountries[chinaIndex].economy,
+          gdp: Math.max(0, updatedCountries[chinaIndex].economy.gdp - economyLoss)
+        }
+      }
+
+      // 🎯 Si China baja de 50 de estabilidad, hacerla vulnerable a ataques
+      const newStability = updatedCountries[chinaIndex].stability
+      const isVulnerable = newStability < 50
+      
+      inactivityEvent = {
+        id: `china_inactivity_${Date.now()}`,
+        type: isVulnerable ? "error" : "warning",
+        title: isVulnerable ? "🚨 China en Crisis Crítica" : "🇨🇳 Crisis de Liderazgo en China",
+        description: isVulnerable 
+          ? `China está en crisis crítica por falta de liderazgo. Otros países ven una oportunidad para actuar contra la superpotencia debilitada.`
+          : `La falta de liderazgo activo en China está causando inestabilidad interna. Los ciudadanos demandan acción gubernamental decisiva.`,
+        effects: [
+          `Estabilidad de China -${stabilityLoss}%`,
+          `Economía de China -$${economyLoss}B`,
+          "Protestas por falta de liderazgo",
+          "Pérdida de confianza internacional",
+          "Presión interna creciente",
+          ...(isVulnerable ? [
+            "🎯 China ahora vulnerable a ataques",
+            "Rivales consideran acciones militares",
+            "Oportunidad estratégica para enemigos"
+          ] : [])
+        ],
+        countryEffects: {
+          ["china"]: {
+            stabilityChange: -stabilityLoss,
+            economyChange: -economyLoss
+          }
+        },
+        timestamp: Date.now(),
+        targetedCountry: "china"
+      }
+
+      console.log(`🎯 Penalización por inactividad aplicada a China: -${stabilityLoss} estabilidad, -${economyLoss}B economía${isVulnerable ? ' (VULNERABLE)' : ''}`)
+    }
+  }
+
+  return { updatedCountries, inactivityEvent }
+}
+
 export function checkGlobalCollapseAndTriggerAI(
   countries: Country[],
   playerCountryId: string,
@@ -3653,13 +4496,17 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
 
       deductCostFromSource(conquestCost)
 
+      // Asegurar que la conquista se aplique correctamente tanto para conquistas directas como a distancia
       updated = updated.map((c) => {
         if (c.id === target.id) {
           return {
             ...c,
-            ownedBy: source.id,
+            ownedBy: source.id, // Asignar propiedad al conquistador
             stability: 35,
             playerKarma: 0, // Reset karma tras conquista
+            // Limpiar cualquier estado de IA previo
+            isAIControlled: false,
+            aiLastAction: undefined,
             economy: {
               ...c.economy,
               debt: Math.min(150, c.economy.debt + 20),
@@ -3669,20 +4516,26 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         return c
       })
 
+      // Determinar si es conquista a distancia para el mensaje
+      const isDistantConquest = !areCountriesNeighbors(source.id, target.id, countries)
+      const conquestType = isDistantConquest ? "a distancia" : "directa"
+
       return {
         success: true,
         updatedCountries: updated,
         event: {
           id: `special_conquest_${Date.now()}`,
           type: "success",
-          title: "👑 Conquista Imperial Exitosa",
-          description: `${source.name} ha conquistado exitosamente ${target.name}`,
+          title: isDistantConquest ? "🚀 Conquista Imperial a Distancia" : "👑 Conquista Imperial Exitosa",
+          description: `${source.name} ha conquistado exitosamente ${target.name} mediante conquista ${conquestType}`,
           effects: [
             `${target.name} ahora es parte de tu imperio`,
             `Costo de conquista: $${conquestCost}B`,
+            `Tipo de conquista: ${conquestType}`,
             "Estabilidad del territorio restaurada al 35%",
             "Karma del territorio reiniciado",
             "Deuda del territorio aumentada por ocupación",
+            "País eliminado de la IA automáticamente",
             "Ahora debes gestionar este territorio",
           ],
           timestamp: Date.now(),

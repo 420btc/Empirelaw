@@ -5,7 +5,7 @@ import type React from "react"
 import { ComposableMap, Geographies, Geography } from "react-simple-maps"
 import { useEffect, useState } from "react"
 import { geoMercator } from "d3-geo"
-import type { Country, GameAction } from "@/lib/types"
+import type { Country, GameAction, GameEvent } from "@/lib/types"
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json"
 
@@ -27,7 +27,7 @@ interface WorldMapProps {
   onCountryClick: (countryId: string) => void
   onCountryHover: (countryId: string | null) => void
   onMapClick: () => void // Nueva prop para deseleccionar
-  recentAction?: GameAction | null // Nueva prop para activar animaciones
+  recentAction?: GameAction | GameEvent | null // Nueva prop para activar animaciones
 }
 
 export function WorldMap({
@@ -148,54 +148,90 @@ export function WorldMap({
     return () => clearInterval(interval)
   }, [selectedCountry])
 
-  // Efecto para crear animaciones de misil cuando hay nuevas acciones
+  // Efecto para crear animaciones cuando hay nuevas acciones o eventos
   useEffect(() => {
     if (!recentAction) return
     
-    // Solo crear animaciones para acciones que involucran dos países diferentes
-    if (recentAction.sourceCountry === recentAction.targetCountry) return
-    if (!recentAction.targetCountry) return
+    let sourceCountry: string | null = null
+    let targetCountry: string | null = null
+    let actionType: string = 'event'
+    
+    // Manejar GameAction (acciones del jugador)
+    if ('sourceCountry' in recentAction && 'targetCountry' in recentAction) {
+      sourceCountry = recentAction.sourceCountry
+      targetCountry = recentAction.targetCountry
+      actionType = recentAction.type
+    }
+    // Manejar GameEvent (eventos automáticos y de IA)
+    else if ('effects' in recentAction) {
+      // Extraer países de los efectos del evento
+      const effects = recentAction.effects || []
+      const description = recentAction.description || ''
+      const title = recentAction.title || ''
+      
+      // Buscar patrones de países en el texto
+      const allText = `${title} ${description} ${effects.join(' ')}`
+      const countryNames = countries.map(c => c.name)
+      const foundCountries: string[] = []
+      
+      // Buscar nombres de países en el texto
+      countryNames.forEach(name => {
+        if (allText.includes(name)) {
+          const country = countries.find(c => c.name === name)
+          if (country && !foundCountries.includes(country.id)) {
+            foundCountries.push(country.id)
+          }
+        }
+      })
+      
+      // Si encontramos al menos 2 países, usar los primeros dos
+      if (foundCountries.length >= 2) {
+        sourceCountry = foundCountries[0]
+        targetCountry = foundCountries[1]
+      }
+      // Si solo encontramos 1 país y hay un playerCountry, usar como origen/destino
+      else if (foundCountries.length === 1 && playerCountry) {
+        if (foundCountries[0] === playerCountry) {
+          // El evento afecta al jugador, buscar otro país mencionado
+          sourceCountry = playerCountry
+          targetCountry = foundCountries[0]
+        } else {
+          // El evento viene de otro país hacia el jugador o es general
+          sourceCountry = foundCountries[0]
+          targetCountry = playerCountry
+        }
+      }
+      
+      actionType = recentAction.type
+    }
+    
+    // Solo crear animaciones si tenemos origen y destino válidos
+    if (!sourceCountry || !targetCountry || sourceCountry === targetCountry) {
+      return
+    }
     
     // Verificar que tenemos coordenadas para ambos países
-    const sourceCoords = countryCoordinates[recentAction.sourceCountry]
-    const targetCoords = countryCoordinates[recentAction.targetCountry]
+    const sourceCoords = countryCoordinates[sourceCountry]
+    const targetCoords = countryCoordinates[targetCountry]
     
     if (!sourceCoords || !targetCoords) {
-      console.log(`⚠️ No se encontraron coordenadas para ${recentAction.sourceCountry} o ${recentAction.targetCountry}`)
+      console.log(`⚠️ No se encontraron coordenadas para ${sourceCountry} o ${targetCountry}`)
       return
     }
 
-         // Duración dinámica basada en la distancia entre países
-     const getAnimationDuration = (sourceCountry: string, targetCountry: string): number => {
-       const sourceCoords = countryCoordinates[sourceCountry]
-       const targetCoords = countryCoordinates[targetCountry]
-       
-       if (!sourceCoords || !targetCoords) return 3000
-       
-       // Calcular distancia geográfica
-       const distance = Math.sqrt(
-         Math.pow(targetCoords[0] - sourceCoords[0], 2) + 
-         Math.pow(targetCoords[1] - sourceCoords[1], 2)
-       )
-       
-       // Duración mínima 2s, máxima 5s, escalada por distancia
-       const minDuration = 2000
-       const maxDuration = 5000
-       const scaledDuration = minDuration + (distance / 180) * (maxDuration - minDuration)
-       
-       return Math.min(Math.max(scaledDuration, minDuration), maxDuration)
-     }
+    // Duración fija de 2 segundos para todas las animaciones
+    const ANIMATION_DURATION = 2000
 
     const newAnimation: MissileAnimation = {
       id: `missile_${Date.now()}`,
-      sourceCountry: recentAction.sourceCountry,
-      targetCountry: recentAction.targetCountry,
-      actionType: recentAction.type,
+      sourceCountry: sourceCountry,
+      targetCountry: targetCountry,
+      actionType: actionType,
       startTime: Date.now(),
-      duration: getAnimationDuration(recentAction.sourceCountry, recentAction.targetCountry)
+      duration: ANIMATION_DURATION
     }
 
-    console.log(`🚀 Creando animación SIMPLE: ${recentAction.sourceCountry} → ${recentAction.targetCountry} (${recentAction.type})`)
+    console.log(`🚀 Creando animación: ${sourceCountry} → ${targetCountry} (${actionType}) - 2s`)
     
     setActiveAnimations(prev => [...prev, newAnimation])
 
@@ -204,7 +240,7 @@ export function WorldMap({
       setActiveAnimations(prev => prev.filter(anim => anim.id !== newAnimation.id))
     }, newAnimation.duration)
 
-  }, [recentAction])
+  }, [recentAction, countries, playerCountry])
 
   // Limpiar animaciones expiradas
   useEffect(() => {
@@ -234,7 +270,11 @@ export function WorldMap({
     if (countryId === playerCountry) return "#8b5cf6"
 
     // Prioridad 4: Territorios conquistados por el jugador (púrpura más oscuro)
-    if (country.ownedBy === playerCountry) return "#7c3aed"
+    // Verificación robusta para conquistas tanto directas como a distancia
+    if (country.ownedBy === playerCountry) {
+      console.log(`🎨 País ${country.name} conquistado - aplicando color púrpura`)
+      return "#7c3aed"
+    }
 
     // Los países de IA mantienen su color original según su estado
     // (se identificarán con etiquetas "IA" en lugar de color especial)
@@ -543,37 +583,48 @@ export function WorldMap({
             
             const simplePath = generateSimplePath(sourceCoords, targetCoords, progress)
             const impactColor = getImpactColor(animation.actionType)
-            const lineColor = impactColor // Usar el mismo color para la línea
+            const lineColor = impactColor
             
             // Convertir coordenadas del país de destino a píxeles
             const targetPixels = projection(targetCoords)
             if (!targetPixels) return null
             const [targetX, targetY] = targetPixels
             
-            // Mostrar efecto de impacto cuando la línea esté casi completa
-            const showImpact = progress > 0.9
-            const impactProgress = Math.max(0, (progress - 0.9) / 0.1) // 0 a 1 en los últimos 10%
-            const impactRadius = 8 + impactProgress * 12 // Crece de 8 a 20px
+            // Calcular opacidad de desvanecimiento cuando la línea llega al destino
+            let lineOpacity = 0.9
+            let glowOpacity = 0.5
+            
+            if (progress >= 0.85) {
+              // Comenzar desvanecimiento en el último 15% del recorrido
+              const fadeProgress = (progress - 0.85) / 0.15 // 0 a 1 en los últimos 15%
+              lineOpacity = 0.9 * (1 - fadeProgress)
+              glowOpacity = 0.5 * (1 - fadeProgress)
+            }
+            
+            // Mostrar efecto de impacto cuando la línea llega al destino
+            const showImpact = progress >= 0.85
+            const impactProgress = Math.max(0, (progress - 0.85) / 0.15) // 0 a 1 en los últimos 15%
+            const impactRadius = 8 + impactProgress * 15 // Crece de 8 a 23px
             const impactOpacity = Math.max(0, 0.8 - impactProgress * 0.8) // Desvanece de 0.8 a 0
             
             return (
               <g key={animation.id}>
-                {/* Línea curva con color según el tipo de acción */}
+                {/* Línea curva con color según el tipo de acción y desvanecimiento */}
                 <path
                   d={simplePath}
                   fill="none"
                   stroke={lineColor}
                   strokeWidth="3"
-                  strokeOpacity="0.9"
+                  strokeOpacity={lineOpacity}
                   strokeLinecap="round"
                 />
-                {/* Efecto de brillo con color más claro */}
+                {/* Efecto de brillo con color más claro y desvanecimiento */}
                 <path
                   d={simplePath}
                   fill="none"
                   stroke={lineColor}
                   strokeWidth="1"
-                  strokeOpacity="0.5"
+                  strokeOpacity={glowOpacity}
                   strokeLinecap="round"
                   filter="blur(1px)"
                 />

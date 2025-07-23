@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import type { Country, GameEvent, GameAction, GameStats, ActionHistory, TradeOffer } from "@/lib/types"
 import { initialCountries } from "@/lib/data/countries"
-import { generateRandomEvent, processAction, checkForCollapses, calculateChaosLevel, applyGDPGrowth, provideMutualAidToCriticalCountries, checkTerritorialRebellions, applyImperialMaintenanceCosts } from "@/lib/game-engine"
+import { generateRandomEvent, generateConspiracyEvent, processAction, checkForCollapses, calculateChaosLevel, applyGDPGrowth, provideMutualAidToCriticalCountries, checkTerritorialRebellions, applyImperialMaintenanceCosts, applyInactivityPenalties } from "@/lib/game-engine"
 import { aiProactiveActionsService } from "@/lib/ai-proactive-actions"
 import { ACHIEVEMENTS, checkAchievements, calculateXPGain, getPlayerLevel, type Achievement } from "@/lib/achievement-system"
 import type { GameProgression } from "@/lib/types"
@@ -79,6 +79,7 @@ export function useGameState() {
   // Estado del reloj de tiempo de juego
   const [gameTime, setGameTime] = useState(0) // Tiempo en segundos
   const [isClockAnimating, setIsClockAnimating] = useState(false)
+  const [recentEvent, setRecentEvent] = useState<GameEvent | null>(null)
   const gameStartTimeRef = useRef<number>(Date.now())
   const gameTimeIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -118,6 +119,11 @@ export function useGameState() {
       // Añadir el evento a la lista de eventos y notificaciones
       setGameEvents((prev) => [...prev, eventWithUniqueId])
       setVisibleNotifications((prev) => [eventWithUniqueId, ...prev.slice(0, 2)]) // Eventos más recientes arriba, máximo 3 (1 nuevo + 2 anteriores)
+      
+      // Capturar evento para animaciones del mapa
+      setRecentEvent(eventWithUniqueId)
+      // Limpiar el evento después de 3 segundos para que no se repita la animación
+      setTimeout(() => setRecentEvent(null), 3000)
       
       lastEventTimeRef.current = uniqueTimestamp
       
@@ -222,6 +228,21 @@ export function useGameState() {
 
     // --- Lógica de inactividad para IA rival (MÁS AGRESIVA) ---
     inactivityTicksRef.current += 1
+    
+    // 🎯 NUEVA LÓGICA: Penalización específica para China por inactividad
+    if (playerCountry === "china" && inactivityTicksRef.current >= 2) {
+      const { updatedCountries, inactivityEvent } = applyInactivityPenalties(
+        countries,
+        playerCountry,
+        inactivityTicksRef.current
+      )
+      if (inactivityEvent) {
+        setCountries(updatedCountries)
+        addEventToQueue(inactivityEvent)
+        console.log(`🇨🇳 Penalización por inactividad aplicada a China (tick ${inactivityTicksRef.current})`)
+      }
+    }
+    
     // Si el jugador ejecuta una acción, inactivityTicksRef se resetea vía registerPlayerAction
     // Si pasan 2 ciclos de eventos y la estabilidad global es baja, activar IA rival
     if (inactivityTicksRef.current >= 2 && gameStats.globalStability < 30 && playerCountry) {
@@ -651,6 +672,95 @@ export function useGameState() {
     }
   }, [playerCountry, countries, gameEvents, addEventToQueue])
 
+  // Función específica para generar eventos de conspiración
+  const generateConspiracyEvent = useCallback(async () => {
+    console.log("🕵️ generateConspiracyEvent ejecutándose...")
+    
+    if (!playerCountry || isGameOver) {
+      console.log("🕵️ No se puede generar evento de conspiración: juego no iniciado o terminado")
+      return
+    }
+
+    // Calcular nivel de caos actual
+    const currentChaosLevel = calculateChaosLevel(countries, gameEvents)
+
+    // Generar evento de conspiración específico usando la función del game-engine
+     console.log("🕵️ Generando evento de conspiración...")
+     const { generateConspiracyEvent: engineGenerateConspiracyEvent } = require("@/lib/game-engine")
+     const { mainEvent, contagionEvents } = engineGenerateConspiracyEvent(
+       countries,
+       playerCountry,
+       currentChaosLevel,
+       gameEvents,
+     )
+
+    if (mainEvent) {
+      console.log("🕵️ Evento de conspiración generado:", mainEvent.title)
+
+      addEventToQueue(mainEvent)
+
+      // Aplicar efectos del evento de conspiración
+      if (mainEvent.countryEffects) {
+        setCountries((prev) =>
+          prev.map((country) => {
+            const effect = mainEvent.countryEffects?.[country.id]
+            if (effect) {
+              console.log(`🕵️ Aplicando efectos de conspiración a ${country.name}:`, effect)
+
+              const updatedCountry = {
+                ...country,
+                stability: Math.max(0, Math.min(100, country.stability + (effect.stabilityChange || 0))),
+                economy: {
+                  ...country.economy,
+                  gdp: Math.max(0, country.economy.gdp + (effect.economyChange || 0)),
+                  debt: Math.max(0, Math.min(300, country.economy.debt + (effect.debtChange || 0))),
+                  resourceProduction: { ...country.economy.resourceProduction },
+                  resourceReserves: { ...country.economy.resourceReserves },
+                },
+                population: Math.max(0, country.population + (effect.populationChange || 0)),
+              }
+
+              if (effect.resourceEffects) {
+                  Object.entries(effect.resourceEffects).forEach(([resource, change]) => {
+                    const numericChange = change as number
+                    if (updatedCountry.economy.resourceProduction[resource] !== undefined) {
+                      updatedCountry.economy.resourceProduction[resource] = Math.max(
+                        0,
+                        updatedCountry.economy.resourceProduction[resource] + numericChange,
+                      )
+                    }
+                    if (updatedCountry.economy.resourceReserves[resource] !== undefined) {
+                      updatedCountry.economy.resourceReserves[resource] = Math.max(
+                        0,
+                        updatedCountry.economy.resourceReserves[resource] + numericChange * 10,
+                      )
+                    }
+                  })
+                }
+
+              return updatedCountry
+            }
+            return country
+          }),
+        )
+      }
+
+      // Procesar eventos de contagio si los hay
+       contagionEvents.forEach((contagionEvent: GameEvent) => {
+         console.log("🕵️ Evento de contagio de conspiración generado:", contagionEvent.title)
+         addEventToQueue(contagionEvent)
+       })
+
+      // Actualizar estadísticas
+      setGameStats((prev) => ({
+        ...prev,
+        eventsThisSession: prev.eventsThisSession + 1,
+      }))
+    } else {
+      console.log("🕵️ No se generó evento de conspiración este ciclo")
+    }
+  }, [playerCountry, countries, gameEvents, addEventToQueue, isGameOver])
+
   // Función para generar eventos militares menores
 
   
@@ -661,6 +771,7 @@ export function useGameState() {
   // Sistema de eventos determinístico basado en tiempo exacto
   const lastSecondaryEventTimeRef = useRef<number>(0)
   const lastAIActionTimeRef = useRef<number>(0)
+  const lastConspiracyEventTimeRef = useRef<number>(0)
   
   useEffect(() => {
     if (!playerCountry || gameTime === 0) return
@@ -685,6 +796,15 @@ export function useGameState() {
       generateEvent()
     }
 
+    // Eventos de conspiración cada 15 segundos exactos (2 cada 30 segundos)
+    const shouldGenerateConspiracyEvent = gameTime % 15 === 0 && gameTime > 0 && gameTime !== lastConspiracyEventTimeRef.current
+    
+    if (shouldGenerateConspiracyEvent) {
+      console.log(`🕵️ GENERANDO EVENTO DE CONSPIRACIÓN en segundo ${gameTime}`)
+      lastConspiracyEventTimeRef.current = gameTime
+      generateConspiracyEvent()
+    }
+
     // Acción de IA cada 60 segundos exactos (1 minuto)
     const shouldGenerateAIAction = gameTime % 60 === 0 && gameTime > 0 && gameTime !== lastAIActionTimeRef.current
     
@@ -693,7 +813,7 @@ export function useGameState() {
       lastAIActionTimeRef.current = gameTime
       generateAIAction()
     }
-  }, [gameTime, playerCountry, generateEvent, generateAIAction])
+  }, [gameTime, playerCountry, generateEvent, generateAIAction, generateConspiracyEvent])
 
   // Sistema de mejora automática de territorios conquistados
   useEffect(() => {
@@ -1094,6 +1214,17 @@ export function useGameState() {
         console.log("✅ Acción exitosa, actualizando países")
         setCountries(result.updatedCountries)
 
+        // Si es una conquista, limpiar la lista de países IA persistentes
+        if (action.type === "special_conquest" || action.type === "conquest") {
+          console.log("🏴 Conquista detectada, actualizando países IA")
+          // Filtrar países IA que ya no son válidos (conquistados)
+          const validAICountries = persistentAICountries.filter(countryId => {
+            const country = result.updatedCountries.find(c => c.id === countryId)
+            return country && !country.ownedBy
+          })
+          setPersistentAICountries(validAICountries)
+        }
+
         if (result.event) {
           console.log("📢 Evento generado por acción:", result.event.title)
           addEventToQueue(result.event)
@@ -1362,6 +1493,10 @@ export function useGameState() {
     inactivityTicksRef.current = 0
     lastActionTimeRef.current = Date.now()
     
+    // Limpiar lista de países IA persistentes
+    setPersistentAICountries([])
+    console.log("🔄 Juego reiniciado - Países IA y conquistas restablecidos")
+    
     // Limpiar intervalos
     if (eventIntervalRef.current) {
       clearInterval(eventIntervalRef.current)
@@ -1417,5 +1552,7 @@ export function useGameState() {
     // Reloj de tiempo de juego
     gameTime,
     isClockAnimating,
+    // Evento reciente para animaciones del mapa
+    recentEvent,
   }
 }
