@@ -856,6 +856,7 @@ export function ActionMenu({ playerCountry, targetCountry, onExecuteAction, owne
                     <p>• Haz clic en un país enemigo para atacarlo</p>
                     <p>• Los países conquistados por ti no pueden ser objetivos</p>
                     <p>• Tu país principal tampoco puede ser objetivo</p>
+                    <p>• Puedes atacar aliados si las relaciones son tensas (&lt;20)</p>
                   </div>
                   {playerCountry.economy.gdp < 1000 && (
                     <div className="mt-4 text-xs text-yellow-400 bg-yellow-900/20 p-2 rounded border border-yellow-600/30">

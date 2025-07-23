@@ -111,7 +111,7 @@ export function CountrySelectionModal({ countries, onSelect }: CountrySelectionM
               </h2>
               {/* Debug info */}
               <div className="mt-2 text-xs text-yellow-400">
-                Debug: Países cargados: 52 países disponibles | Seleccionado: {selectedCountry?.name || "ninguno"}
+                Debug: Países cargados: 74 países disponibles | Seleccionado: {selectedCountry?.name || "ninguno"}
               </div>
             </div>
 

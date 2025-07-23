@@ -3442,6 +3442,115 @@ export const initialCountries: Country[] = [
       legal: 15,
     },
   },
+
+  // Omán
+  {
+    id: "oman",
+    name: "Omán",
+    president: "Haitham bin Tariq Al Said", // Sultán actual de Omán
+    ideology: "Monarquía",
+    economy: {
+      gdp: 107, // PIB 2024: $106.943M según datos
+      debt: 37, // Deuda del 37,49% del PIB
+      resources: ["petróleo", "gas natural", "pesca", "turismo"],
+      resourceProduction: { petróleo: 45, "gas natural": 35, pesca: 25, turismo: 20 },
+      resourceReserves: { petróleo: 675, "gas natural": 525, pesca: 375, turismo: 300 },
+    },
+    population: 5166000, // 5.166.000 habitantes
+    stability: 75, // Alta estabilidad política
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 35,
+    powerLevel: "minor",
+    geopoliticalBlock: "middle_east",
+    alliances: ["saudi_arabia", "uae"],
+    neighbors: ["saudi_arabia", "uae", "yemen"],
+    diplomaticRelations: {
+      saudi_arabia: 80,
+      uae: 75,
+      iran: 60,
+      usa: 70,
+      uk: 65,
+    },
+    conspiracyInfluence: {
+      geoengineering: 2,
+      masonic: 5,
+      legal: 8,
+    },
+  },
+
+  // Madagascar
+  {
+    id: "madagascar",
+    name: "Madagascar",
+    president: "Andry Rajoelina", // Presidente reelecto en 2023
+    ideology: "Democracia",
+    economy: {
+      gdp: 17, // PIB 2024: $17.42 billion según World Bank
+      debt: 45,
+      resources: ["vainilla", "níquel", "cobalto", "turismo"],
+      resourceProduction: { vainilla: 40, níquel: 30, cobalto: 25, turismo: 15 },
+      resourceReserves: { vainilla: 600, níquel: 450, cobalto: 375, turismo: 225 },
+    },
+    population: 30000000, // Aproximadamente 30 millones
+    stability: 55, // Media por desafíos económicos
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 15,
+    powerLevel: "minor",
+    geopoliticalBlock: "africa",
+    alliances: ["south_africa", "mauritius"],
+    neighbors: ["mozambique"],
+    diplomaticRelations: {
+      south_africa: 60,
+      france: 55, // Ex-colonia francesa
+      mauritius: 70,
+      china: 50,
+    },
+    conspiracyInfluence: {
+      geoengineering: 1,
+      masonic: 3,
+      legal: 5,
+    },
+  },
+
+  // Venezuela
+  {
+    id: "venezuela",
+    name: "Venezuela",
+    president: "Nicolás Maduro", // Presidente actual
+    ideology: "Socialismo",
+    economy: {
+      gdp: 102, // PIB 2024: $102.3 billion estimado
+      debt: 350, // Deuda externa muy alta
+      resources: ["petróleo", "oro", "hierro", "bauxita"],
+      resourceProduction: { petróleo: 100, oro: 45, hierro: 35, bauxita: 30 },
+      resourceReserves: { petróleo: 4500, oro: 675, hierro: 525, bauxita: 450 }, // Mayores reservas de petróleo del mundo
+    },
+    population: 28000000, // Aproximadamente 28 millones (muchos emigraron)
+    stability: 35, // Baja estabilidad por crisis política y económica
+    legalSystem: "positiva",
+    isSovereign: false,
+    militaryStrength: 40,
+    powerLevel: "regional",
+    geopoliticalBlock: "latin_america",
+    alliances: ["cuba", "nicaragua", "russia", "china"],
+    neighbors: ["colombia", "brazil", "guyana"],
+    diplomaticRelations: {
+      cuba: 90,
+      nicaragua: 85,
+      russia: 80,
+      china: 75,
+      colombia: -30, // Tensiones por migración
+      usa: -80, // Sanciones estadounidenses
+      brazil: 40,
+    },
+    conspiracyInfluence: {
+      geoengineering: 3,
+      masonic: 8,
+      legal: 12,
+    },
+  },
 ]
 
 // Definición de bloques geopolíticos
@@ -3476,7 +3585,7 @@ export const geopoliticalBlocks = {
   africa: {
     id: "africa",
     name: "Unión Africana",
-    members: ["nigeria", "south_africa", "ghana", "kenya", "morocco", "ethiopia", "algeria", "niger", "libya", "chad", "tunisia", "mali", "sudan", "gabon", "mauritania"],
+    members: ["nigeria", "south_africa", "ghana", "kenya", "morocco", "ethiopia", "algeria", "niger", "libya", "chad", "tunisia", "mali", "sudan", "gabon", "mauritania", "madagascar"],
     leader: "south_africa",
     mutualDefense: false,
     economicCooperation: true,
@@ -3485,7 +3594,7 @@ export const geopoliticalBlocks = {
   latin_america: {
     id: "latin_america",
     name: "América Latina",
-    members: ["mexico", "brazil", "argentina", "chile", "colombia", "peru"],
+    members: ["mexico", "brazil", "argentina", "chile", "colombia", "peru", "venezuela"],
     leader: "brazil",
     mutualDefense: false,
     economicCooperation: true,
@@ -3494,7 +3603,7 @@ export const geopoliticalBlocks = {
   middle_east: {
     id: "middle_east",
     name: "Oriente Medio",
-    members: ["saudi_arabia", "egypt", "turkey", "syria", "yemen"],
+    members: ["saudi_arabia", "egypt", "turkey", "syria", "yemen", "oman"],
     leader: "saudi_arabia",
     mutualDefense: false,
     economicCooperation: true,

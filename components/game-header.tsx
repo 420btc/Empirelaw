@@ -121,7 +121,7 @@ export function GameHeader({ playerCountry, gameStats, actionHistory, events, on
   const recentActions = actionHistory.slice(-15).reverse()
 
   // Calcular progreso hacia la dominación mundial
-  const totalCountries = 52
+  const totalCountries = 74
   const stableCountries = gameStats.countriesControlled
   const progressPercentage = Math.round((stableCountries / totalCountries) * 100)
 

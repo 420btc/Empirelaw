@@ -160,6 +160,18 @@ export default function GeopoliticsGame() {
     if (!selectedCountryData) return null
     if (selectedCountryData.ownedBy === playerCountry) return null
     
+    // Permitir atacar países aliados si las relaciones diplomáticas son muy tensas (< 20)
+    const playerCountryData = countries.find((c) => c.id === playerCountry)
+    if (playerCountryData) {
+      const isAlly = playerCountryData.alliances?.includes(selectedCountryData.id)
+      const diplomaticRelation = playerCountryData.diplomaticRelations?.[selectedCountryData.id] || 0
+      
+      // Si es aliado pero las relaciones son muy tensas, permitir el ataque
+      if (isAlly && diplomaticRelation >= 20) {
+        return null // No permitir ataque a aliados con buenas relaciones
+      }
+    }
+    
     return selectedCountryData
   }
 

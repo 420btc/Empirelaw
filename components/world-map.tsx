@@ -129,6 +129,10 @@ export function WorldMap({
     paraguay: [-58, -23],
     cuba: [-77, 21],
     mongolia: [103, 46],
+    // NUEVOS PAÍSES AÑADIDOS
+    oman: [56, 21], // Omán - Golfo Pérsico
+    madagascar: [47, -19], // Madagascar - Isla al este de África
+    venezuela: [-66, 6], // Venezuela - Norte de Sudamérica
   }
 
   // Efecto de parpadeo para el país seleccionado
@@ -377,6 +381,10 @@ export function WorldMap({
       "233": "estonia", // Estonia
       "428": "latvia", // Letonia
       "440": "lithuania", // Lituania
+      // NUEVOS PAÍSES AÑADIDOS - TERCERA TANDA
+      "512": "oman", // Omán
+      "450": "madagascar", // Madagascar
+      "862": "venezuela", // Venezuela
     }
 
     return countryMapping[geoId] || null

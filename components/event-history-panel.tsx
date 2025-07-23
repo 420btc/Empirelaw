@@ -135,16 +135,16 @@ export function EventHistoryPanel({ events, onClose }: EventHistoryPanelProps) {
               Total: {eventTypeStats.total}
             </Badge>
             <Badge variant="outline" className="text-green-400 border-green-400">
-              Éxitos: {eventTypeStats.success}
+              Eventos Positivos: {eventTypeStats.success}
             </Badge>
             <Badge variant="outline" className="text-yellow-400 border-yellow-400">
-              Advertencias: {eventTypeStats.warning}
+              Eventos de Precaución: {eventTypeStats.warning}
             </Badge>
             <Badge variant="outline" className="text-red-400 border-red-400">
-              Errores: {eventTypeStats.error}
+              Eventos Críticos: {eventTypeStats.error}
             </Badge>
             <Badge variant="outline" className="text-blue-400 border-blue-400">
-              Info: {eventTypeStats.info}
+              Eventos Informativos: {eventTypeStats.info}
             </Badge>
           </div>
         </CardHeader>
@@ -168,10 +168,10 @@ export function EventHistoryPanel({ events, onClose }: EventHistoryPanelProps) {
               className="px-3 py-2 bg-slate-800 border border-gray-600 rounded-lg text-white"
             >
               <option value="all">Todos los tipos</option>
-              <option value="success">Éxitos</option>
-              <option value="warning">Advertencias</option>
-              <option value="error">Errores</option>
-              <option value="info">Información</option>
+              <option value="success">Eventos Positivos</option>
+              <option value="warning">Eventos de Precaución</option>
+              <option value="error">Eventos Críticos</option>
+              <option value="info">Eventos Informativos</option>
             </select>
 
             <Button
@@ -214,10 +214,10 @@ export function EventHistoryPanel({ events, onClose }: EventHistoryPanelProps) {
   {event.type === "success"
     ? "Evento Positivo"
     : event.type === "warning"
-    ? "Aviso"
+    ? "Evento de Precaución"
     : event.type === "error"
-    ? "Evento Negativo"
-    : "Información"}
+    ? "Evento Crítico"
+    : "Evento Informativo"}
 </Badge>
                                 <div className="text-xs text-gray-400 flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
