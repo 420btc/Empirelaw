@@ -118,7 +118,11 @@ export function useGameState() {
       
       // Añadir el evento a la lista de eventos y notificaciones
       setGameEvents((prev) => [...prev, eventWithUniqueId])
-      setVisibleNotifications((prev) => [eventWithUniqueId, ...prev.slice(0, 2)]) // Eventos más recientes arriba, máximo 3 (1 nuevo + 2 anteriores)
+      setVisibleNotifications((prev) => {
+        const updated = [eventWithUniqueId, ...prev].slice(0, 3) // Mantener máximo 3 eventos
+        console.log(`📢 Actualizando visibleNotifications: ${updated.length} eventos`)
+        return updated
+      })
       
       // Capturar evento para animaciones del mapa
       setRecentEvent(eventWithUniqueId)

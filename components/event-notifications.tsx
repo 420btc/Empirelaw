@@ -26,36 +26,17 @@ export function EventNotifications({ events, onDismiss }: EventNotificationsProp
   }, [])
 
   useEffect(() => {
-    // Filtrar eventos que no sean muy antiguos (máximo 5 minutos)
-    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000)
-    const recentEvents = events
-      .filter(event => event.timestamp > fiveMinutesAgo)
-      .slice(-3)
-    
-    // Identificar eventos completamente nuevos que no están en visibleEvents
-    const newEvents = recentEvents.filter(event => 
-      !visibleEvents.find(visible => visible.id === event.id)
-    )
-
-    if (newEvents.length > 0) {
-      console.log(`📢 Agregando ${newEvents.length} eventos nuevos:`, newEvents.map(e => e.title))
-      
-      // Actualizar todos los eventos visibles de una vez
-      setVisibleEvents(prev => {
-        // Combinar eventos nuevos con los existentes, manteniendo orden cronológico
-        const combined = [...newEvents, ...prev]
-        const limited = combined.slice(0, 3) // Mantener solo los 3 más recientes
-        console.log(`📢 Eventos visibles actualizados: ${limited.length} eventos`)
-        return limited
-      })
-      
-      // Auto-dismiss para cada evento nuevo después de 8 segundos
-          newEvents.forEach(newEvent => {
-            setTimeout(() => {
-              handleDismiss(newEvent.id)
-            }, 8000)
-          })
-    }
+    // Simplificar: usar directamente los eventos que vienen de useGameState
+    // ya que useGameState ya maneja el filtrado y límite de 3 eventos
+    console.log(`📢 EventNotifications recibió ${events.length} eventos`)
+    setVisibleEvents(events)
+     
+     // Auto-dismiss para eventos después de 8 segundos
+     events.forEach(event => {
+       setTimeout(() => {
+         handleDismiss(event.id)
+       }, 8000)
+     })
   }, [events])
 
   const handleDismiss = (eventId: string) => {

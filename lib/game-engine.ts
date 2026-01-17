@@ -1176,93 +1176,9 @@ export function generateConspiracyEvent(
       timestamp: Date.now(),
     }),
 
-    mk_ultra_revival: () => ({
-      id: makeId(),
-      type: "error",
-      title: "🧪 Programa MK-Ultra Revivido",
-      description: `Un programa de control mental estilo MK-Ultra ha sido descubierto operando en ${affectedCountry.name}`,
-      effects: [
-        "Experimentos de control mental activos",
-        "Víctimas de lavado de cerebro identificadas",
-        "Crisis de derechos humanos internacional",
-        "Protestas por libertad mental",
-        "Tribunal de crímenes psicológicos convocado",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -65,
-          economyChange: -2200,
-          populationChange: -800000,
-          debtChange: 40,
-          resourceEffects: {
-            tecnología: -95,
-            servicios: -80,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
 
-    flat_earth_government_cover: () => ({
-      id: makeId(),
-      type: "warning",
-      title: "🌍 Encubrimiento de Tierra Plana",
-      description: `Evidencia de que ${affectedCountry.name} ha estado encubriendo la verdad sobre la forma de la Tierra`,
-      effects: [
-        "Documentos sobre forma real de la Tierra",
-        "Crisis de confianza en ciencia oficial",
-        "Movimiento terraplanista masivo",
-        "Reevaluación de educación científica",
-        "Protestas contra NASA y agencias espaciales",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -25,
-          economyChange: -600,
-          debtChange: 8,
-          resourceEffects: {
-            tecnología: -40,
-            servicios: -30,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
 
-    new_world_order_agenda: () => ({
-      id: makeId(),
-      type: "error",
-      title: "🌐 Agenda del Nuevo Orden Mundial",
-      description: `Planes para un gobierno mundial único han sido descubiertos en ${affectedCountry.name}`,
-      effects: [
-        "Documentos de gobierno mundial revelados",
-        "Crisis de soberanía nacional",
-        "Resistencia patriótica masiva",
-        "Movimientos independentistas activados",
-        "Guerra de información global",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -75,
-          economyChange: -3000,
-          debtChange: 50,
-          resourceEffects: {
-            "servicios financieros": -95,
-            servicios: -85,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
+
   }
 
   const generator = eventGenerators[eventType]
@@ -1707,6 +1623,391 @@ export function generateRandomEvent(
       timestamp: Date.now(),
     }),
 
+    // ========== EVENTOS CONSPIRANÓICOS ESPECÍFICOS ==========
+    conspiracy_exposed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🕵️ Conspiración Revelada",
+      description: `Una conspiración de alto nivel ha sido expuesta en ${affectedCountry.name}, causando conmoción nacional y desestabilización política`,
+      effects: [
+        "Documentos clasificados filtrados",
+        "Redes de corrupción expuestas",
+        "Crisis de confianza gubernamental",
+        "Protestas masivas exigiendo transparencia",
+        "Investigaciones internacionales iniciadas"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -25,
+          economyChange: -800,
+          debtChange: 12,
+        },
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    illuminati_manipulation: () => ({
+      id: makeId(),
+      type: "error",
+      title: "👁️ Manipulación Illuminati Expuesta",
+      description: `Evidencia de manipulación por sociedades secretas ha salido a la luz en ${affectedCountry.name}, revelando control oculto de instituciones clave`,
+      effects: [
+        "Sociedades secretas expuestas",
+        "Control financiero oculto revelado",
+        "Manipulación mediática documentada",
+        "Redes de influencia internacional",
+        "Teorías conspirativas confirmadas"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -35,
+          economyChange: -1200,
+          debtChange: 20,
+        },
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    deep_state_purge: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🏛️ Purga del Estado Profundo",
+      description: `Una purga masiva del estado profundo está ocurriendo en ${affectedCountry.name}, exponiendo décadas de operaciones encubiertas`,
+      effects: [
+        "Operaciones encubiertas expuestas",
+        "Funcionarios de alto nivel arrestados",
+        "Archivos clasificados liberados",
+        "Restructuración gubernamental masiva",
+        "Crisis institucional profunda"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -40,
+          economyChange: -1000,
+          debtChange: 15,
+        },
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    mind_control_experiment: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🧠 Experimentos de Control Mental Revelados",
+      description: `Programas secretos de control mental han sido expuestos en ${affectedCountry.name}, causando horror y indignación pública`,
+      effects: [
+        "Experimentos psicológicos ilegales expuestos",
+        "Víctimas de programas secretos identificadas",
+        "Tecnología de manipulación mental revelada",
+        "Escándalo de derechos humanos masivo",
+        "Demandas de justicia internacional"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -45,
+          economyChange: -900,
+          debtChange: 18,
+        },
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    pharmaceutical_conspiracy: () => ({
+       id: makeId(),
+       type: "error",
+       title: "💊 Conspiración Farmacéutica Expuesta",
+       description: `Una conspiración masiva de la industria farmacéutica ha sido revelada en ${affectedCountry.name}, incluyendo supresión de curas y manipulación de precios`,
+       effects: [
+         "Supresión de tratamientos efectivos expuesta",
+         "Manipulación de precios documentada",
+         "Estudios falsificados revelados",
+         "Crisis de salud pública",
+         "Demandas masivas contra farmacéuticas"
+       ],
+       countryEffects: {
+         [affectedCountry.id]: {
+           stabilityChange: -30,
+           economyChange: -1100,
+           debtChange: 16,
+         },
+       },
+       targetedCountry: affectedCountry.id,
+       chaosLevel: chaosLevel,
+       timestamp: Date.now(),
+     }),
+
+     alien_cover_up: () => ({
+       id: makeId(),
+       type: "error",
+       title: "👽 Encubrimiento Alienígena Revelado",
+       description: `Documentos clasificados sobre contacto extraterrestre han sido filtrados en ${affectedCountry.name}, causando pánico y cuestionamiento de la realidad`,
+       effects: [
+         "Evidencia de contacto extraterrestre expuesta",
+         "Décadas de encubrimiento gubernamental reveladas",
+         "Tecnología alienígena oculta documentada",
+         "Crisis existencial masiva",
+         "Demandas de transparencia total"
+       ],
+       countryEffects: {
+         [affectedCountry.id]: {
+           stabilityChange: -50,
+           economyChange: -700,
+           debtChange: 10,
+         },
+       },
+       targetedCountry: affectedCountry.id,
+       chaosLevel: chaosLevel,
+       timestamp: Date.now(),
+     }),
+
+     weather_manipulation: () => ({
+       id: makeId(),
+       type: "error",
+       title: "🌪️ Manipulación Climática Expuesta",
+       description: `Programas secretos de modificación del clima han sido revelados en ${affectedCountry.name}, incluyendo el uso de tecnología HAARP`,
+       effects: [
+         "Tecnología de modificación climática expuesta",
+         "Desastres naturales artificiales documentados",
+         "Programas HAARP revelados",
+         "Manipulación geopolítica del clima",
+         "Crisis ambiental y política"
+       ],
+       countryEffects: {
+         [affectedCountry.id]: {
+           stabilityChange: -35,
+           economyChange: -950,
+           debtChange: 14,
+         },
+       },
+       targetedCountry: affectedCountry.id,
+       chaosLevel: chaosLevel,
+       timestamp: Date.now(),
+     }),
+
+     mk_ultra_revival: () => ({
+       id: makeId(),
+       type: "error",
+       title: "🧪 Programa MK-Ultra Revivido",
+       description: `Evidencia de la continuación de experimentos MK-Ultra ha sido expuesta en ${affectedCountry.name}, revelando control mental moderno`,
+       effects: [
+         "Experimentos de control mental modernos expuestos",
+         "Víctimas de programas actuales identificadas",
+         "Tecnología neurológica avanzada revelada",
+         "Violaciones masivas de derechos humanos",
+         "Escándalo de seguridad nacional"
+       ],
+       countryEffects: {
+         [affectedCountry.id]: {
+           stabilityChange: -42,
+           economyChange: -850,
+           debtChange: 17,
+         },
+       },
+       targetedCountry: affectedCountry.id,
+       chaosLevel: chaosLevel,
+       timestamp: Date.now(),
+     }),
+
+     false_flag_operation: () => ({
+       id: makeId(),
+       type: "error",
+       title: "🚩 Operación Bandera Falsa Expuesta",
+       description: `Una operación de bandera falsa ha sido desenmascarada en ${affectedCountry.name}, revelando manipulación de eventos para justificar acciones políticas`,
+       effects: [
+         "Operación de bandera falsa documentada",
+         "Manipulación de eventos públicos expuesta",
+         "Justificaciones falsas para políticas reveladas",
+         "Crisis de confianza institucional",
+         "Demandas de investigación internacional"
+       ],
+       countryEffects: {
+         [affectedCountry.id]: {
+           stabilityChange: -38,
+           economyChange: -1050,
+           debtChange: 19,
+         },
+       },
+       targetedCountry: affectedCountry.id,
+       chaosLevel: chaosLevel,
+       timestamp: Date.now(),
+     }),
+
+     media_mind_control: () => ({
+        id: makeId(),
+        type: "error",
+        title: "📺 Control Mental Mediático Expuesto",
+        description: `Programas de manipulación psicológica a través de medios de comunicación han sido revelados en ${affectedCountry.name}`,
+        effects: [
+          "Técnicas de manipulación mediática expuestas",
+          "Programación subliminal documentada",
+          "Control de narrativas revelado",
+          "Influencia psicológica masiva expuesta",
+          "Crisis de confianza en medios"
+        ],
+        countryEffects: {
+          [affectedCountry.id]: {
+            stabilityChange: -28,
+            economyChange: -750,
+            debtChange: 11,
+          },
+        },
+        targetedCountry: affectedCountry.id,
+        chaosLevel: chaosLevel,
+        timestamp: Date.now(),
+      }),
+
+      cia_black_ops_revealed: () => ({
+        id: makeId(),
+        type: "error",
+        title: "🕴️ Operaciones Negras CIA Reveladas",
+        description: `Operaciones encubiertas de la CIA han sido expuestas en ${affectedCountry.name}, revelando décadas de intervención ilegal`,
+        effects: [
+          "Operaciones encubiertas documentadas",
+          "Intervención extranjera ilegal expuesta",
+          "Asesinatos políticos revelados",
+          "Manipulación electoral documentada",
+          "Crisis diplomática internacional"
+        ],
+        countryEffects: {
+          [affectedCountry.id]: {
+            stabilityChange: -45,
+            economyChange: -1200,
+            debtChange: 22,
+          },
+        },
+        targetedCountry: affectedCountry.id,
+        chaosLevel: chaosLevel,
+        timestamp: Date.now(),
+      }),
+
+      fbi_surveillance_scandal: () => ({
+        id: makeId(),
+        type: "error",
+        title: "👁️ Escándalo de Vigilancia FBI",
+        description: `Programas masivos de vigilancia ilegal del FBI han sido expuestos en ${affectedCountry.name}, violando derechos constitucionales`,
+        effects: [
+          "Vigilancia masiva ilegal expuesta",
+          "Violaciones constitucionales documentadas",
+          "Espionaje doméstico revelado",
+          "Abuso de poder gubernamental",
+          "Crisis de derechos civiles"
+        ],
+        countryEffects: {
+          [affectedCountry.id]: {
+            stabilityChange: -32,
+            economyChange: -900,
+            debtChange: 15,
+          },
+        },
+        targetedCountry: affectedCountry.id,
+        chaosLevel: chaosLevel,
+        timestamp: Date.now(),
+      }),
+
+      epstein_network_exposed: () => ({
+        id: makeId(),
+        type: "error",
+        title: "🏝️ Red Epstein Completamente Expuesta",
+        description: `La red completa de tráfico y chantaje de Epstein ha sido revelada en ${affectedCountry.name}, implicando a élites globales`,
+        effects: [
+          "Red de tráfico global expuesta",
+          "Élites políticas y empresariales implicadas",
+          "Operaciones de chantaje documentadas",
+          "Corrupción sistémica revelada",
+          "Crisis de confianza en instituciones"
+        ],
+        countryEffects: {
+          [affectedCountry.id]: {
+            stabilityChange: -55,
+            economyChange: -1400,
+            debtChange: 25,
+          },
+        },
+        targetedCountry: affectedCountry.id,
+        chaosLevel: chaosLevel,
+        timestamp: Date.now(),
+      }),
+
+      vaccine_depopulation_plot: () => ({
+        id: makeId(),
+        type: "error",
+        title: "💉 Conspiración de Despoblación Vacunal",
+        description: `Evidencia de un plan de despoblación a través de vacunas ha sido expuesta en ${affectedCountry.name}, causando pánico masivo`,
+        effects: [
+          "Plan de despoblación documentado",
+          "Efectos adversos ocultos revelados",
+          "Manipulación de datos de seguridad",
+          "Agenda eugenésica expuesta",
+          "Crisis de salud pública masiva"
+        ],
+        countryEffects: {
+          [affectedCountry.id]: {
+            stabilityChange: -60,
+            economyChange: -800,
+            debtChange: 18,
+          },
+        },
+        targetedCountry: affectedCountry.id,
+        chaosLevel: chaosLevel,
+        timestamp: Date.now(),
+      }),
+
+      chemtrail_operation: () => ({
+        id: makeId(),
+        type: "error",
+        title: "✈️ Operación Chemtrails Confirmada",
+        description: `Programas de fumigación atmosférica secreta han sido confirmados en ${affectedCountry.name}, revelando manipulación química del aire`,
+        effects: [
+          "Fumigación atmosférica secreta confirmada",
+          "Químicos tóxicos en el aire documentados",
+          "Manipulación del clima y salud",
+          "Programas de geoingeniería ocultos",
+          "Crisis ambiental y sanitaria"
+        ],
+        countryEffects: {
+          [affectedCountry.id]: {
+            stabilityChange: -40,
+            economyChange: -950,
+            debtChange: 16,
+          },
+        },
+        targetedCountry: affectedCountry.id,
+        chaosLevel: chaosLevel,
+        timestamp: Date.now(),
+      }),
+
+      digital_surveillance_state: () => ({
+        id: makeId(),
+        type: "error",
+        title: "📱 Estado de Vigilancia Digital Total",
+        description: `Un sistema completo de vigilancia digital ha sido expuesto en ${affectedCountry.name}, monitoreando cada aspecto de la vida ciudadana`,
+        effects: [
+          "Vigilancia digital total expuesta",
+          "Monitoreo de comunicaciones masivo",
+          "Seguimiento de ubicación permanente",
+          "Análisis de comportamiento predictivo",
+          "Erosión completa de la privacidad"
+        ],
+        countryEffects: {
+          [affectedCountry.id]: {
+            stabilityChange: -35,
+            economyChange: -1100,
+            debtChange: 20,
+          },
+        },
+        targetedCountry: affectedCountry.id,
+        chaosLevel: chaosLevel,
+        timestamp: Date.now(),
+      }),
+
     // Nuevo evento específico de karma
     karma_rebellion: () => ({
       id: makeId(),
@@ -1853,422 +2154,9 @@ export function generateRandomEvent(
       timestamp: Date.now(),
     }),
 
-    // ========== 11 EVENTOS DE CONSPIRACIÓN ESPECÍFICOS ==========
-    illuminati_manipulation: () => ({
-      id: makeId(),
-      type: "error",
-      title: "👁️ Manipulación Illuminati Detectada",
-      description: `Evidencia de manipulación secreta por sociedades ocultas ha sido descubierta en ${affectedCountry.name}`,
-      effects: [
-        "Estructuras de poder ocultas expuestas",
-        "Desconfianza masiva en instituciones",
-        "Protestas anti-establishment generalizadas",
-        "Investigaciones gubernamentales iniciadas",
-        "Redes de conspiración desmanteladas",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -40,
-          economyChange: -1200,
-          debtChange: 15,
-          resourceEffects: {
-            servicios: -50,
-            turismo: -60,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
+    // ========== EVENTOS DE CORRUPCIÓN ESPECÍFICOS POR REGIÓN ==========
 
-    masonic_lodge_exposed: () => ({
-      id: makeId(),
-      type: "warning",
-      title: "🏛️ Logia Masónica Expuesta",
-      description: `Una poderosa logia masónica que controlaba sectores clave de ${affectedCountry.name} ha sido expuesta públicamente`,
-      effects: [
-        "Redes de influencia masónica reveladas",
-        "Escándalo de corrupción institucional",
-        "Renuncias masivas en el gobierno",
-        "Reformas de transparencia exigidas",
-        "Pérdida de confianza en élites",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -35,
-          economyChange: -800,
-          debtChange: 12,
-          resourceEffects: {
-            "servicios financieros": -70,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
 
-    weather_manipulation_exposed: () => ({
-      id: makeId(),
-      type: "error",
-      title: "🌪️ Manipulación Climática Descubierta",
-      description: `Evidencia de manipulación climática artificial ha sido descubierta afectando a ${affectedCountry.name}`,
-      effects: [
-        "Tecnología de geoingeniería expuesta",
-        "Protestas ambientales masivas",
-        "Demandas internacionales por daños",
-        "Crisis de soberanía atmosférica",
-        "Investigación de crímenes climáticos",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -45,
-          economyChange: -1500,
-          populationChange: -1000000,
-          debtChange: 20,
-          resourceEffects: {
-            agricultura: -80,
-            turismo: -70,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
-
-    deep_state_purge: () => ({
-      id: makeId(),
-      type: "warning",
-      title: "🕴️ Purga del Estado Profundo",
-      description: `Una purga masiva del "estado profundo" está ocurriendo en ${affectedCountry.name}, desestabilizando instituciones`,
-      effects: [
-        "Funcionarios clave removidos masivamente",
-        "Servicios de inteligencia reestructurados",
-        "Continuidad gubernamental amenazada",
-        "Facciones políticas en guerra",
-        "Crisis de gobernabilidad institucional",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -50,
-          economyChange: -1000,
-          debtChange: 18,
-          resourceEffects: {
-            servicios: -60,
-            tecnología: -40,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
-
-    mind_control_experiment: () => ({
-      id: makeId(),
-      type: "error",
-      title: "🧠 Experimento de Control Mental Expuesto",
-      description: `Experimentos secretos de control mental han sido descubiertos en ${affectedCountry.name}, causando pánico masivo`,
-      effects: [
-        "Experimentos psicológicos ilegales revelados",
-        "Víctimas de experimentos demandando justicia",
-        "Crisis de confianza en ciencia gubernamental",
-        "Protestas por derechos humanos",
-        "Investigaciones internacionales iniciadas",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -55,
-          economyChange: -1800,
-          populationChange: -500000,
-          debtChange: 25,
-          resourceEffects: {
-            tecnología: -90,
-            servicios: -70,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
-
-    shadow_government_revealed: () => ({
-      id: makeId(),
-      type: "error", // Gobierno en las sombras: evento catastrófico
-      title: "👤 Gobierno en las Sombras Revelado",
-      description: `Un gobierno paralelo que operaba en secreto en ${affectedCountry.name} ha sido completamente expuesto`,
-      effects: [
-        "Estructuras de poder paralelas desmanteladas",
-        "Documentos clasificados filtrados masivamente",
-        "Crisis constitucional sin precedentes",
-        "Llamados a refundación del estado",
-        "Intervención internacional considerada",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -60,
-          economyChange: -2000,
-          debtChange: 30,
-          resourceEffects: {
-            "servicios financieros": -80,
-            servicios: -75,
-            tecnología: -50,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
-
-    alien_technology_leak: () => ({
-      id: makeId(),
-      type: "warning",
-      title: "👽 Filtración de Tecnología Alienígena",
-      description: `Documentos sobre tecnología extraterrestre en posesión del gobierno de ${affectedCountry.name} han sido filtrados`,
-      effects: [
-        "Evidencia de contacto extraterrestre confirmada",
-        "Tecnología avanzada mantenida en secreto",
-        "Demandas de transparencia total",
-        "Pánico y fascinación pública simultánea",
-        "Reevaluación de la historia humana",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -30,
-          economyChange: -500,
-          debtChange: 10,
-          resourceEffects: {
-            tecnología: 100, // Paradójicamente beneficia la tecnología
-            servicios: -40,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
-
-    pharmaceutical_conspiracy: () => ({
-      id: makeId(),
-      type: "error",
-      title: "💊 Conspiración Farmacéutica Masiva",
-      description: `Una conspiración masiva de la industria farmacéutica para suprimir curas ha sido expuesta en ${affectedCountry.name}`,
-      effects: [
-        "Supresión de curas médicas revelada",
-        "Demandas colectivas multimillonarias",
-        "Crisis de confianza en sistema de salud",
-        "Reformas médicas urgentes requeridas",
-        "Investigación de crímenes contra humanidad",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -45,
-          economyChange: -1600,
-          populationChange: -800000,
-          debtChange: 22,
-          resourceEffects: {
-            servicios: -65,
-            tecnología: -30,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
-
-    financial_elite_exposed: () => ({
-      id: makeId(),
-      type: "warning", // Elite financiera expuesta: negativo pero no colapso
-      title: "💰 Élite Financiera Global Expuesta",
-      description: `Las manipulaciones secretas de la élite financiera global han sido expuestas, afectando gravemente a ${affectedCountry.name}`,
-      effects: [
-        "Manipulación de mercados globales revelada",
-        "Esquemas de evasión fiscal expuestos",
-        "Crisis de legitimidad del sistema financiero",
-        "Protestas anti-Wall Street masivas",
-        "Reformas financieras radicales exigidas",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -40,
-          economyChange: -2200,
-          debtChange: 35,
-          resourceEffects: {
-            "servicios financieros": -90,
-            oro: -50,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
-
-    media_brainwashing_exposed: () => ({
-      id: makeId(),
-      type: "warning", // Manipulación mediática: negativo pero no catastrófico
-      title: "📺 Lavado de Cerebro Mediático Expuesto",
-      description: `Técnicas de lavado de cerebro masivo a través de medios de comunicación han sido reveladas en ${affectedCountry.name}`,
-      effects: [
-        "Manipulación psicológica masiva revelada",
-        "Boicots a medios tradicionales",
-        "Crisis de credibilidad informativa",
-        "Surgimiento de medios alternativos",
-        "Demandas por daños psicológicos colectivos",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -35,
-          economyChange: -900,
-          debtChange: 15,
-          resourceEffects: {
-            servicios: -55,
-            turismo: -45,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
-
-    population_control_agenda: () => ({
-      id: makeId(),
-      type: "error",
-      title: "👥 Agenda de Control Poblacional Revelada",
-      description: `Una agenda secreta de control poblacional ha sido descubierta operando en ${affectedCountry.name}`,
-      effects: [
-        "Programas de reducción poblacional expuestos",
-        "Esterilización masiva encubierta revelada",
-        "Crisis de derechos reproductivos",
-        "Protestas por genocidio demográfico",
-        "Tribunal internacional de derechos humanos convocado",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -65,
-          economyChange: -1400,
-          populationChange: -2000000,
-          debtChange: 40,
-          resourceEffects: {
-            servicios: -80,
-            agricultura: -60,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
-
-    // ========== NUEVOS EVENTOS DE CONSPIRACIÓN ESPECÍFICOS ==========
-    
-    // Nuevos eventos de conspiración adicionales
-    reptilian_elite_exposed: () => ({
-      id: makeId(),
-      type: "error",
-      title: "🦎 Élite Reptiliana Expuesta",
-      description: `Evidencia de una élite reptiliana controlando ${affectedCountry.name} ha sido filtrada al público`,
-      effects: [
-        "Documentos sobre seres reptilianos revelados",
-        "Pánico masivo y teorías conspirativas",
-        "Crisis de identidad de la humanidad",
-        "Protestas exigiendo transparencia total",
-        "Investigación xenobiológica iniciada",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -70,
-          economyChange: -2500,
-          populationChange: -1500000,
-          debtChange: 45,
-          resourceEffects: {
-            servicios: -85,
-            turismo: -90,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
-
-    chemtrails_program_exposed: () => ({
-      id: makeId(),
-      type: "error",
-      title: "✈️ Programa de Chemtrails Revelado",
-      description: `Un programa secreto de fumigación química desde aviones ha sido expuesto en ${affectedCountry.name}`,
-      effects: [
-        "Evidencia de fumigación química aérea",
-        "Crisis de salud pública masiva",
-        "Demandas por envenenamiento poblacional",
-        "Prohibición de vuelos comerciales",
-        "Investigación de crímenes contra humanidad",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -50,
-          economyChange: -1800,
-          populationChange: -1200000,
-          debtChange: 35,
-          resourceEffects: {
-            agricultura: -70,
-            servicios: -60,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
-
-    mk_ultra_revival: () => ({
-      id: makeId(),
-      type: "error",
-      title: "🧪 Programa MK-Ultra Revivido",
-      description: `Un programa de control mental estilo MK-Ultra ha sido descubierto operando en ${affectedCountry.name}`,
-      effects: [
-        "Experimentos de control mental activos",
-        "Víctimas de lavado de cerebro identificadas",
-        "Crisis de derechos humanos internacional",
-        "Protestas por libertad mental",
-        "Tribunal de crímenes psicológicos convocado",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -65,
-          economyChange: -2200,
-          populationChange: -800000,
-          debtChange: 40,
-          resourceEffects: {
-            tecnología: -95,
-            servicios: -80,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
 
     flat_earth_government_cover: () => ({
       id: makeId(),
@@ -2357,94 +2245,11 @@ export function generateRandomEvent(
       timestamp: Date.now(),
     }),
 
-    cia_black_ops_revealed: () => ({
-      id: makeId(),
-      type: "error",
-      title: "🏴 Operaciones Negras de la CIA Reveladas",
-      description: `Documentos clasificados han expuesto operaciones encubiertas de la CIA en ${affectedCountry.name}, incluyendo manipulación política y económica`,
-      effects: [
-        "Operaciones encubiertas de la CIA expuestas",
-        "Manipulación política estadounidense revelada",
-        "Crisis de confianza en relaciones bilaterales",
-        "Demandas de compensación internacional",
-        "Protestas anti-estadounidenses masivas",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -50,
-          economyChange: -1200,
-          debtChange: 18,
-          resourceEffects: {
-            "servicios financieros": -70,
-            servicios: -60,
-            tecnología: -40,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
 
-    fbi_surveillance_scandal: () => ({
-      id: makeId(),
-      type: "warning",
-      title: "👁️ Escándalo de Vigilancia del FBI",
-      description: `Se ha revelado que el FBI ha estado realizando vigilancia masiva e ilegal de ciudadanos en ${affectedCountry.name} sin autorización judicial`,
-      effects: [
-        "Vigilancia masiva del FBI expuesta",
-        "Violaciones de privacidad documentadas",
-        "Crisis de derechos civiles",
-        "Demandas legales masivas contra el gobierno",
-        "Reformas de vigilancia exigidas",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -35,
-          economyChange: -600,
-          debtChange: 15,
-          resourceEffects: {
-            servicios: -45,
-            tecnología: -30,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
 
-    epstein_network_exposed: () => ({
-      id: makeId(),
-      type: "error",
-      title: "🏝️ Red de Jeffrey Epstein Completamente Expuesta",
-      description: `La red completa de tráfico y chantaje de Jeffrey Epstein ha sido revelada, implicando a élites políticas y económicas de ${affectedCountry.name}`,
-      effects: [
-        "Red de tráfico de élites expuesta",
-        "Chantaje político masivo revelado",
-        "Renuncias masivas de funcionarios",
-        "Crisis de legitimidad gubernamental",
-        "Investigaciones internacionales iniciadas",
-      ],
-      countryEffects: {
-        [affectedCountry.id]: {
-          stabilityChange: -60,
-          economyChange: -1800,
-          debtChange: 25,
-          resourceEffects: {
-            "servicios financieros": -80,
-            servicios: -70,
-            turismo: -90,
-          },
-        },
-      },
-      isPlayerTriggered: false,
-      targetedCountry: affectedCountry.id,
-      chaosLevel: chaosLevel,
-      timestamp: Date.now(),
-    }),
+
+
+
 
     // ========== EVENTOS DE CORRUPCIÓN ESPECÍFICOS POR REGIÓN ==========
     
