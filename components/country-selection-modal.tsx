@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import type { Country } from "@/lib/types"
 import { Search, Crown, Users, DollarSign, Shield, Info, Target, Globe, Zap } from "lucide-react"
+import { getCountryFlag } from "@/lib/data/flags"
 
 interface CountrySelectionModalProps {
   countries: Country[]
@@ -127,18 +128,17 @@ export function CountrySelectionModal({ countries, onSelect }: CountrySelectionM
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[calc(88vh-320px)] overflow-y-auto" style={{
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#475569 #1e293b',
-                  msOverflowStyle: 'none'
-                }}>
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#475569 #1e293b',
+                msOverflowStyle: 'none'
+              }}>
                 {filteredCountries.map((country) => (
                   <div
                     key={country.id}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                      selectedCountry?.id === country.id
-                        ? "border-cyan-500 bg-cyan-900/20"
-                        : "border-gray-600 bg-slate-800 hover:border-gray-500"
-                    }`}
+                    className={`p-4 rounded-lg border cursor-pointer transition-all ${selectedCountry?.id === country.id
+                      ? "border-cyan-500 bg-cyan-900/20"
+                      : "border-gray-600 bg-slate-800 hover:border-gray-500"
+                      }`}
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
@@ -149,8 +149,9 @@ export function CountrySelectionModal({ countries, onSelect }: CountrySelectionM
                   >
                     <div className="flex items-start justify-between mb-2">
                       <h3 className="font-bold text-white flex items-center gap-2">
-                        {selectedCountry?.id === country.id && <span className="text-green-400">✅</span>}
+                        <span className="text-2xl">{getCountryFlag(country.id)}</span>
                         {country.name}
+                        {selectedCountry?.id === country.id && <span className="text-green-400 text-sm">✅</span>}
                       </h3>
                       <div className="flex gap-2">
                         {selectedCountry?.id === country.id && (
@@ -205,8 +206,10 @@ export function CountrySelectionModal({ countries, onSelect }: CountrySelectionM
               <div className="flex justify-between items-center pt-4 border-t border-gray-600">
                 <div className="text-sm">
                   {selectedCountry ? (
-                    <div className="text-green-400 font-semibold">
-                      ✅ Seleccionado: <span className="text-white">{selectedCountry.name}</span>
+                    <div className="text-green-400 font-semibold flex items-center gap-2">
+                      ✅ Seleccionado:
+                      <span className="text-2xl">{getCountryFlag(selectedCountry.id)}</span>
+                      <span className="text-white text-lg">{selectedCountry.name}</span>
                     </div>
                   ) : (
                     <div className="text-gray-400">
@@ -214,18 +217,17 @@ export function CountrySelectionModal({ countries, onSelect }: CountrySelectionM
                     </div>
                   )}
                 </div>
-                <Button 
+                <Button
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
                     handleSelect()
-                  }} 
-                  disabled={!selectedCountry} 
-                  className={`px-6 py-2 font-bold text-lg ${
-                    selectedCountry 
-                      ? "bg-green-600 hover:bg-green-700 text-white animate-pulse" 
-                      : "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  }`}
+                  }}
+                  disabled={!selectedCountry}
+                  className={`px-6 py-2 font-bold text-lg ${selectedCountry
+                    ? "bg-green-600 hover:bg-green-700 text-white animate-pulse"
+                    : "bg-gray-600 text-gray-400 cursor-not-allowed"
+                    }`}
                 >
                   {selectedCountry ? "🚀 Comenzar Partida" : "Selecciona un País"}
                 </Button>

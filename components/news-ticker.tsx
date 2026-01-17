@@ -11,8 +11,9 @@ interface NewsTickerProps {
 export function NewsTicker({ events, maxItems = 8 }: NewsTickerProps) {
     const [isPaused, setIsPaused] = useState(false)
 
-    // Get recent events sorted by timestamp
-    const recentEvents = [...events]
+    // Deduplicate events by ID and sort descending
+    const uniqueEvents = Array.from(new Map(events.map(event => [event.id, event])).values())
+    const recentEvents = uniqueEvents
         .sort((a, b) => b.timestamp - a.timestamp)
         .slice(0, maxItems)
 
@@ -22,6 +23,7 @@ export function NewsTicker({ events, maxItems = 8 }: NewsTickerProps) {
             case "error": return "🚨"
             case "warning": return "⚠️"
             case "rebellion": return "🔥"
+            case "money": return "💰"
             case "economic": return "💰"
             default: return "📢"
         }
@@ -33,6 +35,7 @@ export function NewsTicker({ events, maxItems = 8 }: NewsTickerProps) {
             case "error": return "text-red-400"
             case "warning": return "text-yellow-400"
             case "rebellion": return "text-orange-400"
+            case "money": return "text-cyan-400"
             case "economic": return "text-cyan-400"
             default: return "text-gray-300"
         }
@@ -69,8 +72,8 @@ export function NewsTicker({ events, maxItems = 8 }: NewsTickerProps) {
                             animationPlayState: isPaused ? 'paused' : 'running'
                         }}
                     >
-                        {/* Duplicate events for seamless loop */}
-                        {[...recentEvents, ...recentEvents].map((event, index) => (
+                        {/* Events list */}
+                        {recentEvents.map((event, index) => (
                             <div
                                 key={`${event.id}-${index}`}
                                 className="flex items-center gap-2 px-4"
