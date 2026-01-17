@@ -14,6 +14,7 @@ import { LevelUpNotification } from "@/components/level-up-notification"
 import { AchievementsPanel } from "@/components/achievements-panel"
 import { GameOverModal } from "@/components/game-over-modal"
 import { AISettings } from "@/components/ai-settings"
+import { NewsTicker } from "@/components/news-ticker"
 import { useGameState } from "@/hooks/use-game-state"
 import type { Country, TradeOffer, GameAction } from "@/lib/types"
 
@@ -121,7 +122,7 @@ export default function GeopoliticsGame() {
   // Función para manejar acciones de IA
   const handleAIAction = (action: any) => {
     console.log('🤖 Acción de IA recibida:', action)
-    
+
     // Convertir la acción de IA al formato esperado por executeAction
     const gameAction: GameAction = {
       id: `ai_action_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -132,11 +133,11 @@ export default function GeopoliticsGame() {
       sourceCountry: action.sourceCountry,
       severity: action.severity || 5
     }
-    
+
     // Ejecutar la acción
     executeAction(gameAction)
     setRecentAction(gameAction)
-    
+
     // Limpiar la acción después de un tiempo
     setTimeout(() => {
       setRecentAction(null)
@@ -147,7 +148,7 @@ export default function GeopoliticsGame() {
   const handleActionExecuted = (action: GameAction) => {
     executeAction(action)
     setRecentAction(action)
-    
+
     // Limpiar la acción después de un tiempo para permitir nuevas animaciones
     setTimeout(() => {
       setRecentAction(null)
@@ -158,23 +159,23 @@ export default function GeopoliticsGame() {
   const getTargetCountry = (): Country | null => {
     if (!selectedCountry) return null
     if (selectedCountry === playerCountry) return null
-    
+
     const selectedCountryData = countries.find((c) => c.id === selectedCountry)
     if (!selectedCountryData) return null
     if (selectedCountryData.ownedBy === playerCountry) return null
-    
+
     // Permitir atacar países aliados si las relaciones diplomáticas son muy tensas (< 20)
     const playerCountryData = countries.find((c) => c.id === playerCountry)
     if (playerCountryData) {
       const isAlly = playerCountryData.alliances?.includes(selectedCountryData.id)
       const diplomaticRelation = playerCountryData.diplomaticRelations?.[selectedCountryData.id] || 0
-      
+
       // Si es aliado pero las relaciones son muy tensas, permitir el ataque
       if (isAlly && diplomaticRelation >= 20) {
         return null // No permitir ataque a aliados con buenas relaciones
       }
     }
-    
+
     return selectedCountryData
   }
 
@@ -273,12 +274,16 @@ export default function GeopoliticsGame() {
         {/* Notificaciones flotantes - SOLO visibleNotifications */}
         <EventNotifications events={visibleNotifications} onDismiss={dismissNotification} />
 
-        {/* Notificación de subida de nivel */}
-        <LevelUpNotification 
-          show={showLevelUp} 
+        <LevelUpNotification
+          show={showLevelUp}
           playerLevel={playerLevel}
           onDismiss={dismissLevelUp}
         />
+
+        {/* Ticker de noticias en la parte inferior */}
+        <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-auto">
+          <NewsTicker events={gameEvents} />
+        </div>
       </div>
 
       {/* Modales */}

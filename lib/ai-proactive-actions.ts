@@ -15,12 +15,12 @@ export interface AIProactiveResult {
 }
 
 class AIProactiveActionsService {
-  private lastActionTime: Map<string, number> = new Map()
-  private readonly ACTION_COOLDOWN = 120000 // 2 minutos entre acciones por país
-  private readonly MAX_ACTIVE_AI_COUNTRIES = 3 // Máximo 3 países IA activos
+  private lastActionTime: Map<string, number> = new Map() // Configuración de frecuencia de acciones
+  private readonly ACTION_COOLDOWN = 180000 // 3 minutos entre acciones por país (antes 2 min)
+  private readonly MAX_ACTIVE_AI_COUNTRIES = 3 // Máximo número de países IA activos simultáneamente
   private activeAICountries: Set<string> = new Set()
   private lastAIRotation = 0
-  private readonly AI_ROTATION_INTERVAL = 60000 // Rotar países IA cada 60 segundos
+  private readonly AI_ROTATION_INTERVAL = 90000 // Rotar países activos cada 90s (antes 60s)
 
   /**
    * Evalúa si un país controlado por IA debe tomar acciones proactivas
@@ -42,13 +42,13 @@ class AIProactiveActionsService {
     this.rotateActiveAICountries(countries, playerCountryId)
 
     // Solo procesar países IA activos que pueden tomar acciones
-    const aiCountries = countries.filter(country => 
-      country.id !== playerCountryId && 
+    const aiCountries = countries.filter(country =>
+      country.id !== playerCountryId &&
       !country.ownedBy &&
       this.activeAICountries.has(country.id) &&
       this.shouldTakeAction(country)
     )
-    
+
     console.log(`🤖 Países IA activos: ${Array.from(this.activeAICountries).join(', ')}`)
     console.log(`🤖 Países IA que pueden actuar: ${aiCountries.map(c => c.name).join(', ')}`)
 
@@ -67,18 +67,18 @@ class AIProactiveActionsService {
 
         if (proactiveAction) {
           actions.push(proactiveAction)
-          
+
           // Ejecutar la acción y generar evento
           const actionResult = this.executeProactiveAction(
             proactiveAction,
             updatedCountries,
             playerCountryId
           )
-          
+
           if (actionResult.event) {
             events.push(actionResult.event)
           }
-          
+
           updatedCountries = actionResult.updatedCountries
           this.lastActionTime.set(country.id, Date.now())
         }
@@ -88,7 +88,7 @@ class AIProactiveActionsService {
     }
 
     console.log(`🤖 Resultado: ${actions.length} acciones generadas, ${events.length} eventos creados`)
-    
+
     return { actions, events, updatedCountries }
   }
 
@@ -101,21 +101,21 @@ class AIProactiveActionsService {
    */
   private rotateActiveAICountries(countries: Country[], playerCountryId: string): void {
     const now = Date.now()
-    
+
     // Solo rotar si han pasado 30 segundos desde la última rotación
     if (now - this.lastAIRotation < this.AI_ROTATION_INTERVAL) {
       return
     }
 
     this.lastAIRotation = now
-    
+
     // Obtener el PIB del jugador
     const playerCountry = countries.find(c => c.id === playerCountryId)
     const playerGDP = playerCountry?.economy.gdp || 0
-    
+
     // Obtener países IA disponibles con PIB mayor al del jugador
-    const availableAICountries = countries.filter(country => 
-      country.id !== playerCountryId && 
+    const availableAICountries = countries.filter(country =>
+      country.id !== playerCountryId &&
       !country.ownedBy &&
       country.economy.gdp > playerGDP
     )
@@ -126,7 +126,7 @@ class AIProactiveActionsService {
         .filter(country => country.id !== playerCountryId && !country.ownedBy)
         .sort((a, b) => b.economy.gdp - a.economy.gdp)
         .slice(0, this.MAX_ACTIVE_AI_COUNTRIES)
-      
+
       this.activeAICountries = new Set(fallbackCountries.map(c => c.id))
       console.log(`🔄 Países IA activos (fallback - mayor PIB): ${Array.from(this.activeAICountries).join(', ')}`)
       return
@@ -151,7 +151,7 @@ class AIProactiveActionsService {
   private shouldTakeAction(country: Country): boolean {
     const lastAction = this.lastActionTime.get(country.id) || 0
     const timeSinceLastAction = Date.now() - lastAction
-    
+
     if (timeSinceLastAction < this.ACTION_COOLDOWN) {
       return false
     }
@@ -170,10 +170,10 @@ class AIProactiveActionsService {
     recentEvents: GameEvent[]
   ): Promise<AIProactiveAction | null> {
     const context = this.buildActionContext(country, allCountries, playerCountryId, recentEvents)
-    
+
     const playerCountry = allCountries.find(c => c.id === playerCountryId)
     const playerGDP = playerCountry?.economy.gdp || 0
-    
+
     const prompt = `
 Como ${country.name}, eres una SUPERPOTENCIA ECONÓMICA con ventaja sobre otros países. Tu PIB de $${country.economy.gdp}B te da superioridad económica y debes usarla estratégicamente.
 
@@ -231,11 +231,11 @@ ${context}`
         actionHistory: [],
         currentMessage: prompt
       }
-      
+
       const response = await aiDiplomacyService.generateAIResponse(aiContext)
 
       const actionData = JSON.parse(response.message)
-      
+
       // Si por alguna razón la IA devuelve 'none', forzar una acción aleatoria
       if (actionData.action === 'none' || !actionData.action) {
         const actions = ['military_action', 'economic_sanction', 'conspiracy']
@@ -252,7 +252,7 @@ ${context}`
       }
 
       const cost = actionCosts[actionData.action as keyof typeof actionCosts] || 0
-      
+
       // Si no tiene recursos suficientes, elegir una acción más barata
       if (country.economy.gdp < cost) {
         if (country.economy.gdp >= 30) {
@@ -298,8 +298,8 @@ ${context}`
     recentEvents: GameEvent[]
   ): string {
     const playerCountry = allCountries.find(c => c.id === playerCountryId)
-    const neighbors = allCountries.filter(c => 
-      c.id !== country.id && 
+    const neighbors = allCountries.filter(c =>
+      c.id !== country.id &&
       !c.ownedBy &&
       Math.abs(c.economy.gdp - country.economy.gdp) < 300
     )
@@ -319,11 +319,11 @@ ${recentEventsSummary}
 
 Relaciones diplomáticas:
 ${Object.entries(country.diplomaticRelations || {})
-  .map(([id, relation]) => {
-    const targetCountry = allCountries.find(c => c.id === id)
-    return `- ${targetCountry?.name}: ${relation}%`
-  })
-  .join('\n')}`
+        .map(([id, relation]) => {
+          const targetCountry = allCountries.find(c => c.id === id)
+          return `- ${targetCountry?.name}: ${relation}%`
+        })
+        .join('\n')}`
   }
 
   /**
@@ -376,7 +376,7 @@ ${Object.entries(country.diplomaticRelations || {})
     countries: Country[]
   ): GameEvent {
     const targetCountry = countries.find(c => c.id === action.action.targetCountry)
-    
+
     return {
       id: `ai_military_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type: 'warning',
@@ -409,7 +409,7 @@ ${Object.entries(country.diplomaticRelations || {})
     countries: Country[]
   ): GameEvent {
     const targetCountry = countries.find(c => c.id === action.action.targetCountry)
-    
+
     return {
       id: `ai_sanction_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type: 'info',
@@ -441,7 +441,7 @@ ${Object.entries(country.diplomaticRelations || {})
     countries: Country[]
   ): GameEvent {
     const targetCountry = countries.find(c => c.id === action.action.targetCountry)
-    
+
     return {
       id: `ai_conspiracy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       type: 'error',

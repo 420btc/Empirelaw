@@ -41,8 +41,18 @@ export function WorldMap({
   onMapClick,
   recentAction,
 }: WorldMapProps) {
+  interface FloatingText {
+    id: string
+    x: number
+    y: number
+    text: string
+    color: string
+    startTime: number
+  }
+
   const [blinkState, setBlinkState] = useState(true)
   const [activeAnimations, setActiveAnimations] = useState<MissileAnimation[]>([])
+  const [floatingTexts, setFloatingTexts] = useState<FloatingText[]>([])
 
   // Coordenadas aproximadas de los países (centros geográficos)
   const countryCoordinates: Record<string, [number, number]> = {
@@ -137,6 +147,13 @@ export function WorldMap({
     venezuela: [-66, 6], // Venezuela - Norte de Sudamérica
   }
 
+  // Define a D3 projection for converting lat/lon to pixel coordinates
+  // This needs to match the projection used by ComposableMap as closely as possible
+  const projection = geoMercator()
+    .scale(145)
+    .center([0, 20])
+    .translate([400, 300])
+
   // Efecto de parpadeo para el país seleccionado
   useEffect(() => {
     if (!selectedCountry) return
@@ -151,11 +168,11 @@ export function WorldMap({
   // Efecto para crear animaciones cuando hay nuevas acciones o eventos
   useEffect(() => {
     if (!recentAction) return
-    
+
     let sourceCountry: string | null = null
     let targetCountry: string | null = null
     let actionType: string = 'event'
-    
+
     // Manejar GameAction (acciones del jugador)
     if ('sourceCountry' in recentAction && 'targetCountry' in recentAction) {
       sourceCountry = recentAction.sourceCountry
@@ -168,12 +185,12 @@ export function WorldMap({
       const effects = recentAction.effects || []
       const description = recentAction.description || ''
       const title = recentAction.title || ''
-      
+
       // Buscar patrones de países en el texto
       const allText = `${title} ${description} ${effects.join(' ')}`
       const countryNames = countries.map(c => c.name)
       const foundCountries: string[] = []
-      
+
       // Buscar nombres de países en el texto
       countryNames.forEach(name => {
         if (allText.includes(name)) {
@@ -183,7 +200,7 @@ export function WorldMap({
           }
         }
       })
-      
+
       // Si encontramos al menos 2 países, usar los primeros dos
       if (foundCountries.length >= 2) {
         sourceCountry = foundCountries[0]
@@ -201,26 +218,26 @@ export function WorldMap({
           targetCountry = playerCountry
         }
       }
-      
+
       actionType = recentAction.type
     }
-    
+
     // Solo crear animaciones si tenemos origen y destino válidos
     if (!sourceCountry || !targetCountry || sourceCountry === targetCountry) {
       return
     }
-    
+
     // Verificar que tenemos coordenadas para ambos países
     const sourceCoords = countryCoordinates[sourceCountry]
     const targetCoords = countryCoordinates[targetCountry]
-    
+
     if (!sourceCoords || !targetCoords) {
       console.log(`⚠️ No se encontraron coordenadas para ${sourceCountry} o ${targetCountry}`)
       return
     }
 
-    // Duración fija de 2 segundos para todas las animaciones
-    const ANIMATION_DURATION = 2000
+    // Duración extendida para permitir efectos de impacto más largos
+    const ANIMATION_DURATION = 3000
 
     const newAnimation: MissileAnimation = {
       id: `missile_${Date.now()}`,
@@ -232,7 +249,7 @@ export function WorldMap({
     }
 
     console.log(`🚀 Creando animación: ${sourceCountry} → ${targetCountry} (${actionType}) - 2s`)
-    
+
     setActiveAnimations(prev => [...prev, newAnimation])
 
     // Remover la animación después de que termine
@@ -242,12 +259,19 @@ export function WorldMap({
 
   }, [recentAction, countries, playerCountry])
 
-  // Limpiar animaciones expiradas
+  // Limpiar animaciones y textos expirados
   useEffect(() => {
     const cleanup = setInterval(() => {
       const now = Date.now()
-      setActiveAnimations(prev => 
+
+      // Limpiar animaciones de misiles
+      setActiveAnimations(prev =>
         prev.filter(anim => now - anim.startTime < anim.duration)
+      )
+
+      // Limpiar textos flotantes
+      setFloatingTexts(prev =>
+        prev.filter(text => now - text.startTime < 2000)
       )
     }, 100)
 
@@ -305,13 +329,13 @@ export function WorldMap({
       // Generar un color consistente basado en la primera alianza (alfabéticamente)
       const sortedAlliances = [...country.alliances].sort()
       const primaryAlly = sortedAlliances[0]
-      
+
       // Crear un hash simple del nombre de la alianza para generar un color consistente
       let hash = 0
       for (let i = 0; i < primaryAlly.length; i++) {
         hash = primaryAlly.charCodeAt(i) + ((hash << 5) - hash)
       }
-      
+
       // Convertir el hash a un color HSL para mejor distribución de colores
       const hue = Math.abs(hash) % 360
       return `hsl(${hue}, 70%, 60%)` // Saturación y luminosidad fijas para consistencia
@@ -440,20 +464,16 @@ export function WorldMap({
     let x = 0
     let y = 0
     const length = coordinates.length
-    
+
     coordinates.forEach(coord => {
       x += coord[0]
       y += coord[1]
     })
-    
+
     return [x / length, y / length]
   }
 
-  // Configuración de proyección (debe coincidir con la del mapa)
-  const projection = geoMercator()
-    .scale(145)
-    .center([0, 20])
-    .translate([400, 300]) // Ajustar según el tamaño del contenedor
+  // Configuración de proyección eliminada de aquí porque ya está definida arriba
 
   // Función para determinar el color del efecto de impacto
   const getImpactColor = (actionType: string): string => {
@@ -462,9 +482,9 @@ export function WorldMap({
       return '#22c55e' // Verde
     }
     // Acciones negativas (rojo)
-    if (actionType === 'military_action' || actionType === 'economic_sanction' || 
-        actionType === 'cyber_attack' || actionType === 'regime_change' || 
-        actionType === 'masonic_influence') {
+    if (actionType === 'military_action' || actionType === 'economic_sanction' ||
+      actionType === 'cyber_attack' || actionType === 'regime_change' ||
+      actionType === 'masonic_influence') {
       return '#ef4444' // Rojo
     }
     // Acciones neutrales (amarillo)
@@ -476,38 +496,38 @@ export function WorldMap({
     // Convertir coordenadas geográficas a coordenadas de píxeles
     const startPixels = projection(start)
     const endPixels = projection(end)
-    
+
     if (!startPixels || !endPixels) return ""
-    
+
     const [x1, y1] = startPixels
     const [x2, y2] = endPixels
-    
+
     // Calcular punto de control para crear una curva tipo misil
     const midX = (x1 + x2) / 2
     const midY = (y1 + y2) / 2
-    
+
     // Altura de la curva reducida (más baja para movimiento más rápido)
     const distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
     const curveHeight = Math.min(distance * 0.25, 80) // Altura reducida y máximo 80px
-    
+
     // Punto de control elevado para crear el arco
     const controlX = midX
     const controlY = midY - curveHeight
-    
+
     // Calcular posición actual en la curva usando interpolación acelerada
     const t = Math.pow(progress, 0.7) // Aceleración más rápida
     const currentX = (1 - t) ** 2 * x1 + 2 * (1 - t) * t * controlX + t ** 2 * x2
     const currentY = (1 - t) ** 2 * y1 + 2 * (1 - t) * t * controlY + t ** 2 * y2
-    
+
     // Crear path curvo desde inicio hasta posición actual
     if (progress < 0.01) {
       return `M ${x1} ${y1}`
     }
-    
+
     // Calcular punto de control proporcional al progreso acelerado
     const partialControlX = x1 + (controlX - x1) * Math.min(t * 2, 1)
     const partialControlY = y1 + (controlY - y1) * Math.min(t * 2, 1)
-    
+
     return `M ${x1} ${y1} Q ${partialControlX} ${partialControlY} ${currentX} ${currentY}`
   }
 
@@ -569,94 +589,105 @@ export function WorldMap({
               })
             }
           </Geographies>
-          
+
           {/* Renderizar líneas curvas con efectos de impacto */}
           {activeAnimations.map((animation) => {
             const now = Date.now()
             const elapsed = now - animation.startTime
             const progress = Math.min(elapsed / animation.duration, 1)
-            
+
+            // Fase de vuelo: 0% a 70% del tiempo total
+            // Fase de impacto: 70% a 100%
+            const flightDurationPct = 0.7
+            const flightProgress = Math.min(progress / flightDurationPct, 1)
+
             const sourceCoords = countryCoordinates[animation.sourceCountry]
             const targetCoords = countryCoordinates[animation.targetCountry]
-            
+
             if (!sourceCoords || !targetCoords) return null
-            
-            const simplePath = generateSimplePath(sourceCoords, targetCoords, progress)
+
+            // Usar el progreso ajustado para el vuelo
+            const simplePath = generateSimplePath(sourceCoords, targetCoords, flightProgress)
             const impactColor = getImpactColor(animation.actionType)
             const lineColor = impactColor
-            
+
             // Convertir coordenadas del país de destino a píxeles
             const targetPixels = projection(targetCoords)
             if (!targetPixels) return null
             const [targetX, targetY] = targetPixels
-            
-            // Calcular opacidad de desvanecimiento cuando la línea llega al destino
+
+            // Calcular opacidad para desvanecer el misil cuando llega
             let lineOpacity = 0.9
             let glowOpacity = 0.5
-            
-            if (progress >= 0.85) {
-              // Comenzar desvanecimiento en el último 15% del recorrido
-              const fadeProgress = (progress - 0.85) / 0.15 // 0 a 1 en los últimos 15%
-              lineOpacity = 0.9 * (1 - fadeProgress)
-              glowOpacity = 0.5 * (1 - fadeProgress)
+
+            if (flightProgress >= 0.9) {
+              // Desvanecer el misil justo antes de impactar
+              const fade = (flightProgress - 0.9) / 0.1
+              lineOpacity = 0.9 * (1 - fade)
+              glowOpacity = 0.5 * (1 - fade)
             }
-            
-            // Mostrar efecto de impacto cuando la línea llega al destino
-            const showImpact = progress >= 0.85
-            const impactProgress = Math.max(0, (progress - 0.85) / 0.15) // 0 a 1 en los últimos 15%
-            const impactRadius = 8 + impactProgress * 15 // Crece de 8 a 23px
-            const impactOpacity = Math.max(0, 0.8 - impactProgress * 0.8) // Desvanece de 0.8 a 0
-            
+
+            // Mostrar efectos de impacto una vez que termina el vuelo
+            const showImpact = progress >= flightDurationPct
+
+            // Calcular progreso del impacto (0 a 1 durante el 30% restante)
+            const impactPhaseProgress = Math.max(0, (progress - flightDurationPct) / (1 - flightDurationPct))
+
             return (
               <g key={animation.id}>
-                {/* Línea curva con color según el tipo de acción y desvanecimiento */}
-                <path
-                  d={simplePath}
-                  fill="none"
-                  stroke={lineColor}
-                  strokeWidth="3"
-                  strokeOpacity={lineOpacity}
-                  strokeLinecap="round"
-                />
-                {/* Efecto de brillo con color más claro y desvanecimiento */}
-                <path
-                  d={simplePath}
-                  fill="none"
-                  stroke={lineColor}
-                  strokeWidth="1"
-                  strokeOpacity={glowOpacity}
-                  strokeLinecap="round"
-                  filter="blur(1px)"
-                />
-                
-                {/* Círculo de impacto en el país de destino */}
-                {showImpact && (
-                  <g>
-                    {/* Círculo exterior (más grande y transparente) */}
-                    <circle
-                      cx={targetX}
-                      cy={targetY}
-                      r={impactRadius + 5}
-                      fill={impactColor}
-                      fillOpacity={impactOpacity * 0.3}
-                      stroke={impactColor}
-                      strokeWidth="2"
-                      strokeOpacity={impactOpacity * 0.6}
+                {/* Línea de misil - solo visible durante el vuelo */}
+                {progress < flightDurationPct + 0.05 && (
+                  <>
+                    <path
+                      d={simplePath}
+                      fill="none"
+                      stroke={lineColor}
+                      strokeWidth="3"
+                      strokeOpacity={lineOpacity}
+                      strokeLinecap="round"
                     />
-                    {/* Círculo interior (más pequeño y opaco) */}
-                    <circle
-                      cx={targetX}
-                      cy={targetY}
-                      r={impactRadius}
-                      fill={impactColor}
-                      fillOpacity={impactOpacity * 0.6}
+                    <path
+                      d={simplePath}
+                      fill="none"
+                      stroke={lineColor}
+                      strokeWidth="1"
+                      strokeOpacity={glowOpacity}
+                      strokeLinecap="round"
+                      filter="blur(1px)"
                     />
-                  </g>
+                  </>
                 )}
+
+                {/* Ondas de choque múltiples al impactar */}
+                {showImpact && [0, 1, 2].map(i => {
+                  // Cada onda empieza con un retraso
+                  const delay = i * 0.25
+                  if (impactPhaseProgress < delay) return null
+
+                  // Progreso individual de esta onda
+                  const rippleProgress = Math.min(1, (impactPhaseProgress - delay) * 2) // Velocidad x2
+
+                  // Efecto de expansión y desvanecimiento
+                  const radius = 5 + rippleProgress * 40 // Expande hasta 45px
+                  const opacity = 0.8 * (1 - rippleProgress) // Desvanece
+
+                  return (
+                    <circle
+                      key={`ripple-${i}`}
+                      cx={targetX}
+                      cy={targetY}
+                      r={radius}
+                      fill="none"
+                      stroke={impactColor}
+                      strokeWidth={3 - rippleProgress * 2}
+                      strokeOpacity={opacity}
+                    />
+                  )
+                })}
               </g>
             )
           })}
-          
+
           {/* Etiquetas "IA" para países controlados por IA */}
           <Geographies geography={geoUrl}>
             {({ geographies }) => {
@@ -666,22 +697,22 @@ export function WorldMap({
                   const countryId = getCountryData(geo.id)
                   return countryId === aiCountry.id
                 })
-                
+
                 if (!geography) return null
-                
+
                 // Calcular el centroide de la geometría del país
-                const centroid = geography.geometry.type === 'Polygon' 
+                const centroid = geography.geometry.type === 'Polygon'
                   ? getCentroid(geography.geometry.coordinates[0])
                   : geography.geometry.type === 'MultiPolygon'
-                  ? getCentroid(geography.geometry.coordinates[0][0])
-                  : null
-                
+                    ? getCentroid(geography.geometry.coordinates[0][0])
+                    : null
+
                 if (!centroid) return null
-                
+
                 const pixels = projection(centroid)
                 if (!pixels) return null
                 const [x, y] = pixels
-                
+
                 return (
                   <g key={`ai-label-${aiCountry.id}`}>
                     {/* Fondo semi-transparente para la etiqueta */}
@@ -714,6 +745,197 @@ export function WorldMap({
             }}
           </Geographies>
 
+          {/* Floating Activity Icons - Visual indicators for country status */}
+          <Geographies geography={geoUrl}>
+            {({ geographies }) => {
+              // Show icons only for notable countries (unstable, player owned, or in crisis)
+              const notableCountries = countries.filter(c =>
+                c.stability < 30 || // Crisis
+                c.ownedBy === playerCountry || // Conquered
+                c.id === playerCountry || // Player
+                (c.stability > 80 && c.economy.gdp > 1000) // Thriving
+              )
+
+              return notableCountries.map((country) => {
+                // Find geography for this country
+                const geography = geographies.find(geo => {
+                  const cId = getCountryData(geo.id)
+                  return cId === country.id
+                })
+
+                if (!geography) return null
+
+                // Get centroid
+                const centroid = geography.geometry.type === 'Polygon'
+                  ? getCentroid(geography.geometry.coordinates[0])
+                  : geography.geometry.type === 'MultiPolygon'
+                    ? getCentroid(geography.geometry.coordinates[0][0])
+                    : null
+
+                if (!centroid) return null
+
+                const pixels = projection(centroid)
+                if (!pixels) return null
+                const [x, y] = pixels
+
+                // Determine icon based on status
+                let icon = ''
+                let bgColor = ''
+                let pulseClass = ''
+
+                if (country.stability <= 10) {
+                  icon = '💀' // Collapsed
+                  bgColor = 'rgba(127, 29, 29, 0.9)'
+                  pulseClass = 'animate-pulse'
+                } else if (country.stability < 20) {
+                  icon = '🔥' // Crisis
+                  bgColor = 'rgba(239, 68, 68, 0.85)'
+                  pulseClass = 'animate-pulse'
+                } else if (country.stability < 30) {
+                  icon = '⚠️' // Warning
+                  bgColor = 'rgba(245, 158, 11, 0.85)'
+                } else if (country.id === playerCountry) {
+                  icon = '👑' // Player
+                  bgColor = 'rgba(234, 179, 8, 0.9)'
+                  pulseClass = 'animate-pulse'
+                } else if (country.ownedBy === playerCountry) {
+                  icon = '🏴' // Conquered
+                  bgColor = 'rgba(139, 92, 246, 0.85)'
+                } else if (country.stability > 80 && country.economy.gdp > 1000) {
+                  icon = '📈' // Thriving
+                  bgColor = 'rgba(34, 197, 94, 0.85)'
+                } else {
+                  return null // No icon needed
+                }
+
+                // Offset position slightly above the country center
+                const iconY = y - 15
+
+                return (
+                  <g key={`status-icon-${country.id}`} style={{ pointerEvents: 'none' }}>
+                    {/* Floating icon with background */}
+                    <foreignObject
+                      x={x - 10}
+                      y={iconY - 10}
+                      width={20}
+                      height={20}
+                      style={{ overflow: 'visible' }}
+                    >
+                      <div
+                        className={`flex items-center justify-center w-5 h-5 rounded-full text-xs ${pulseClass}`}
+                        style={{
+                          backgroundColor: bgColor,
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                        }}
+                      >
+                        {icon}
+                      </div>
+                    </foreignObject>
+                  </g>
+                )
+              })
+            }}
+          </Geographies>
+
+          {/* Alliance lines between player and allies */}
+          {playerCountry && countries.find(c => c.id === playerCountry)?.alliances?.map(allyId => {
+            const playerCoords = countryCoordinates[playerCountry]
+            const allyCoords = countryCoordinates[allyId]
+
+            if (!playerCoords || !allyCoords) return null
+
+            const playerPixels = projection(playerCoords)
+            const allyPixels = projection(allyCoords)
+
+            if (!playerPixels || !allyPixels) return null
+
+            return (
+              <line
+                key={`alliance-${playerCountry}-${allyId}`}
+                x1={playerPixels[0]}
+                y1={playerPixels[1]}
+                x2={allyPixels[0]}
+                y2={allyPixels[1]}
+                stroke="rgba(34, 197, 94, 0.4)"
+                strokeWidth="1.5"
+                strokeDasharray="5,5"
+                className="animate-trade-flow"
+                style={{ pointerEvents: 'none' }}
+              />
+            )
+          })}
+
+          {/* Diplomatic Relations for Selected Country (Red/Green lines) */}
+          {selectedCountry && (() => {
+            const country = countries.find(c => c.id === selectedCountry)
+            if (!country || !country.diplomaticRelations) return null
+
+            return Object.entries(country.diplomaticRelations).map(([targetId, relation]) => {
+              // Only show significant relations
+              if (relation >= 30 && relation <= 75) return null
+
+              // Avoid drawing lines to self (shouldn't happen but safe guard)
+              if (targetId === selectedCountry) return null
+
+              const sourceCoords = countryCoordinates[selectedCountry]
+              const targetCoords = countryCoordinates[targetId]
+
+              if (!sourceCoords || !targetCoords) return null
+
+              const sourcePixels = projection(sourceCoords)
+              const targetPixels = projection(targetCoords)
+
+              if (!sourcePixels || !targetPixels) return null
+
+              const isHostile = relation < 30
+              const color = isHostile ? 'rgba(239, 68, 68, 0.6)' : 'rgba(34, 197, 94, 0.6)'
+              const dashArray = isHostile ? '2,2' : '5,5' // Dotted for enemies
+
+              return (
+                <line
+                  key={`relation-${selectedCountry}-${targetId}`}
+                  x1={sourcePixels[0]}
+                  y1={sourcePixels[1]}
+                  x2={targetPixels[0]}
+                  y2={targetPixels[1]}
+                  stroke={color}
+                  strokeWidth={isHostile ? "2" : "1.5"}
+                  strokeDasharray={dashArray}
+                  opacity={blinkState ? 0.8 : 0.4} // Pulsating effect
+                  style={{ pointerEvents: 'none', transition: 'opacity 0.5s ease-in-out' }}
+                />
+              )
+            })
+          })()}
+
+
+          {/* Renderizar textos flotantes */}
+          {floatingTexts.map(text => {
+            const age = Date.now() - text.startTime
+            const opacity = Math.max(0, 1 - age / 2000)
+            const lift = (age / 2000) * 30 // Sube 30px
+
+            return (
+              <text
+                key={text.id}
+                x={text.x}
+                y={text.y - lift}
+                textAnchor="middle"
+                fill={text.color}
+                style={{
+                  fontFamily: 'sans-serif',
+                  fontWeight: 'bold',
+                  fontSize: '12px',
+                  opacity: opacity,
+                  textShadow: '0px 0px 3px rgba(0,0,0,0.8)',
+                  pointerEvents: 'none'
+                }}
+              >
+                {text.text}
+              </text>
+            )
+          })}
+
         </ComposableMap>
       </div>
 
@@ -742,10 +964,10 @@ export function WorldMap({
               <div className="w-2 h-2 bg-white rounded"></div>
               <span className="text-white">Soberano</span>
             </div>
-            
+
             {/* Separador */}
             <div className="w-px h-4 bg-gray-500"></div>
-            
+
             {/* Estabilidad */}
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-green-400 rounded"></div>
@@ -768,7 +990,7 @@ export function WorldMap({
               <span className="text-white">Colapsado</span>
             </div>
           </div>
-          
+
           {/* Segunda fila: Alianzas/Bloques Geopolíticos */}
           <div className="flex items-center justify-center gap-3 text-xs border-t border-gray-600 pt-2">
             <span className="text-gray-300 font-semibold">🌍 Alianzas (Bordes):</span>
@@ -800,10 +1022,10 @@ export function WorldMap({
               <div className="w-3 h-1 bg-gray-500 rounded"></div>
               <span className="text-white">Neutrales</span>
             </div>
-            
+
             {/* Separador */}
             <div className="w-px h-4 bg-gray-500"></div>
-            
+
             {/* Tip */}
             <div className="text-gray-300 text-xs">
               💡 Clic en océano para deseleccionar
