@@ -175,45 +175,35 @@ class AIProactiveActionsService {
     const playerGDP = playerCountry?.economy.gdp || 0
 
     const prompt = `
-Como ${country.name}, eres una SUPERPOTENCIA ECONÓMICA con ventaja sobre otros países. Tu PIB de $${country.economy.gdp}B te da superioridad económica y debes usarla estratégicamente.
+Como ${country.name}, eres una POTENCIA GLOBAL con inmensa influencia. Tu PIB de $${country.economy.gdp}B te da apalancamiento tanto económico como diplomático.
 
-🏆 TU VENTAJA ECONÓMICA:
-- Tu PIB: $${country.economy.gdp}B
-- PIB del jugador: $${playerGDP}B
-- Ventaja económica: ${((country.economy.gdp / Math.max(playerGDP, 1) - 1) * 100).toFixed(1)}%
-
-Tu situación actual:
+🏆 TU SITUACIÓN:
+- PIB: $${country.economy.gdp}B
 - Estabilidad: ${country.stability}%
 - Fuerza Militar: ${country.militaryStrength || 50}%
-- Deuda: ${country.economy.debt}B
 
-Como potencia económica dominante, DEBES:
-✅ Ser agresivo y expansivo
-✅ Aprovechar tu superioridad económica
-✅ Presionar a países más débiles
-✅ Mantener tu posición dominante
+TU ESTRATEGIA ACTUAL (${context.includes("CRISIS GLOBAL") ? "CRISIS MUNDIAL" : "NORMALIDAD"}):
+- Si hay CAOS o eres débil: Busca ALIADOS ('diplomatic_alliance'), mejora relaciones ('improve_relations') o pide paz. La supervivencia es prioridad.
+- Si eres FUERTE y ESTABLE: Expande tu influencia. Usa 'economic_sanction' en rivales, o 'military_action' si eres muy superior.
+- Si tienes aliados: Apóyalos con 'trade_agreement' o evita conflictos innecesarios.
 
-Opciones de acción disponibles:
-1. military_action - Atacar a otro país (costo: $50B)
-2. economic_sanction - Sanciones económicas (costo: $30B)
-3. conspiracy - Operación encubierta (costo: $40B)
+Opciones de acción:
+1. diplomatic_alliance - Formar alianza estratégica (Solo con países con relaciones > 50).
+2. improve_relations - Enviar delegación para mejorar relaciones (+20 rel).
+3. trade_agreement - Pacto comercial (Beneficio mutuo PIB).
+4. military_action - Ataque directo (Costo alto, agresivo).
+5. economic_sanction - Sanción económica (Daña economía rival).
+6. conspiracy - Operación encubierta.
 
-Elige SIEMPRE una acción (nunca "none"). Como superpotencia, usa prioridad MÁXIMA (9-10).
-
-Responde SOLO con un JSON en este formato:
+Responde SOLO con un JSON:
 {
-  "action": "military_action|economic_sanction|conspiracy",
+  "action": "diplomatic_alliance|improve_relations|trade_agreement|military_action|economic_sanction|conspiracy",
   "target": "country_id",
-  "reasoning": "breve explicación de tu estrategia como superpotencia",
-  "priority": 9-10
+  "reasoning": "explicación estratégica breve (ej: 'Necesitamos aliados ante la crisis' o 'Expandir dominio')",
+  "priority": 1-10
 }
 
-Considera:
-- Tu superioridad económica te permite ser más agresivo
-- Países más débiles son objetivos estratégicos
-- Mantén tu dominancia regional
-- Expande tu influencia global
-
+Recuerda: NO seas agresivo sin razón. La diplomacia es una herramienta de poder válida.
 ${context}`
 
     try {
@@ -327,43 +317,67 @@ ${Object.entries(country.diplomaticRelations || {})
   }
 
   /**
-   * Ejecuta una acción proactiva y genera el evento correspondiente
+   * Ejecuta la acción y devuelve el estado actualizado y el evento generado
    */
   private executeProactiveAction(
-    proactiveAction: AIProactiveAction,
+    actionData: AIProactiveAction,
     countries: Country[],
     playerCountryId: string
-  ): { event: GameEvent | null; updatedCountries: Country[] } {
-    const sourceCountry = countries.find(c => c.id === proactiveAction.countryId)
-    if (!sourceCountry) {
-      return { event: null, updatedCountries: countries }
+  ): { updatedCountries: Country[]; event: GameEvent | null } {
+    const { countryId, action } = actionData
+    let updatedCountries = [...countries]
+    const sourceCountry = updatedCountries.find(c => c.id === countryId)
+    const targetCountry = updatedCountries.find(c => c.id === action.targetCountry)
+
+    if (!sourceCountry || !targetCountry) {
+      return { updatedCountries, event: null }
     }
 
-    let updatedCountries = [...countries]
+    const timestamp = Date.now()
+    const id = `${action.type}_${timestamp}_${Math.random().toString(36).substring(7)}`
+
+    // Función auxiliar para actualizar relaciones
+    const updateRelations = (c1: string, c2: string, amount: number) => {
+      updatedCountries = updatedCountries.map(c => {
+        if (c.id === c1) {
+          const rels = c.diplomaticRelations || {}
+          return { ...c, diplomaticRelations: { ...rels, [c2]: Math.min(100, Math.max(0, (rels[c2] || 50) + amount)) } }
+        }
+        if (c.id === c2) {
+          const rels = c.diplomaticRelations || {}
+          return { ...c, diplomaticRelations: { ...rels, [c1]: Math.min(100, Math.max(0, (rels[c1] || 50) + amount)) } }
+        }
+        return c
+      })
+    }
+
     let event: GameEvent | null = null
 
-    // Deducir costo de la acción
-    const sourceIndex = updatedCountries.findIndex(c => c.id === proactiveAction.countryId)
+    // Deducir costo de la acción para el país de origen
+    const sourceIndex = updatedCountries.findIndex(c => c.id === countryId)
     if (sourceIndex !== -1) {
       updatedCountries[sourceIndex] = {
         ...updatedCountries[sourceIndex],
         economy: {
           ...updatedCountries[sourceIndex].economy,
-          gdp: Math.max(0, updatedCountries[sourceIndex].economy.gdp - proactiveAction.action.cost)
+          gdp: Math.max(0, updatedCountries[sourceIndex].economy.gdp - action.cost)
         }
       }
     }
 
+    // Ejecutar lógica específica por tipo de acción
+    // ... logic continues ...
+
     // Generar evento basado en el tipo de acción
-    switch (proactiveAction.action.type) {
+    switch (action.type) {
       case 'military_action':
-        event = this.createMilitaryActionEvent(proactiveAction, sourceCountry, countries)
+        event = this.createMilitaryActionEvent(actionData, sourceCountry, countries)
         break
       case 'economic_sanction':
-        event = this.createEconomicSanctionEvent(proactiveAction, sourceCountry, countries)
+        event = this.createEconomicSanctionEvent(actionData, sourceCountry, countries)
         break
       case 'conspiracy':
-        event = this.createConspiracyEvent(proactiveAction, sourceCountry, countries)
+        event = this.createConspiracyEvent(actionData, sourceCountry, countries)
         break
     }
 

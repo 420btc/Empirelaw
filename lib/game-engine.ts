@@ -13,12 +13,12 @@ function areCountriesNeighbors(countryId1: string, countryId2: string, countries
     // Si no se proporcionan países, usar una lógica básica
     return false
   }
-  
+
   const country1 = countries.find(c => c.id === countryId1)
   const country2 = countries.find(c => c.id === countryId2)
-  
+
   if (!country1 || !country2) return false
-  
+
   // Verificar si country1 tiene a country2 como vecino o viceversa
   return (country1.neighbors?.includes(countryId2) || country2.neighbors?.includes(countryId1)) || false
 }
@@ -57,7 +57,7 @@ export function calculateGDPGrowth(country: Country, countries: Country[], playe
   growthRate -= debtPenalty
 
   // Factor 4: Relaciones diplomáticas (buenas relaciones = comercio = crecimiento)
-  const avgDiplomaticRelation = country.diplomaticRelations 
+  const avgDiplomaticRelation = country.diplomaticRelations
     ? Object.values(country.diplomaticRelations).reduce((sum, rel) => sum + rel, 0) / Object.values(country.diplomaticRelations).length
     : 0
   const diplomaticFactor = Math.max(-0.01, Math.min(0.015, avgDiplomaticRelation / 100 * 0.015))
@@ -89,12 +89,12 @@ export function calculateGDPGrowth(country: Country, countries: Country[], playe
 
 export function applyGDPGrowth(countries: Country[], playerCountryId: string): Country[] {
   let territorialContributions = 0
-  
+
   // Primero calcular las contribuciones de territorios conquistados
   const updatedCountries = countries.map(country => {
     const growthRate = calculateGDPGrowth(country, countries, playerCountryId)
     const gdpIncrease = Math.round(country.economy.gdp * growthRate)
-    
+
     // Calcular contribución de territorios conquistados (15% del crecimiento)
     if (country.ownedBy === playerCountryId && country.id !== playerCountryId) {
       const contribution = Math.round(gdpIncrease * 0.15) // 15% del crecimiento va al conquistador
@@ -110,7 +110,7 @@ export function applyGDPGrowth(countries: Country[], playerCountryId: string): C
       lastGDPGrowth: gdpIncrease,
     }
   })
-  
+
   // Aplicar las contribuciones territoriales al país del jugador
   return updatedCountries.map(country => {
     if (country.id === playerCountryId && territorialContributions > 0) {
@@ -136,23 +136,23 @@ export function checkTerritorialRebellions(countries: Country[], playerCountryId
 } {
   const rebellionEvents: GameEvent[] = []
   let updatedCountries = [...countries]
-  
+
   // Buscar territorios conquistados por el jugador
-  const conqueredTerritories = countries.filter(country => 
+  const conqueredTerritories = countries.filter(country =>
     country.ownedBy === playerCountryId && country.id !== playerCountryId
   )
-  
+
   conqueredTerritories.forEach(territory => {
     // Calcular probabilidad de rebelión basada en estabilidad y tiempo
     const baseRebellionChance = territory.stability < 40 ? 0.05 : 0.02
     const stabilityFactor = Math.max(0, (50 - territory.stability) / 100) // Más probable con baja estabilidad
     const rebellionChance = Math.min(0.25, baseRebellionChance + stabilityFactor)
-    
+
     if (Math.random() < rebellionChance) {
       const rebellionStrength = Math.random() * 0.6 + 0.2 // Entre 20% y 80%
       const stabilityLoss = Math.floor(rebellionStrength * 40) + 10
       const economicDamage = Math.floor(territory.economy.gdp * rebellionStrength * 0.1)
-      
+
       // Aplicar efectos de la rebelión
       updatedCountries = updatedCountries.map(country => {
         if (country.id === territory.id) {
@@ -167,7 +167,7 @@ export function checkTerritorialRebellions(countries: Country[], playerCountryId
         }
         return country
       })
-      
+
       // Si la rebelión es muy fuerte, el territorio puede independizarse
       if (rebellionStrength > 0.7 && territory.stability - stabilityLoss <= 10) {
         updatedCountries = updatedCountries.map(country => {
@@ -181,7 +181,7 @@ export function checkTerritorialRebellions(countries: Country[], playerCountryId
           }
           return country
         })
-        
+
         rebellionEvents.push({
           id: `independence_rebellion_${Date.now()}`,
           type: "rebellion",
@@ -224,7 +224,7 @@ export function checkTerritorialRebellions(countries: Country[], playerCountryId
       }
     }
   })
-  
+
   return { updatedCountries, rebellionEvents }
 }
 
@@ -237,41 +237,41 @@ export function applyImperialMaintenanceCosts(countries: Country[], playerCountr
 } {
   const maintenanceEvents: GameEvent[] = []
   let updatedCountries = [...countries]
-  
+
   // Buscar territorios conquistados por el jugador
-  const conqueredTerritories = countries.filter(country => 
+  const conqueredTerritories = countries.filter(country =>
     country.ownedBy === playerCountryId && country.id !== playerCountryId
   )
-  
+
   if (conqueredTerritories.length === 0) {
     return { updatedCountries, maintenanceEvents }
   }
-  
+
   const playerCountry = countries.find(c => c.id === playerCountryId)
   if (!playerCountry) {
     return { updatedCountries, maintenanceEvents }
   }
-  
+
   // Calcular costos de mantenimiento
   const territoryCount = conqueredTerritories.length
   const baseCostPerTerritory = 200 // Costo base por territorio
-  
+
   // Escalado exponencial: más territorios = costos mucho mayores
   const scalingFactor = Math.pow(1.3, territoryCount - 1) // Escalado exponencial
   const totalMaintenanceCost = Math.floor(baseCostPerTerritory * territoryCount * scalingFactor)
-  
+
   // Costo adicional por territorios inestables
   const unstableTerritories = conqueredTerritories.filter(t => t.stability < 50)
   const instabilityCost = unstableTerritories.length * 150
-  
+
   const finalCost = totalMaintenanceCost + instabilityCost
-  
+
   // Aplicar costos de mantenimiento
   updatedCountries = updatedCountries.map(country => {
     if (country.id === playerCountryId) {
       const newGDP = Math.max(100, country.economy.gdp - finalCost)
       const stabilityLoss = territoryCount > 5 ? Math.floor(territoryCount / 2) : 0 // Penalización por sobreextensión
-      
+
       return {
         ...country,
         economy: {
@@ -284,11 +284,11 @@ export function applyImperialMaintenanceCosts(countries: Country[], playerCountr
     }
     return country
   })
-  
+
   // Generar evento de mantenimiento si el costo es significativo
   if (finalCost > 500) {
     const costPercentage = ((finalCost / playerCountry.economy.gdp) * 100).toFixed(1)
-    
+
     maintenanceEvents.push({
       id: `imperial_maintenance_${Date.now()}`,
       type: "economic",
@@ -309,7 +309,7 @@ export function applyImperialMaintenanceCosts(countries: Country[], playerCountr
       }
     })
   }
-  
+
   return { updatedCountries, maintenanceEvents }
 }
 
@@ -324,10 +324,10 @@ export function provideMutualAidToCriticalCountries(countries: Country[], player
   let updatedCountries = [...countries]
 
   // Encontrar países en crisis crítica (estabilidad <= 25, no conquistados, no soberanos)
-  const criticalCountries = countries.filter(c => 
-    c.stability <= 25 && 
-    !c.ownedBy && 
-    !c.isSovereign && 
+  const criticalCountries = countries.filter(c =>
+    c.stability <= 25 &&
+    !c.ownedBy &&
+    !c.isSovereign &&
     c.id !== playerCountryId
   )
 
@@ -337,15 +337,15 @@ export function provideMutualAidToCriticalCountries(countries: Country[], player
       // Debe ser vecino o del mismo bloque
       const isNeighbor = criticalCountry.neighbors?.includes(helper.id) || helper.neighbors?.includes(criticalCountry.id)
       const sameBlock = helper.geopoliticalBlock === criticalCountry.geopoliticalBlock
-      
+
       // Debe estar estable y tener capacidad económica
       const isStable = helper.stability >= 60
       const hasCapacity = helper.economy.gdp >= 1000
       const notInDebt = helper.economy.debt < 120
-      
+
       // No debe ser el jugador ni estar conquistado por el jugador
       const notPlayerControlled = helper.id !== playerCountryId && helper.ownedBy !== playerCountryId
-      
+
       return (isNeighbor || sameBlock) && isStable && hasCapacity && notInDebt && notPlayerControlled
     })
 
@@ -362,7 +362,7 @@ export function provideMutualAidToCriticalCountries(countries: Country[], player
         Math.round(bestHelper.economy.gdp * 0.05), // Máximo 5% del PIB del ayudante
         Math.round(criticalCountry.economy.gdp * 0.3)  // Máximo 30% del PIB del receptor
       )
-      
+
       const stabilityBoost = Math.min(15, Math.max(5, Math.round(aidAmount / 100)))
 
       // Aplicar ayuda
@@ -745,7 +745,7 @@ export function generateConspiracyEvent(
   // Protección temporal para países recientemente afectados
   const currentTime = Date.now()
   const protectionPeriod = 2 * 60 * 1000 // 2 minutos de protección
-  
+
   const recentlyAffectedCountries = recentEvents
     .filter(event => {
       const timeDiff = currentTime - event.timestamp
@@ -756,8 +756,8 @@ export function generateConspiracyEvent(
     .filter((id): id is string => !!id)
 
   // Seleccionar país objetivo (evitando países con protección temporal)
-  const eligibleCountries = countries.filter(c => 
-    c.id !== playerCountryId && 
+  const eligibleCountries = countries.filter(c =>
+    c.id !== playerCountryId &&
     !recentlyAffectedCountries.includes(c.id)
   )
 
@@ -770,9 +770,9 @@ export function generateConspiracyEvent(
   // Si China no es el jugador, 30% de probabilidad de ser afectada (más que otros países)
   const chinaCountry = countries.find(c => c.id === "china")
   const isPlayerChina = playerCountryId === "china"
-  
+
   let affectedCountry: Country
-  
+
   if (isPlayerChina && Math.random() < 0.6) {
     // Si el jugador es China, 60% de probabilidad de ser afectado por conspiración
     affectedCountry = chinaCountry!
@@ -1234,7 +1234,7 @@ export function generateRandomEvent(
   // 🛡️ SISTEMA DE PROTECCIÓN TEMPORAL: Evitar eventos consecutivos en el mismo país
   const currentTime = Date.now()
   const protectionPeriod = 2 * 60 * 1000 // 2 minutos de protección
-  
+
   // Obtener países que han tenido eventos recientes (excluyendo ayudas mutuas)
   const recentlyAffectedCountries = recentEvents
     .filter(event => {
@@ -1356,8 +1356,8 @@ export function generateRandomEvent(
   ]
 
   const neutralEvents = [
-    "diplomatic_incident", 
-    "alien_contact", 
+    "diplomatic_incident",
+    "alien_contact",
     "AI_singularity",
     // 7 nuevos eventos neutrales
     "international_summit",
@@ -1390,37 +1390,37 @@ export function generateRandomEvent(
         console.log(`🛡️ Estados Unidos protegido temporalmente, buscando otro objetivo`)
         // Buscar otro objetivo que no esté protegido
         const availableCountries = countries.filter(c => !recentlyAffectedCountries.includes(c.id) && !c.isSovereign)
-        affectedCountry = availableCountries.length > 0 
+        affectedCountry = availableCountries.length > 0
           ? availableCountries[Math.floor(Math.random() * availableCountries.length)]
           : countries[Math.floor(Math.random() * countries.length)]
       }
     }
     // Para eventos negativos, priorizar países con alto karma del jugador (PERO EXCLUIR PROTEGIDOS)
     else {
-      const highKarmaCountries = countries.filter((c) => 
-        (c.playerKarma || 0) > 30 && 
-        !c.isSovereign && 
+      const highKarmaCountries = countries.filter((c) =>
+        (c.playerKarma || 0) > 30 &&
+        !c.isSovereign &&
         !recentlyAffectedCountries.includes(c.id) // 🛡️ EXCLUSIÓN DE PROTEGIDOS
       )
-      
+
       // 🎯 NUEVA LÓGICA: Incluir superpotencias en países vulnerables con menor probabilidad
-      const vulnerableCountries = countries.filter((c) => 
-        c.powerLevel !== "superpower" && 
-        !c.isSovereign && 
+      const vulnerableCountries = countries.filter((c) =>
+        c.powerLevel !== "superpower" &&
+        !c.isSovereign &&
         !recentlyAffectedCountries.includes(c.id) // 🛡️ EXCLUSIÓN DE PROTEGIDOS
       )
-      
+
       // 🎯 SUPERPOTENCIAS VULNERABLES: China, USA, Rusia pueden ser afectadas con 25% de probabilidad
-      const superpowerCountries = countries.filter((c) => 
-        c.powerLevel === "superpower" && 
-        !c.isSovereign && 
+      const superpowerCountries = countries.filter((c) =>
+        c.powerLevel === "superpower" &&
+        !c.isSovereign &&
         !recentlyAffectedCountries.includes(c.id)
       )
 
-    if (highKarmaCountries.length > 0 && Math.random() < 0.7) {
+      if (highKarmaCountries.length > 0 && Math.random() < 0.7) {
         // 70% de probabilidad de afectar a países con alto karma (no protegidos)
-      affectedCountry = highKarmaCountries[Math.floor(Math.random() * highKarmaCountries.length)]
-      console.log(`⚖️ Evento dirigido por karma hacia ${affectedCountry.name} (karma: ${affectedCountry.playerKarma})`)
+        affectedCountry = highKarmaCountries[Math.floor(Math.random() * highKarmaCountries.length)]
+        console.log(`⚖️ Evento dirigido por karma hacia ${affectedCountry.name} (karma: ${affectedCountry.playerKarma})`)
       } else if (superpowerCountries.length > 0 && Math.random() < 0.25) {
         // 🎯 25% de probabilidad de afectar superpotencias (incluyendo China)
         affectedCountry = superpowerCountries[Math.floor(Math.random() * superpowerCountries.length)]
@@ -1428,7 +1428,7 @@ export function generateRandomEvent(
       } else if (vulnerableCountries.length > 0) {
         affectedCountry = vulnerableCountries[Math.floor(Math.random() * vulnerableCountries.length)]
         console.log(`🎯 Evento dirigido a país vulnerable: ${affectedCountry.name}`)
-    } else {
+      } else {
         // Si todos los países vulnerables están protegidos, seleccionar cualquiera disponible
         const availableCountries = countries.filter(c => !recentlyAffectedCountries.includes(c.id))
         if (availableCountries.length > 0) {
@@ -1444,14 +1444,14 @@ export function generateRandomEvent(
   } else {
     // Eventos positivos: preferir países que no han tenido eventos recientes, pero no es obligatorio
     const availableCountries = countries.filter(c => !recentlyAffectedCountries.includes(c.id))
-    
+
     if (availableCountries.length > 0 && Math.random() < 0.7) {
       // 70% de probabilidad de elegir un país sin eventos recientes
       affectedCountry = availableCountries[Math.floor(Math.random() * availableCountries.length)]
       console.log(`🌟 Evento positivo para país sin eventos recientes: ${affectedCountry.name}`)
     } else {
       // 30% de probabilidad de elegir cualquier país (eventos positivos son más flexibles)
-    affectedCountry = countries[Math.floor(Math.random() * countries.length)]
+      affectedCountry = countries[Math.floor(Math.random() * countries.length)]
       console.log(`🎲 Evento positivo aleatorio: ${affectedCountry.name}`)
     }
   }
@@ -1464,7 +1464,7 @@ export function generateRandomEvent(
   }
 
   let eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)]
-  
+
   // 🌍 EVENTOS ESPECÍFICOS POR REGIÓN: Asegurar que ciertos eventos solo ocurran en regiones apropiadas
   const regionalEvents = {
     africa: ["african_diamond_corruption", "african_oil_embezzlement"],
@@ -1472,27 +1472,27 @@ export function generateRandomEvent(
     asia: ["asian_infrastructure_corruption"],
     europe: ["european_banking_scandal"]
   }
-  
+
   // Si el evento seleccionado es específico de una región, verificar si el país pertenece a esa región
   const isRegionalEvent = Object.values(regionalEvents).flat().includes(eventType)
-  
+
   if (isRegionalEvent) {
     const countryRegion = affectedCountry.geopoliticalBlock
-    const eventRegion = Object.keys(regionalEvents).find(region => 
+    const eventRegion = Object.keys(regionalEvents).find(region =>
       regionalEvents[region as keyof typeof regionalEvents].includes(eventType)
     )
-    
+
     // Si el país no pertenece a la región del evento, cambiar el evento o el país
     if (countryRegion !== eventRegion) {
       // Opción 1: Cambiar a un país de la región correcta
-      const correctRegionCountries = countries.filter(c => 
-        c.geopoliticalBlock === eventRegion && 
+      const correctRegionCountries = countries.filter(c =>
+        c.geopoliticalBlock === eventRegion &&
         !recentlyAffectedCountries.includes(c.id)
       )
-      
+
       if (correctRegionCountries.length > 0) {
         affectedCountry = correctRegionCountries[Math.floor(Math.random() * correctRegionCountries.length)]
-        console.log(`🌍 Evento regional ${eventType} redirigido a ${affectedCountry.name} (${eventRegion})`)  
+        console.log(`🌍 Evento regional ${eventType} redirigido a ${affectedCountry.name} (${eventRegion})`)
       } else {
         // Opción 2: Si no hay países disponibles en la región, cambiar el evento
         const nonRegionalEvents = eventTypes.filter(type => !Object.values(regionalEvents).flat().includes(type))
@@ -1503,7 +1503,7 @@ export function generateRandomEvent(
       console.log(`🌍 Evento regional ${eventType} aplicado correctamente en ${affectedCountry.name} (${countryRegion})`)
     }
   }
-  
+
   // 🌍 RESTRICCIÓN AFRICANA: Limitar eventos científicos y tecnológicos para países africanos
   const scientificEvents = [
     "technological_breakthrough",
@@ -1518,7 +1518,7 @@ export function generateRandomEvent(
     "AI_singularity",
     "alien_technology_leak"
   ]
-  
+
   // Si el país afectado es africano y el evento es científico/tecnológico, cambiar por evento más básico
   if (affectedCountry.geopoliticalBlock === "africa" && scientificEvents.includes(eventType)) {
     const africanFriendlyEvents = [
@@ -1530,19 +1530,19 @@ export function generateRandomEvent(
       "educational_reform_success",
       "economic_boom"
     ]
-    
+
     // 80% de probabilidad de cambiar a evento más apropiado para África
     if (Math.random() < 0.8) {
       eventType = africanFriendlyEvents[Math.floor(Math.random() * africanFriendlyEvents.length)]
       console.log(`🌍 Evento científico limitado para país africano ${affectedCountry.name}, cambiado a: ${eventType}`)
     }
   }
-  
+
   // 🧠 SISTEMA DE COHERENCIA: Evitar eventos contradictorios
   const recentCountryEvents = recentEvents
     .filter(event => event.targetedCountry === affectedCountry.id)
     .slice(-2) // Solo los 2 eventos más recientes del país
-  
+
   // Definir eventos contradictorios
   const contradictoryPairs: Record<string, string[]> = {
     "economic_crisis": ["economic_boom", "resource_discovery", "technological_breakthrough"],
@@ -1557,10 +1557,10 @@ export function generateRandomEvent(
     "infrastructure_modernization": ["natural_disaster", "volcanic_eruption"],
     "reality_glitch": ["technological_breakthrough", "digital_currency_adoption"],
   }
-  
+
   // Verificar si el evento seleccionado contradice eventos recientes
   const hasContradiction = recentCountryEvents.some(recentEvent => {
-    const recentEventType = Object.keys(contradictoryPairs).find(key => 
+    const recentEventType = Object.keys(contradictoryPairs).find(key =>
       recentEvent.title?.toLowerCase().includes(key.replace(/_/g, ' '))
     )
     if (recentEventType && contradictoryPairs[recentEventType]) {
@@ -1568,18 +1568,18 @@ export function generateRandomEvent(
     }
     return false
   })
-  
+
   // Si hay contradicción, elegir un evento alternativo más coherente
   if (hasContradiction) {
     const alternativeEvents = eventTypes.filter(type => {
       return !recentCountryEvents.some(recentEvent => {
-        const recentEventType = Object.keys(contradictoryPairs).find(key => 
+        const recentEventType = Object.keys(contradictoryPairs).find(key =>
           recentEvent.title?.toLowerCase().includes(key.replace(/_/g, ' '))
         )
         return recentEventType && contradictoryPairs[recentEventType]?.includes(type)
       })
     })
-    
+
     if (alternativeEvents.length > 0) {
       eventType = alternativeEvents[Math.floor(Math.random() * alternativeEvents.length)]
       console.log(`🧠 Evento modificado por coherencia: ${eventType} (evitando contradicción)`)
@@ -1721,292 +1721,292 @@ export function generateRandomEvent(
     }),
 
     pharmaceutical_conspiracy: () => ({
-       id: makeId(),
-       type: "error",
-       title: "💊 Conspiración Farmacéutica Expuesta",
-       description: `Una conspiración masiva de la industria farmacéutica ha sido revelada en ${affectedCountry.name}, incluyendo supresión de curas y manipulación de precios`,
-       effects: [
-         "Supresión de tratamientos efectivos expuesta",
-         "Manipulación de precios documentada",
-         "Estudios falsificados revelados",
-         "Crisis de salud pública",
-         "Demandas masivas contra farmacéuticas"
-       ],
-       countryEffects: {
-         [affectedCountry.id]: {
-           stabilityChange: -30,
-           economyChange: -1100,
-           debtChange: 16,
-         },
-       },
-       targetedCountry: affectedCountry.id,
-       chaosLevel: chaosLevel,
-       timestamp: Date.now(),
-     }),
-
-     alien_cover_up: () => ({
-       id: makeId(),
-       type: "error",
-       title: "👽 Encubrimiento Alienígena Revelado",
-       description: `Documentos clasificados sobre contacto extraterrestre han sido filtrados en ${affectedCountry.name}, causando pánico y cuestionamiento de la realidad`,
-       effects: [
-         "Evidencia de contacto extraterrestre expuesta",
-         "Décadas de encubrimiento gubernamental reveladas",
-         "Tecnología alienígena oculta documentada",
-         "Crisis existencial masiva",
-         "Demandas de transparencia total"
-       ],
-       countryEffects: {
-         [affectedCountry.id]: {
-           stabilityChange: -50,
-           economyChange: -700,
-           debtChange: 10,
-         },
-       },
-       targetedCountry: affectedCountry.id,
-       chaosLevel: chaosLevel,
-       timestamp: Date.now(),
-     }),
-
-     weather_manipulation: () => ({
-       id: makeId(),
-       type: "error",
-       title: "🌪️ Manipulación Climática Expuesta",
-       description: `Programas secretos de modificación del clima han sido revelados en ${affectedCountry.name}, incluyendo el uso de tecnología HAARP`,
-       effects: [
-         "Tecnología de modificación climática expuesta",
-         "Desastres naturales artificiales documentados",
-         "Programas HAARP revelados",
-         "Manipulación geopolítica del clima",
-         "Crisis ambiental y política"
-       ],
-       countryEffects: {
-         [affectedCountry.id]: {
-           stabilityChange: -35,
-           economyChange: -950,
-           debtChange: 14,
-         },
-       },
-       targetedCountry: affectedCountry.id,
-       chaosLevel: chaosLevel,
-       timestamp: Date.now(),
-     }),
-
-     mk_ultra_revival: () => ({
-       id: makeId(),
-       type: "error",
-       title: "🧪 Programa MK-Ultra Revivido",
-       description: `Evidencia de la continuación de experimentos MK-Ultra ha sido expuesta en ${affectedCountry.name}, revelando control mental moderno`,
-       effects: [
-         "Experimentos de control mental modernos expuestos",
-         "Víctimas de programas actuales identificadas",
-         "Tecnología neurológica avanzada revelada",
-         "Violaciones masivas de derechos humanos",
-         "Escándalo de seguridad nacional"
-       ],
-       countryEffects: {
-         [affectedCountry.id]: {
-           stabilityChange: -42,
-           economyChange: -850,
-           debtChange: 17,
-         },
-       },
-       targetedCountry: affectedCountry.id,
-       chaosLevel: chaosLevel,
-       timestamp: Date.now(),
-     }),
-
-     false_flag_operation: () => ({
-       id: makeId(),
-       type: "error",
-       title: "🚩 Operación Bandera Falsa Expuesta",
-       description: `Una operación de bandera falsa ha sido desenmascarada en ${affectedCountry.name}, revelando manipulación de eventos para justificar acciones políticas`,
-       effects: [
-         "Operación de bandera falsa documentada",
-         "Manipulación de eventos públicos expuesta",
-         "Justificaciones falsas para políticas reveladas",
-         "Crisis de confianza institucional",
-         "Demandas de investigación internacional"
-       ],
-       countryEffects: {
-         [affectedCountry.id]: {
-           stabilityChange: -38,
-           economyChange: -1050,
-           debtChange: 19,
-         },
-       },
-       targetedCountry: affectedCountry.id,
-       chaosLevel: chaosLevel,
-       timestamp: Date.now(),
-     }),
-
-     media_mind_control: () => ({
-        id: makeId(),
-        type: "error",
-        title: "📺 Control Mental Mediático Expuesto",
-        description: `Programas de manipulación psicológica a través de medios de comunicación han sido revelados en ${affectedCountry.name}`,
-        effects: [
-          "Técnicas de manipulación mediática expuestas",
-          "Programación subliminal documentada",
-          "Control de narrativas revelado",
-          "Influencia psicológica masiva expuesta",
-          "Crisis de confianza en medios"
-        ],
-        countryEffects: {
-          [affectedCountry.id]: {
-            stabilityChange: -28,
-            economyChange: -750,
-            debtChange: 11,
-          },
+      id: makeId(),
+      type: "error",
+      title: "💊 Conspiración Farmacéutica Expuesta",
+      description: `Una conspiración masiva de la industria farmacéutica ha sido revelada en ${affectedCountry.name}, incluyendo supresión de curas y manipulación de precios`,
+      effects: [
+        "Supresión de tratamientos efectivos expuesta",
+        "Manipulación de precios documentada",
+        "Estudios falsificados revelados",
+        "Crisis de salud pública",
+        "Demandas masivas contra farmacéuticas"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -30,
+          economyChange: -1100,
+          debtChange: 16,
         },
-        targetedCountry: affectedCountry.id,
-        chaosLevel: chaosLevel,
-        timestamp: Date.now(),
-      }),
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
 
-      cia_black_ops_revealed: () => ({
-        id: makeId(),
-        type: "error",
-        title: "🕴️ Operaciones Negras CIA Reveladas",
-        description: `Operaciones encubiertas de la CIA han sido expuestas en ${affectedCountry.name}, revelando décadas de intervención ilegal`,
-        effects: [
-          "Operaciones encubiertas documentadas",
-          "Intervención extranjera ilegal expuesta",
-          "Asesinatos políticos revelados",
-          "Manipulación electoral documentada",
-          "Crisis diplomática internacional"
-        ],
-        countryEffects: {
-          [affectedCountry.id]: {
-            stabilityChange: -45,
-            economyChange: -1200,
-            debtChange: 22,
-          },
+    alien_cover_up: () => ({
+      id: makeId(),
+      type: "error",
+      title: "👽 Encubrimiento Alienígena Revelado",
+      description: `Documentos clasificados sobre contacto extraterrestre han sido filtrados en ${affectedCountry.name}, causando pánico y cuestionamiento de la realidad`,
+      effects: [
+        "Evidencia de contacto extraterrestre expuesta",
+        "Décadas de encubrimiento gubernamental reveladas",
+        "Tecnología alienígena oculta documentada",
+        "Crisis existencial masiva",
+        "Demandas de transparencia total"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -50,
+          economyChange: -700,
+          debtChange: 10,
         },
-        targetedCountry: affectedCountry.id,
-        chaosLevel: chaosLevel,
-        timestamp: Date.now(),
-      }),
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
 
-      fbi_surveillance_scandal: () => ({
-        id: makeId(),
-        type: "error",
-        title: "👁️ Escándalo de Vigilancia FBI",
-        description: `Programas masivos de vigilancia ilegal del FBI han sido expuestos en ${affectedCountry.name}, violando derechos constitucionales`,
-        effects: [
-          "Vigilancia masiva ilegal expuesta",
-          "Violaciones constitucionales documentadas",
-          "Espionaje doméstico revelado",
-          "Abuso de poder gubernamental",
-          "Crisis de derechos civiles"
-        ],
-        countryEffects: {
-          [affectedCountry.id]: {
-            stabilityChange: -32,
-            economyChange: -900,
-            debtChange: 15,
-          },
+    weather_manipulation: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🌪️ Manipulación Climática Expuesta",
+      description: `Programas secretos de modificación del clima han sido revelados en ${affectedCountry.name}, incluyendo el uso de tecnología HAARP`,
+      effects: [
+        "Tecnología de modificación climática expuesta",
+        "Desastres naturales artificiales documentados",
+        "Programas HAARP revelados",
+        "Manipulación geopolítica del clima",
+        "Crisis ambiental y política"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -35,
+          economyChange: -950,
+          debtChange: 14,
         },
-        targetedCountry: affectedCountry.id,
-        chaosLevel: chaosLevel,
-        timestamp: Date.now(),
-      }),
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
 
-      epstein_network_exposed: () => ({
-        id: makeId(),
-        type: "error",
-        title: "🏝️ Red Epstein Completamente Expuesta",
-        description: `La red completa de tráfico y chantaje de Epstein ha sido revelada en ${affectedCountry.name}, implicando a élites globales`,
-        effects: [
-          "Red de tráfico global expuesta",
-          "Élites políticas y empresariales implicadas",
-          "Operaciones de chantaje documentadas",
-          "Corrupción sistémica revelada",
-          "Crisis de confianza en instituciones"
-        ],
-        countryEffects: {
-          [affectedCountry.id]: {
-            stabilityChange: -55,
-            economyChange: -1400,
-            debtChange: 25,
-          },
+    mk_ultra_revival: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🧪 Programa MK-Ultra Revivido",
+      description: `Evidencia de la continuación de experimentos MK-Ultra ha sido expuesta en ${affectedCountry.name}, revelando control mental moderno`,
+      effects: [
+        "Experimentos de control mental modernos expuestos",
+        "Víctimas de programas actuales identificadas",
+        "Tecnología neurológica avanzada revelada",
+        "Violaciones masivas de derechos humanos",
+        "Escándalo de seguridad nacional"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -42,
+          economyChange: -850,
+          debtChange: 17,
         },
-        targetedCountry: affectedCountry.id,
-        chaosLevel: chaosLevel,
-        timestamp: Date.now(),
-      }),
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
 
-      vaccine_depopulation_plot: () => ({
-        id: makeId(),
-        type: "error",
-        title: "💉 Conspiración de Despoblación Vacunal",
-        description: `Evidencia de un plan de despoblación a través de vacunas ha sido expuesta en ${affectedCountry.name}, causando pánico masivo`,
-        effects: [
-          "Plan de despoblación documentado",
-          "Efectos adversos ocultos revelados",
-          "Manipulación de datos de seguridad",
-          "Agenda eugenésica expuesta",
-          "Crisis de salud pública masiva"
-        ],
-        countryEffects: {
-          [affectedCountry.id]: {
-            stabilityChange: -60,
-            economyChange: -800,
-            debtChange: 18,
-          },
+    false_flag_operation: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🚩 Operación Bandera Falsa Expuesta",
+      description: `Una operación de bandera falsa ha sido desenmascarada en ${affectedCountry.name}, revelando manipulación de eventos para justificar acciones políticas`,
+      effects: [
+        "Operación de bandera falsa documentada",
+        "Manipulación de eventos públicos expuesta",
+        "Justificaciones falsas para políticas reveladas",
+        "Crisis de confianza institucional",
+        "Demandas de investigación internacional"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -38,
+          economyChange: -1050,
+          debtChange: 19,
         },
-        targetedCountry: affectedCountry.id,
-        chaosLevel: chaosLevel,
-        timestamp: Date.now(),
-      }),
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
 
-      chemtrail_operation: () => ({
-        id: makeId(),
-        type: "error",
-        title: "✈️ Operación Chemtrails Confirmada",
-        description: `Programas de fumigación atmosférica secreta han sido confirmados en ${affectedCountry.name}, revelando manipulación química del aire`,
-        effects: [
-          "Fumigación atmosférica secreta confirmada",
-          "Químicos tóxicos en el aire documentados",
-          "Manipulación del clima y salud",
-          "Programas de geoingeniería ocultos",
-          "Crisis ambiental y sanitaria"
-        ],
-        countryEffects: {
-          [affectedCountry.id]: {
-            stabilityChange: -40,
-            economyChange: -950,
-            debtChange: 16,
-          },
+    media_mind_control: () => ({
+      id: makeId(),
+      type: "error",
+      title: "📺 Control Mental Mediático Expuesto",
+      description: `Programas de manipulación psicológica a través de medios de comunicación han sido revelados en ${affectedCountry.name}`,
+      effects: [
+        "Técnicas de manipulación mediática expuestas",
+        "Programación subliminal documentada",
+        "Control de narrativas revelado",
+        "Influencia psicológica masiva expuesta",
+        "Crisis de confianza en medios"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -28,
+          economyChange: -750,
+          debtChange: 11,
         },
-        targetedCountry: affectedCountry.id,
-        chaosLevel: chaosLevel,
-        timestamp: Date.now(),
-      }),
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
 
-      digital_surveillance_state: () => ({
-        id: makeId(),
-        type: "error",
-        title: "📱 Estado de Vigilancia Digital Total",
-        description: `Un sistema completo de vigilancia digital ha sido expuesto en ${affectedCountry.name}, monitoreando cada aspecto de la vida ciudadana`,
-        effects: [
-          "Vigilancia digital total expuesta",
-          "Monitoreo de comunicaciones masivo",
-          "Seguimiento de ubicación permanente",
-          "Análisis de comportamiento predictivo",
-          "Erosión completa de la privacidad"
-        ],
-        countryEffects: {
-          [affectedCountry.id]: {
-            stabilityChange: -35,
-            economyChange: -1100,
-            debtChange: 20,
-          },
+    cia_black_ops_revealed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🕴️ Operaciones Negras CIA Reveladas",
+      description: `Operaciones encubiertas de la CIA han sido expuestas en ${affectedCountry.name}, revelando décadas de intervención ilegal`,
+      effects: [
+        "Operaciones encubiertas documentadas",
+        "Intervención extranjera ilegal expuesta",
+        "Asesinatos políticos revelados",
+        "Manipulación electoral documentada",
+        "Crisis diplomática internacional"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -45,
+          economyChange: -1200,
+          debtChange: 22,
         },
-        targetedCountry: affectedCountry.id,
-        chaosLevel: chaosLevel,
-        timestamp: Date.now(),
-      }),
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    fbi_surveillance_scandal: () => ({
+      id: makeId(),
+      type: "error",
+      title: "👁️ Escándalo de Vigilancia FBI",
+      description: `Programas masivos de vigilancia ilegal del FBI han sido expuestos en ${affectedCountry.name}, violando derechos constitucionales`,
+      effects: [
+        "Vigilancia masiva ilegal expuesta",
+        "Violaciones constitucionales documentadas",
+        "Espionaje doméstico revelado",
+        "Abuso de poder gubernamental",
+        "Crisis de derechos civiles"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -32,
+          economyChange: -900,
+          debtChange: 15,
+        },
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    epstein_network_exposed: () => ({
+      id: makeId(),
+      type: "error",
+      title: "🏝️ Red Epstein Completamente Expuesta",
+      description: `La red completa de tráfico y chantaje de Epstein ha sido revelada en ${affectedCountry.name}, implicando a élites globales`,
+      effects: [
+        "Red de tráfico global expuesta",
+        "Élites políticas y empresariales implicadas",
+        "Operaciones de chantaje documentadas",
+        "Corrupción sistémica revelada",
+        "Crisis de confianza en instituciones"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -55,
+          economyChange: -1400,
+          debtChange: 25,
+        },
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    vaccine_depopulation_plot: () => ({
+      id: makeId(),
+      type: "error",
+      title: "💉 Conspiración de Despoblación Vacunal",
+      description: `Evidencia de un plan de despoblación a través de vacunas ha sido expuesta en ${affectedCountry.name}, causando pánico masivo`,
+      effects: [
+        "Plan de despoblación documentado",
+        "Efectos adversos ocultos revelados",
+        "Manipulación de datos de seguridad",
+        "Agenda eugenésica expuesta",
+        "Crisis de salud pública masiva"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -60,
+          economyChange: -800,
+          debtChange: 18,
+        },
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    chemtrail_operation: () => ({
+      id: makeId(),
+      type: "error",
+      title: "✈️ Operación Chemtrails Confirmada",
+      description: `Programas de fumigación atmosférica secreta han sido confirmados en ${affectedCountry.name}, revelando manipulación química del aire`,
+      effects: [
+        "Fumigación atmosférica secreta confirmada",
+        "Químicos tóxicos en el aire documentados",
+        "Manipulación del clima y salud",
+        "Programas de geoingeniería ocultos",
+        "Crisis ambiental y sanitaria"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -40,
+          economyChange: -950,
+          debtChange: 16,
+        },
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
+
+    digital_surveillance_state: () => ({
+      id: makeId(),
+      type: "error",
+      title: "📱 Estado de Vigilancia Digital Total",
+      description: `Un sistema completo de vigilancia digital ha sido expuesto en ${affectedCountry.name}, monitoreando cada aspecto de la vida ciudadana`,
+      effects: [
+        "Vigilancia digital total expuesta",
+        "Monitoreo de comunicaciones masivo",
+        "Seguimiento de ubicación permanente",
+        "Análisis de comportamiento predictivo",
+        "Erosión completa de la privacidad"
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: -35,
+          economyChange: -1100,
+          debtChange: 20,
+        },
+      },
+      targetedCountry: affectedCountry.id,
+      chaosLevel: chaosLevel,
+      timestamp: Date.now(),
+    }),
 
     // Nuevo evento específico de karma
     karma_rebellion: () => ({
@@ -2252,7 +2252,7 @@ export function generateRandomEvent(
 
 
     // ========== EVENTOS DE CORRUPCIÓN ESPECÍFICOS POR REGIÓN ==========
-    
+
     african_diamond_corruption: () => ({
       id: makeId(),
       type: "error",
@@ -2473,7 +2473,7 @@ export function generateRandomEvent(
     }),
 
     // ========== 15 NUEVOS EVENTOS VARIADOS ==========
-    
+
     // EVENTOS NORMALES (1-8)
     space_tourism_boom: () => ({
       id: makeId(),
@@ -3002,7 +3002,7 @@ export function generateRandomEvent(
         title: "💻 Represalia Cibernética",
         description: `${affectedCountry.name} es víctima de una represalia cibernética coordinada`
       },
-      
+
       // Nuevos eventos negativos adicionales
       social_media_manipulation: {
         title: "📱 Manipulación de Redes Sociales",
@@ -3036,7 +3036,7 @@ export function generateRandomEvent(
         title: "🤖 Mal Funcionamiento de IA",
         description: `Los sistemas de inteligencia artificial de ${affectedCountry.name} han comenzado a fallar peligrosamente`
       },
-      
+
       // Eventos positivos específicos
       economic_boom: {
         title: "💰 Boom Económico Extraordinario",
@@ -3058,7 +3058,7 @@ export function generateRandomEvent(
         title: "🚀 Descubrimiento Espacial Épico",
         description: `${affectedCountry.name} ha hecho un descubrimiento espacial que cautiva al mundo`
       },
-      
+
       // Nuevos eventos positivos adicionales
       quantum_computing_breakthrough: {
         title: "⚛️ Avance en Computación Cuántica",
@@ -3100,7 +3100,7 @@ export function generateRandomEvent(
         title: "🎭 Programa de Intercambio Cultural",
         description: `${affectedCountry.name} ha creado un programa de intercambio cultural que une al mundo`
       },
-      
+
       // Eventos neutrales específicos
       alien_contact: {
         title: "👽 Primer Contacto Extraterrestre",
@@ -3110,7 +3110,7 @@ export function generateRandomEvent(
         title: "🤖 Singularidad de la Inteligencia Artificial",
         description: `${affectedCountry.name} ha alcanzado la singularidad tecnológica con IA`
       },
-      
+
       // Nuevos eventos neutrales
       international_summit: {
         title: "🌍 Cumbre Internacional",
@@ -3144,31 +3144,31 @@ export function generateRandomEvent(
 
     const eventInfo = eventTitles[eventType] || {
       title: isNegativeEvent ? "⚠️ Crisis Inesperada" : "✨ Desarrollo Positivo",
-      description: isNegativeEvent 
+      description: isNegativeEvent
         ? `Una situación inesperada ha surgido en ${affectedCountry.name}`
         : `Un desarrollo positivo ha ocurrido en ${affectedCountry.name}`
     }
 
     return {
-    id: makeId(),
-    type: isNegativeEvent ? "warning" : "success",
+      id: makeId(),
+      type: isNegativeEvent ? "warning" : "success",
       title: eventInfo.title,
       description: eventInfo.description,
-    effects: [
-      isNegativeEvent
+      effects: [
+        isNegativeEvent
           ? "Impacto adverso en la economía y la estabilidad"
           : "Impulso económico y de estabilidad",
         "Situación en desarrollo",
         "Se requiere monitoreo continuo"
-    ],
-    countryEffects: {
-      [affectedCountry.id]: {
-        stabilityChange: isNegativeEvent ? -8 : 8,
-        economyChange: isNegativeEvent ? -200 : 200,
+      ],
+      countryEffects: {
+        [affectedCountry.id]: {
+          stabilityChange: isNegativeEvent ? -8 : 8,
+          economyChange: isNegativeEvent ? -200 : 200,
+        },
       },
-    },
-    chaosLevel,
-    timestamp: Date.now(),
+      chaosLevel,
+      timestamp: Date.now(),
     }
   }
 
@@ -3220,6 +3220,67 @@ export function selectAIOpponent(playerCountryId: string, countries: Country[]):
   return candidates.length > 0 ? candidates[Math.floor(Math.random() * candidates.length)] : null
 }
 
+// Helper para actualizar relaciones diplomáticas
+function updateDiplomaticRelations(countries: Country[], country1Id: string, country2Id: string, amount: number): Country[] {
+  return countries.map(c => {
+    if (c.id === country1Id) {
+      const currentRelations = c.diplomaticRelations || {}
+      return {
+        ...c,
+        diplomaticRelations: {
+          ...currentRelations,
+          [country2Id]: Math.max(0, Math.min(100, (currentRelations[country2Id] || 50) + amount))
+        }
+      }
+    }
+    if (c.id === country2Id) {
+      const currentRelations = c.diplomaticRelations || {}
+      return {
+        ...c,
+        diplomaticRelations: {
+          ...currentRelations,
+          [country1Id]: Math.max(0, Math.min(100, (currentRelations[country1Id] || 50) + amount))
+        }
+      }
+    }
+    return c
+  })
+}
+
+// Función para aplicar "drift" (normalización) de relaciones diplomáticas con el tiempo
+export function applyDiplomaticDrift(countries: Country[]): Country[] {
+  return countries.map(country => {
+    if (!country.diplomaticRelations) return country;
+
+    const newRelations = { ...country.diplomaticRelations };
+    let changed = false;
+
+    Object.entries(newRelations).forEach(([targetId, val]) => {
+      // Si es aliado (en lista alliances), no decae hacia 50, se mantiene alto
+      const isAlly = (country.alliances || []).includes(targetId);
+      if (isAlly) {
+        if (val < 75) { // Si bajó de 75, tiende a subir de nuevo por la alianza
+          newRelations[targetId] = Math.min(100, val + 0.5);
+          changed = true;
+        }
+        return;
+      }
+
+      // Normalización hacia 50 (neutralidad)
+      if (val > 50) {
+        newRelations[targetId] = Math.max(50, val - 0.2); // Decae lentamente
+        changed = true;
+      } else if (val < 50) {
+        newRelations[targetId] = Math.min(50, val + 0.2); // Sube lentamente (el odio se olvida)
+        changed = true;
+      }
+    });
+
+    if (!changed) return country;
+    return { ...country, diplomaticRelations: newRelations };
+  });
+}
+
 // =====================
 // Motor principal de IA: permite a superpotencias y países grandes actuar como jugadores
 // =====================
@@ -3260,22 +3321,22 @@ export function runAIActions(
 
     // Lógica de agresividad
     const aggressiveMode = globalStability < 25
-    
+
     // Obtener referencia al país del jugador
     const playerCountry = updatedCountries.find(c => c.id === playerCountryId)
-    
+
     // Lógica especial para China: más vulnerable cuando su estabilidad es baja
     const isChinaVulnerable = playerCountryId === 'china' && playerCountry && playerCountry.stability < 60
     const canAttackChina = isChinaVulnerable && playerCountry && aiCountry.economy.gdp > playerCountry.economy.gdp * 0.4
-    
+
     // También puede atacar al jugador si está débil
     const canAttackPlayer = aggressiveMode && playerCountry?.stability! < 45
-    
+
     // Objetivos posibles: países vulnerables (no conquistados, baja estabilidad, no IA, no jugador)
     let vulnerableTargets = updatedCountries.filter(t =>
       !t.ownedBy && t.id !== aiCountry.id && t.id !== playerCountryId && !t.isSovereign && t.stability < (aggressiveMode ? 55 : 35)
     )
-    
+
     // Si China es vulnerable, añadirla como objetivo prioritario
     if (isChinaVulnerable && playerCountry) {
       vulnerableTargets = [playerCountry, ...vulnerableTargets]
@@ -3294,8 +3355,63 @@ export function runAIActions(
       .some(nc => nc!.stability < 40);
     const allowExpansion = chaosLevel > 50 || neighborInstability;
 
+    // 0. Diplomacia Automática (Prioritaria si estabilidad alta o crisis global para hacer aliados)
+    if (!actionDone && Math.random() < 0.35) { // 35% chance de diplomacia
+      const diplomacyType = Math.random();
+
+      // A. Mejorar relaciones con vecinos o potencias
+      if (diplomacyType < 0.5) {
+        const potentialFriends = updatedCountries.filter(c =>
+          c.id !== aiCountry.id && !c.ownedBy &&
+          ((c.geopoliticalBlock === aiCountry.geopoliticalBlock) || (aiCountry.neighbors || []).includes(c.id))
+        );
+
+        if (potentialFriends.length > 0) {
+          const target = potentialFriends[Math.floor(Math.random() * potentialFriends.length)];
+          updatedCountries = updateDiplomaticRelations(updatedCountries, aiCountry.id, target.id, 5); // +5 relaciones
+
+          // Solo notificar si es significativo
+          if (Math.random() < 0.2) {
+            aiEvents.push({
+              id: `ai_diplomacy_improve_${now}_${aiCountry.id}_${target.id}`,
+              type: "info",
+              title: `🤝 Acercamiento Diplomático`,
+              description: `${aiCountry.name} busca mejorar relaciones con ${target.name}.`,
+              timestamp: now
+            });
+          }
+          actionDone = true;
+        }
+      }
+
+      // B. Tratado de Paz (si hay malas relaciones)
+      else if (diplomacyType < 0.7) {
+        const enemies = updatedCountries.filter(c => {
+          const rel = c.diplomaticRelations?.[aiCountry.id] || 50;
+          return c.id !== aiCountry.id && !c.ownedBy && rel < 30;
+        });
+
+        if (enemies.length > 0) {
+          const enemy = enemies[Math.floor(Math.random() * enemies.length)];
+          // Attempt peace logic
+          if (Math.random() < 0.4) { // 40% chance of success
+            updatedCountries = updateDiplomaticRelations(updatedCountries, aiCountry.id, enemy.id, 20); // Boost relations
+            aiEvents.push({
+              id: `ai_peace_treaty_${now}_${aiCountry.id}_${enemy.id}`,
+              type: "success",
+              title: `🕊️ Tratado de Paz`,
+              description: `${aiCountry.name} y ${enemy.name} han acordado reducir tensiones diplomáticas.`,
+              effects: ["Relaciones diplomáticas mejoradas significativamente"],
+              timestamp: now
+            });
+            actionDone = true;
+          }
+        }
+      }
+    }
+
     // 1. Conquista agresiva
-    if (aggressiveMode && vulnerableTargets.length > 0 && allowExpansion) {
+    if (!actionDone && aggressiveMode && vulnerableTargets.length > 0 && allowExpansion) {
       const target = vulnerableTargets.sort((a, b) => a.stability - b.stability)[0]
       const conquestCost = Math.max(target.economy.gdp * 0.8, 500)
       if (aiCountry.economy.gdp > conquestCost && aiCountry.stability > 45) {
@@ -3306,7 +3422,7 @@ export function runAIActions(
           id: `ai_conquest_${now}_${aiCountry.id}_${target.id}`,
           type: "error",
           title: `⚔️ ${aiCountry.name} conquista ${target.name}`,
-          description: `${aiCountry.name} ha conquistado agresivamente a ${target.name} aprovechando el caos global.`,
+          description: `${aiCountry.name} ha conquistado terminantemente a ${target.name}.`,
           effects: [
             `Costo: $${conquestCost}B PIB`,
             `${target.name} ahora es territorio de ${aiCountry.name}`
@@ -3321,24 +3437,24 @@ export function runAIActions(
     if (!actionDone && (canAttackPlayer || canAttackChina)) {
       if (playerCountry && aiCountry.economy.gdp > playerCountry.economy.gdp * (canAttackChina ? 0.4 : 0.5) && aiCountry.stability > 40) {
         // Daño mutuo - China recibe más daño cuando es vulnerable
-        const playerDamage = canAttackChina ? 
+        const playerDamage = canAttackChina ?
           Math.round(Math.random() * 25 + 15) : // China vulnerable recibe más daño
           Math.round(Math.random() * 15 + 10)
         const aiDamage = Math.round(Math.random() * 8 + 5)
-        
+
         updatedCountries = updatedCountries.map(c => {
           if (c.id === playerCountryId) return applyStabilityChange(c, -playerDamage)
           if (c.id === aiCountry.id) return applyStabilityChange(c, -aiDamage)
           return c
         })
-        
-        const attackTitle = canAttackChina ? 
+
+        const attackTitle = canAttackChina ?
           `⚔️ ${aiCountry.name} aprovecha la crisis en China` :
           `⚔️ ${aiCountry.name} ataca a ${playerCountry.name}`
         const attackDescription = canAttackChina ?
           `${aiCountry.name} ha aprovechado la inestabilidad política en China para lanzar un ataque devastador. La crisis de liderazgo ha dejado a China vulnerable.` :
           `${aiCountry.name} ha lanzado un ataque militar contra ${playerCountry.name}. Ambos países sufren daños en estabilidad.`
-        
+
         aiEvents.push({
           id: `ai_attack_${now}_${aiCountry.id}_${playerCountryId}`,
           type: canAttackChina ? "error" : "warning",
@@ -3421,32 +3537,32 @@ export function runAIActions(
     if (!actionDone && Math.random() < 0.25) { // 25% de probabilidad de acción especial
       const actionTypes = ['diplomatic', 'economic', 'military', 'conspiracy']
       const actionType = actionTypes[Math.floor(Math.random() * actionTypes.length)]
-      
+
       if (actionType === 'diplomatic' && aiCountry.stability > 60) {
         // Formar alianzas
         let ally: Country | undefined
-        
+
         // Restricción: países africanos solo pueden aliarse entre ellos
         if (aiCountry.geopoliticalBlock === "africa") {
-          ally = updatedCountries.filter(t => 
-            t.id !== aiCountry.id && 
-            !t.ownedBy && 
-            !t.isSovereign && 
-            t.geopoliticalBlock === "africa" && 
+          ally = updatedCountries.filter(t =>
+            t.id !== aiCountry.id &&
+            !t.ownedBy &&
+            !t.isSovereign &&
+            t.geopoliticalBlock === "africa" &&
             t.powerLevel !== "minor" &&
             !(t.alliances || []).includes(aiCountry.id)
           )[0]
         } else {
-          ally = updatedCountries.filter(t => 
-            t.id !== aiCountry.id && 
-            !t.ownedBy && 
-            !t.isSovereign && 
-            t.geopoliticalBlock !== "africa" && 
+          ally = updatedCountries.filter(t =>
+            t.id !== aiCountry.id &&
+            !t.ownedBy &&
+            !t.isSovereign &&
+            t.geopoliticalBlock !== "africa" &&
             t.powerLevel !== "minor" &&
             !(t.alliances || []).includes(aiCountry.id)
           )[0]
         }
-        
+
         if (ally) {
           updatedCountries = updatedCountries.map(c => {
             if (c.id === aiCountry.id) {
@@ -3463,7 +3579,7 @@ export function runAIActions(
             }
             return c
           })
-          
+
           aiEvents.push({
             id: `ai_diplomatic_${now}_${aiCountry.id}_${ally.id}`,
             type: "info",
@@ -3479,22 +3595,22 @@ export function runAIActions(
         }
       } else if (actionType === 'economic' && aiCountry.economy.gdp > 800) {
         // Sanciones económicas o inversiones
-        const targets = updatedCountries.filter(t => 
-          t.id !== aiCountry.id && 
-          !t.ownedBy && 
+        const targets = updatedCountries.filter(t =>
+          t.id !== aiCountry.id &&
+          !t.ownedBy &&
           t.geopoliticalBlock !== aiCountry.geopoliticalBlock
         )
-        
+
         if (targets.length > 0) {
           const target = targets[Math.floor(Math.random() * targets.length)]
           const isPositive = Math.random() < 0.4 // 40% inversión, 60% sanción
-          
+
           if (isPositive) {
             // Inversión económica
             updatedCountries = updatedCountries.map(c =>
               c.id === target.id ? { ...c, economy: { ...c.economy, gdp: c.economy.gdp * 1.08 } } : c
             )
-            
+
             aiEvents.push({
               id: `ai_economic_invest_${now}_${aiCountry.id}_${target.id}`,
               type: "success",
@@ -3511,7 +3627,7 @@ export function runAIActions(
             updatedCountries = updatedCountries.map(c =>
               c.id === target.id ? { ...c, economy: { ...c.economy, gdp: c.economy.gdp * 0.94 } } : c
             )
-            
+
             aiEvents.push({
               id: `ai_economic_sanction_${now}_${aiCountry.id}_${target.id}`,
               type: "warning",
@@ -3528,20 +3644,20 @@ export function runAIActions(
         }
       } else if (actionType === 'military' && aiCountry.powerLevel !== 'minor') {
         // Ejercicios militares o amenazas
-        const targets = updatedCountries.filter(t => 
-          t.id !== aiCountry.id && 
-          !t.ownedBy && 
+        const targets = updatedCountries.filter(t =>
+          t.id !== aiCountry.id &&
+          !t.ownedBy &&
           t.powerLevel === 'minor' &&
           !(t.alliances || []).includes(aiCountry.id)
         )
-        
+
         if (targets.length > 0) {
           const target = targets[Math.floor(Math.random() * targets.length)]
-          
+
           updatedCountries = updatedCountries.map(c =>
             c.id === target.id ? applyStabilityChange(c, -8) : c
           )
-          
+
           aiEvents.push({
             id: `ai_military_${now}_${aiCountry.id}_${target.id}`,
             type: "warning",
@@ -3557,19 +3673,19 @@ export function runAIActions(
         }
       } else if (actionType === 'conspiracy' && Math.random() < 0.3) {
         // Operaciones encubiertas
-        const targets = updatedCountries.filter(t => 
-          t.id !== aiCountry.id && 
-          !t.ownedBy && 
+        const targets = updatedCountries.filter(t =>
+          t.id !== aiCountry.id &&
+          !t.ownedBy &&
           t.stability < 70
         )
-        
+
         if (targets.length > 0) {
           const target = targets[Math.floor(Math.random() * targets.length)]
-          
+
           updatedCountries = updatedCountries.map(c =>
             c.id === target.id ? applyStabilityChange(c, -12) : c
           )
-          
+
           const conspiracyTypes = [
             'infiltración de agentes',
             'manipulación mediática',
@@ -3577,9 +3693,9 @@ export function runAIActions(
             'operación de desinformación',
             'financiamiento de grupos opositores'
           ]
-          
+
           const conspiracyType = conspiracyTypes[Math.floor(Math.random() * conspiracyTypes.length)]
-          
+
           aiEvents.push({
             id: `ai_conspiracy_${now}_${aiCountry.id}_${target.id}`,
             type: "error",
@@ -3620,7 +3736,7 @@ export function applyInactivityPenalties(
     if (chinaIndex !== -1) {
       const stabilityLoss = Math.min(inactivityTicks * 3, 15) // Máximo 15 de pérdida
       const economyLoss = Math.min(inactivityTicks * 200, 1000) // Máximo 1000B de pérdida
-      
+
       updatedCountries[chinaIndex] = {
         ...updatedCountries[chinaIndex],
         stability: Math.max(0, updatedCountries[chinaIndex].stability - stabilityLoss),
@@ -3633,12 +3749,12 @@ export function applyInactivityPenalties(
       // 🎯 Si China baja de 50 de estabilidad, hacerla vulnerable a ataques
       const newStability = updatedCountries[chinaIndex].stability
       const isVulnerable = newStability < 50
-      
+
       inactivityEvent = {
         id: `china_inactivity_${Date.now()}`,
         type: isVulnerable ? "error" : "warning",
         title: isVulnerable ? "🚨 China en Crisis Crítica" : "🇨🇳 Crisis de Liderazgo en China",
-        description: isVulnerable 
+        description: isVulnerable
           ? `China está en crisis crítica por falta de liderazgo. Otros países ven una oportunidad para actuar contra la superpotencia debilitada.`
           : `La falta de liderazgo activo en China está causando inestabilidad interna. Los ciudadanos demandan acción gubernamental decisiva.`,
         effects: [
@@ -3810,16 +3926,16 @@ function getScaledActionCost(actionType: string, sourceCountry: Country): number
     quantum_disruption: 4000,
     psychological_warfare: 3200
   }
-  
+
   const baseCost = baseCosts[actionType] || 1000
-  
+
   // Sistema de costos escalados para acciones militares y de conquista
   const militaryActions = ['military_action', 'special_conquest', 'naval_blockade', 'regime_change', 'biological_warfare']
-  
+
   if (militaryActions.includes(actionType)) {
     const playerGDP = sourceCountry.economy.gdp
     let costMultiplier = 1
-    
+
     // Top 10 países más poderosos tienen costos escalados
     if (playerGDP >= 20000) { // Superpotencias (USA, China)
       costMultiplier = 8.0
@@ -3835,10 +3951,10 @@ function getScaledActionCost(actionType: string, sourceCountry: Country): number
       costMultiplier = 1.5
     }
     // Países pobres (PIB < 1000) mantienen costo base (multiplicador = 1)
-    
+
     return Math.round(baseCost * costMultiplier)
   }
-  
+
   return baseCost
 }
 
@@ -4010,14 +4126,14 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       updated = updated.map((c) =>
         c.id === source.id
           ? {
-              ...c,
-              economy: {
-                ...c.economy,
-                gdp: c.economy.gdp + economicReturn,
-                debt: Math.max(0, c.economy.debt - debtReduction),
-              },
-              stability: clamp(c.stability + stabilityBoost, 0, 100),
-            }
+            ...c,
+            economy: {
+              ...c.economy,
+              gdp: c.economy.gdp + economicReturn,
+              debt: Math.max(0, c.economy.debt - debtReduction),
+            },
+            stability: clamp(c.stability + stabilityBoost, 0, 100),
+          }
           : c,
       )
 
@@ -4068,7 +4184,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       if (timeRemaining > 0) {
         const hoursRemaining = Math.floor(timeRemaining / (60 * 60 * 1000))
         const minutesRemaining = Math.floor((timeRemaining % (60 * 60 * 1000)) / (60 * 1000))
-        
+
         return {
           success: false,
           updatedCountries: countries,
@@ -4089,23 +4205,23 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       }
 
       // Calcular cantidad de deuda a emitir
-      const debtAmount = source.id === "usa" 
+      const debtAmount = source.id === "usa"
         ? Math.round(source.economy.gdp * 0.3) // 30% del PIB para USA
         : Math.round(source.economy.gdp * 0.2)  // 20% del PIB para Israel
-      
+
       const debtIncrease = source.id === "usa" ? 15 : 20 // USA tiene mejor rating crediticio
 
       updated = updated.map((c) =>
         c.id === source.id
           ? {
-              ...c,
-              economy: {
-                ...c.economy,
-                gdp: c.economy.gdp + debtAmount,
-                debt: Math.min(300, c.economy.debt + debtIncrease),
-              },
-              lastDebtEmission: currentTime, // Registrar el timestamp del uso
-            }
+            ...c,
+            economy: {
+              ...c.economy,
+              gdp: c.economy.gdp + debtAmount,
+              debt: Math.min(300, c.economy.debt + debtIncrease),
+            },
+            lastDebtEmission: currentTime, // Registrar el timestamp del uso
+          }
           : c,
       )
 
@@ -4121,7 +4237,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
             `PIB aumentado en $${debtAmount}B`,
             `Deuda nacional aumentada en ${debtIncrease}%`,
             `Liquidez internacional mejorada`,
-            source.id === "usa" 
+            source.id === "usa"
               ? "Privilegio del dólar como moneda de reserva"
               : "Respaldo de aliados internacionales",
           ],
@@ -4149,7 +4265,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         let sourceDamage = Math.min(15, Math.max(3, Math.floor(stabilityDamage * 0.4)))
 
         // RESPUESTA INMEDIATA DE ALIADOS
-        const allies = updated.filter(c => 
+        const allies = updated.filter(c =>
           (target.alliances || []).includes(c.id) && c.id !== target.id && c.id !== source.id
         )
 
@@ -4161,9 +4277,9 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
             const allyMilitaryStrength = ally.militaryStrength || 50
             const allyContribution = Math.floor(stabilityDamage * 0.15) // 15% del daño original por aliado
             const allyMilitaryDamage = Math.floor(allyMilitaryStrength * 0.1) // 10% de su fuerza militar
-            
+
             totalAllyDamage += allyContribution
-            
+
             // Los aliados también sufren costos por intervenir
             updated = updated.map(c => {
               if (c.id === ally.id) {
@@ -4176,14 +4292,14 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
               }
               return c
             })
-            
+
             allyEffects.push(`🤝 ${ally.name} interviene en defensa de ${target.name}`)
             allyEffects.push(`💥 Contraataque aliado: +${allyContribution}% daño adicional`)
           })
-          
+
           // Aumentar el daño al atacante por la respuesta de los aliados
           sourceDamage += totalAllyDamage
-          
+
           // Deteriorar relaciones diplomáticas con todos los aliados
           allies.forEach(ally => {
             updated = updated.map(c => {
@@ -4210,7 +4326,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
               return c
             })
           })
-          
+
           allyEffects.push(`⚠️ Has provocado la respuesta militar de ${allies.length} países aliados`)
         }
 
@@ -4550,7 +4666,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       // Verificar límites de alianzas para superpotencias
       const sourceAlliances = source.alliances || []
       const targetAlliances = target.alliances || []
-      
+
       // Límites basados en el nivel de poder del país
       const getAllianceLimit = (country: Country): number => {
         if (country.economy.gdp >= 20000) return 3 // Superpotencias: máximo 3 alianzas
@@ -4558,10 +4674,10 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         if (country.economy.gdp >= 10000) return 5 // Potencias regionales: máximo 5 alianzas
         return 8 // Países menores: máximo 8 alianzas
       }
-      
+
       const sourceLimit = getAllianceLimit(source)
       const targetLimit = getAllianceLimit(target)
-      
+
       // Verificar si alguno de los países ha alcanzado su límite
       if (sourceAlliances.length >= sourceLimit) {
         return {
@@ -4581,7 +4697,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           },
         }
       }
-      
+
       if (targetAlliances.length >= targetLimit) {
         return {
           success: false,
@@ -4813,18 +4929,18 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
     }
 
     // ========== NUEVOS ATAQUES DE CONSPIRACIÓN ==========
-    
+
     case "geoengineering": {
       if (!target || target.id === source.id) break
       deductCostFromSource(action.cost)
-      
+
       const successChance = 0.75 // 75% de éxito
       const isSuccessful = Math.random() < successChance
-      
+
       if (isSuccessful) {
         const stabilityDamage = Math.floor(Math.random() * 25) + 20 // 20-45%
         const economicDamage = Math.floor(target.economy.gdp * 0.15) // 15% del PIB
-        
+
         updated = updated.map((c) => {
           if (c.id === target.id) {
             return {
@@ -4835,7 +4951,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           }
           return c
         })
-        
+
         return {
           success: true,
           updatedCountries: updated,
@@ -4856,7 +4972,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       } else {
         const sourceDamage = Math.floor(Math.random() * 15) + 10
         updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
-        
+
         return {
           success: false,
           updatedCountries: updated,
@@ -4875,18 +4991,18 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
     }
-    
+
     case "masonic_influence": {
       if (!target || target.id === source.id) break
       deductCostFromSource(action.cost)
-      
+
       const successChance = 0.70 // 70% de éxito
       const isSuccessful = Math.random() < successChance
-      
+
       if (isSuccessful) {
         const stabilityDamage = Math.floor(Math.random() * 20) + 15 // 15-35%
         const economicDamage = Math.floor(target.economy.gdp * 0.08) // 8% del PIB
-        
+
         updated = updated.map((c) => {
           if (c.id === target.id) {
             return {
@@ -4897,7 +5013,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           }
           return c
         })
-        
+
         return {
           success: true,
           updatedCountries: updated,
@@ -4918,7 +5034,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       } else {
         const sourceDamage = Math.floor(Math.random() * 12) + 8
         updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
-        
+
         return {
           success: false,
           updatedCountries: updated,
@@ -4937,18 +5053,18 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
     }
-    
+
     case "media_manipulation": {
       if (!target || target.id === source.id) break
       deductCostFromSource(action.cost)
-      
+
       const successChance = 0.80 // 80% de éxito (riesgo medio)
       const isSuccessful = Math.random() < successChance
-      
+
       if (isSuccessful) {
         const stabilityDamage = Math.floor(Math.random() * 15) + 10 // 10-25%
         const economicDamage = Math.floor(target.economy.gdp * 0.05) // 5% del PIB
-        
+
         updated = updated.map((c) => {
           if (c.id === target.id) {
             return {
@@ -4959,7 +5075,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           }
           return c
         })
-        
+
         return {
           success: true,
           updatedCountries: updated,
@@ -4980,7 +5096,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       } else {
         const sourceDamage = Math.floor(Math.random() * 8) + 5
         updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
-        
+
         return {
           success: false,
           updatedCountries: updated,
@@ -4999,19 +5115,19 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
     }
-    
+
     case "regime_change": {
       if (!target || target.id === source.id) break
       const scaledCost = getScaledActionCost(action.type, source)
       deductCostFromSource(scaledCost)
-      
+
       const successChance = 0.60 // 60% de éxito (muy alto riesgo)
       const isSuccessful = Math.random() < successChance
-      
+
       if (isSuccessful) {
         const stabilityDamage = Math.floor(Math.random() * 35) + 30 // 30-65%
         const economicDamage = Math.floor(target.economy.gdp * 0.25) // 25% del PIB
-        
+
         updated = updated.map((c) => {
           if (c.id === target.id) {
             return {
@@ -5022,7 +5138,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           }
           return c
         })
-        
+
         return {
           success: true,
           updatedCountries: updated,
@@ -5044,7 +5160,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       } else {
         const sourceDamage = Math.floor(Math.random() * 20) + 15
         updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
-        
+
         return {
           success: false,
           updatedCountries: updated,
@@ -5064,19 +5180,19 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
     }
-    
+
     case "biological_warfare": {
       if (!target || target.id === source.id) break
       const scaledCost = getScaledActionCost(action.type, source)
       deductCostFromSource(scaledCost)
-      
+
       const successChance = 0.85 // 85% de éxito (riesgo extremo)
       const isSuccessful = Math.random() < successChance
-      
+
       if (isSuccessful) {
         const stabilityDamage = Math.floor(Math.random() * 40) + 35 // 35-75%
         const economicDamage = Math.floor(target.economy.gdp * 0.30) // 30% del PIB
-        
+
         updated = updated.map((c) => {
           if (c.id === target.id) {
             return {
@@ -5087,7 +5203,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           }
           return c
         })
-        
+
         return {
           success: true,
           updatedCountries: updated,
@@ -5109,7 +5225,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       } else {
         const sourceDamage = Math.floor(Math.random() * 25) + 20
         updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
-        
+
         return {
           success: false,
           updatedCountries: updated,
@@ -5129,18 +5245,18 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
     }
-    
+
     case "financial_infiltration": {
       if (!target || target.id === source.id) break
       deductCostFromSource(action.cost)
-      
+
       const successChance = 0.85 // 85% de éxito (riesgo bajo)
       const isSuccessful = Math.random() < successChance
-      
+
       if (isSuccessful) {
         const stabilityDamage = Math.floor(Math.random() * 12) + 8 // 8-20%
         const economicDamage = Math.floor(target.economy.gdp * 0.10) // 10% del PIB
-        
+
         updated = updated.map((c) => {
           if (c.id === target.id) {
             return {
@@ -5151,7 +5267,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           }
           return c
         })
-        
+
         return {
           success: true,
           updatedCountries: updated,
@@ -5172,7 +5288,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       } else {
         const sourceDamage = Math.floor(Math.random() * 6) + 3
         updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
-        
+
         return {
           success: false,
           updatedCountries: updated,
@@ -5191,18 +5307,18 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
     }
-    
+
     case "deep_state_operation": {
       if (!target || target.id === source.id) break
       deductCostFromSource(action.cost)
-      
+
       const successChance = 0.55 // 55% de éxito (muy alto riesgo)
       const isSuccessful = Math.random() < successChance
-      
+
       if (isSuccessful) {
         const stabilityDamage = Math.floor(Math.random() * 45) + 40 // 40-85%
         const economicDamage = Math.floor(target.economy.gdp * 0.35) // 35% del PIB
-        
+
         updated = updated.map((c) => {
           if (c.id === target.id) {
             return {
@@ -5213,7 +5329,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           }
           return c
         })
-        
+
         return {
           success: true,
           updatedCountries: updated,
@@ -5235,7 +5351,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       } else {
         const sourceDamage = Math.floor(Math.random() * 30) + 25
         updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
-        
+
         return {
           success: false,
           updatedCountries: updated,
@@ -5255,18 +5371,18 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
     }
-    
+
     case "social_engineering": {
       if (!target || target.id === source.id) break
       deductCostFromSource(action.cost)
-      
+
       const successChance = 0.75 // 75% de éxito (riesgo medio)
       const isSuccessful = Math.random() < successChance
-      
+
       if (isSuccessful) {
         const stabilityDamage = Math.floor(Math.random() * 18) + 12 // 12-30%
         const economicDamage = Math.floor(target.economy.gdp * 0.08) // 8% del PIB
-        
+
         updated = updated.map((c) => {
           if (c.id === target.id) {
             return {
@@ -5277,7 +5393,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           }
           return c
         })
-        
+
         return {
           success: true,
           updatedCountries: updated,
@@ -5298,7 +5414,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       } else {
         const sourceDamage = Math.floor(Math.random() * 10) + 7
         updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
-        
+
         return {
           success: false,
           updatedCountries: updated,
@@ -5317,18 +5433,18 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
     }
-    
+
     case "quantum_disruption": {
       if (!target || target.id === source.id) break
       deductCostFromSource(action.cost)
-      
+
       const successChance = 0.65 // 65% de éxito (alto riesgo)
       const isSuccessful = Math.random() < successChance
-      
+
       if (isSuccessful) {
         const stabilityDamage = Math.floor(Math.random() * 30) + 25 // 25-55%
         const economicDamage = Math.floor(target.economy.gdp * 0.20) // 20% del PIB
-        
+
         updated = updated.map((c) => {
           if (c.id === target.id) {
             return {
@@ -5339,7 +5455,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           }
           return c
         })
-        
+
         return {
           success: true,
           updatedCountries: updated,
@@ -5361,7 +5477,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       } else {
         const sourceDamage = Math.floor(Math.random() * 18) + 12
         updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
-        
+
         return {
           success: false,
           updatedCountries: updated,
@@ -5380,18 +5496,18 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
     }
-    
+
     case "psychological_warfare": {
       if (!target || target.id === source.id) break
       deductCostFromSource(action.cost)
-      
+
       const successChance = 0.50 // 50% de éxito (riesgo extremo)
       const isSuccessful = Math.random() < successChance
-      
+
       if (isSuccessful) {
         const stabilityDamage = Math.floor(Math.random() * 50) + 45 // 45-95%
         const economicDamage = Math.floor(target.economy.gdp * 0.40) // 40% del PIB
-        
+
         updated = updated.map((c) => {
           if (c.id === target.id) {
             return {
@@ -5402,7 +5518,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
           }
           return c
         })
-        
+
         return {
           success: true,
           updatedCountries: updated,
@@ -5425,7 +5541,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
       } else {
         const sourceDamage = Math.floor(Math.random() * 35) + 30
         updated = updated.map((c) => (c.id === source.id ? applyStabilityChange(c, -sourceDamage) : c))
-        
+
         return {
           success: false,
           updatedCountries: updated,
@@ -5445,17 +5561,17 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
       }
     }
-    
+
     case "economic_aid": {
       if (!target || target.id === source.id) break
       deductCostFromSource(action.cost)
-      
+
       // Calcular beneficios basados en el costo de la ayuda
       const aidAmount = action.cost
       const stabilityBoost = Math.min(25, Math.max(8, Math.floor(aidAmount / 150))) // 8-25% según la cantidad
       const economicBoost = Math.round(aidAmount * 0.7) // 70% del costo se convierte en PIB
       const debtReduction = Math.max(2, Math.floor(aidAmount / 400)) // Reducción de deuda
-      
+
       // Aplicar efectos al país objetivo
       updated = updated.map((c) => {
         if (c.id === target.id) {
@@ -5471,7 +5587,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         }
         return c
       })
-      
+
       return {
         success: true,
         updatedCountries: updated,
@@ -5491,7 +5607,7 @@ export function processAction(action: GameAction, countries: Country[]): ActionR
         },
       }
     }
-    
+
     // Continuar con otros casos de acción...
     default: {
       if (action.cost > 0) deductCostFromSource(action.cost)

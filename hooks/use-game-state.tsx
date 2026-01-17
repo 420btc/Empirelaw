@@ -3,7 +3,21 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import type { Country, GameEvent, GameAction, GameStats, ActionHistory, TradeOffer } from "@/lib/types"
 import { initialCountries } from "@/lib/data/countries"
-import { generateRandomEvent, generateConspiracyEvent, processAction, checkForCollapses, calculateChaosLevel, applyGDPGrowth, provideMutualAidToCriticalCountries, checkTerritorialRebellions, applyImperialMaintenanceCosts, applyInactivityPenalties } from "@/lib/game-engine"
+import {
+  generateRandomEvent,
+  generateConspiracyEvent,
+  processAction,
+  checkForCollapses,
+  calculateChaosLevel,
+  applyGDPGrowth,
+  provideMutualAidToCriticalCountries,
+  checkTerritorialRebellions,
+  applyImperialMaintenanceCosts,
+  applyInactivityPenalties,
+  selectAIOpponent,
+  runAIActions,
+  applyDiplomaticDrift
+} from "@/lib/game-engine"
 import { aiProactiveActionsService } from "@/lib/ai-proactive-actions"
 import { ACHIEVEMENTS, checkAchievements, calculateXPGain, getPlayerLevel, type Achievement } from "@/lib/achievement-system"
 import type { GameProgression } from "@/lib/types"
